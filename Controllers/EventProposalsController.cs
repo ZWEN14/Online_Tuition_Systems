@@ -168,14 +168,6 @@ public class EventProposalsController : Controller
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        if (proposal.Mode is EventMode.Online or EventMode.Hybrid
-            && string.IsNullOrWhiteSpace(model.MeetingUrl))
-        {
-            ModelState.AddModelError(
-                "Approval.MeetingUrl",
-                "Meeting URL is required for an online or hybrid event.");
-        }
-
         if (!ModelState.IsValid)
         {
             return View(
@@ -218,10 +210,16 @@ public class EventProposalsController : Controller
             EndsAt = model.EndsAt.ToUniversalTime(),
             ApplicationDeadline = model.ApplicationDeadline?.ToUniversalTime(),
             RegistrationAudience = model.RegistrationAudience,
-            Mode = pendingProposal.Mode,
-            Location = pendingProposal.Location,
-            MeetingPlatform = pendingProposal.MeetingPlatform,
-            MeetingUrl = CleanOptionalText(model.MeetingUrl),
+            Mode = model.Mode,
+            Location = model.Mode == EventMode.Online
+                ? null
+                : CleanOptionalText(model.Location),
+            MeetingPlatform = model.Mode == EventMode.Physical
+                ? null
+                : model.MeetingPlatform,
+            MeetingUrl = model.Mode == EventMode.Physical
+                ? null
+                : CleanOptionalText(model.MeetingUrl),
             MaxParticipants = model.MaxParticipants,
             Status = EventStatus.Draft,
             CreatedAt = currentTime,
@@ -233,7 +231,7 @@ public class EventProposalsController : Controller
 
         Announcement? publishedAnnouncement = null;
 
-        if (pendingProposal.PublishAsAnnouncement)
+        if (model.PublishAsAnnouncement)
         {
             publishedAnnouncement = new Announcement
             {
@@ -390,7 +388,13 @@ public class EventProposalsController : Controller
                 EndsAt = defaultEnd,
                 ApplicationDeadline = proposal.ProposedApplicationDeadline?.ToLocalTime(),
                 RegistrationAudience = proposal.ProposedRegistrationAudience,
-                MaxParticipants = proposal.ProposedMaxParticipants
+                Mode = proposal.Mode,
+                Location = proposal.Location,
+                MeetingPlatform = proposal.MeetingPlatform,
+                MaxParticipants = proposal.ProposedMaxParticipants > 1
+                    ? proposal.ProposedMaxParticipants
+                    : 30,
+                PublishAsAnnouncement = proposal.PublishAsAnnouncement
             },
             Rejection = rejection ?? new RejectEventProposalViewModel
             {
@@ -410,13 +414,7 @@ public class EventProposalsController : Controller
             Reason = proposal.Reason,
             PreferredStartsAt = proposal.PreferredStartsAt?.ToLocalTime(),
             PreferredEndsAt = proposal.PreferredEndsAt?.ToLocalTime(),
-            ProposedApplicationDeadline = proposal.ProposedApplicationDeadline?.ToLocalTime(),
-            ProposedRegistrationAudience = proposal.ProposedRegistrationAudience,
-            Mode = proposal.Mode,
-            Location = proposal.Location,
-            MeetingPlatform = proposal.MeetingPlatform,
-            ProposedMaxParticipants = proposal.ProposedMaxParticipants,
-            PublishAsAnnouncement = proposal.PublishAsAnnouncement
+            ProposedRegistrationAudience = proposal.ProposedRegistrationAudience
         };
     }
 
@@ -430,18 +428,7 @@ public class EventProposalsController : Controller
         proposal.Reason = model.Reason.Trim();
         proposal.PreferredStartsAt = model.PreferredStartsAt?.ToUniversalTime();
         proposal.PreferredEndsAt = model.PreferredEndsAt?.ToUniversalTime();
-        proposal.ProposedApplicationDeadline =
-            model.ProposedApplicationDeadline?.ToUniversalTime();
         proposal.ProposedRegistrationAudience = model.ProposedRegistrationAudience;
-        proposal.Mode = model.Mode;
-        proposal.Location = model.Mode == EventMode.Online
-            ? null
-            : CleanOptionalText(model.Location);
-        proposal.MeetingPlatform = model.Mode == EventMode.Physical
-            ? null
-            : model.MeetingPlatform;
-        proposal.ProposedMaxParticipants = model.ProposedMaxParticipants;
-        proposal.PublishAsAnnouncement = model.PublishAsAnnouncement;
     }
 
     private static string? CleanOptionalText(string? value)

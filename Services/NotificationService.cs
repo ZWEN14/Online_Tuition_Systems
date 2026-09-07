@@ -52,7 +52,7 @@ public class NotificationService : INotificationService
 
     public async Task EventCancelledAsync(Event tuitionEvent)
     {
-        var userIds = await _context.EventRegistrations
+        var registrantUserIds = await _context.EventRegistrations
             .Where(item =>
                 item.EventId == tuitionEvent.Id
                 && (item.Status == EventRegistrationStatus.Pending
@@ -62,12 +62,38 @@ public class NotificationService : INotificationService
             .ToListAsync();
 
         AddNotifications(
-            userIds,
+            registrantUserIds,
             UserNotificationType.EventCancelled,
             $"Event cancelled: {tuitionEvent.Title}",
             "An event you registered for has been cancelled.",
-            null,
+            $"Reason: {tuitionEvent.CancellationReason}",
             "/EventRegistrations/MyRegistrations");
+
+        var sourceProposal = tuitionEvent.SourceProposal
+            ?? await _context.EventProposals
+                .AsNoTracking()
+                .SingleOrDefaultAsync(item => item.CreatedEventId == tuitionEvent.Id);
+
+        var proposerEmail = sourceProposal?.ProposedByUserId;
+
+        if (string.IsNullOrWhiteSpace(proposerEmail))
+        {
+            return;
+        }
+
+        var proposerUserId = await UserIdForEmail(proposerEmail);
+
+        if (proposerUserId.HasValue
+            && !registrantUserIds.Contains(proposerUserId.Value))
+        {
+            AddNotifications(
+                new[] { proposerUserId.Value },
+                UserNotificationType.EventCancelled,
+                $"Event cancelled: {tuitionEvent.Title}",
+                "An event created from your proposal has been cancelled.",
+                $"Reason: {tuitionEvent.CancellationReason}",
+                $"/EventProposals/Details/{sourceProposal!.Id}");
+        }
     }
 
     public async Task ProposalSubmittedAsync(EventProposal proposal)
@@ -77,7 +103,7 @@ public class NotificationService : INotificationService
             UserNotificationType.ProposalSubmitted,
             $"New event proposal: {proposal.Title}",
             $"{proposal.ProposedByUserId} submitted an event proposal for review.",
-            $"Mode: {proposal.Mode}",
+            $"Suggested audience: {proposal.ProposedRegistrationAudience}",
             $"/EventProposals/Details/{proposal.Id}");
     }
 

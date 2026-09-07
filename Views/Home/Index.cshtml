@@ -1,8 +1,116 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Home";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<section class="home-hero">
+    <div class="home-hero-content">
+        <span class="home-eyebrow">ANNOUNCEMENTS · EVENTS · LEARNING</span>
+        <h1>Your Online Tuition Learning Hub</h1>
+        <p>
+            Follow important announcements, discover upcoming learning events
+            and manage your participation from a single portal.
+        </p>
+        <div class="d-flex flex-wrap gap-2 mt-4">
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <a asp-controller="Announcements" asp-action="Index" class="btn btn-primary btn-lg px-4">View announcements <span aria-hidden="true">→</span></a>
+                <a asp-controller="Events" asp-action="Index" class="btn btn-outline-dark btn-lg px-4">Explore events</a>
+            }
+            else
+            {
+                <a asp-controller="Account" asp-action="Login" class="btn btn-primary btn-lg px-4">Sign in <span aria-hidden="true">→</span></a>
+                <a asp-controller="Account" asp-action="Register" class="btn btn-outline-dark btn-lg px-4">Create student account</a>
+            }
+        </div>
+        <div class="home-trust-line">
+            <span class="home-trust-check" aria-hidden="true">✓</span>
+            One secure portal for students, tutors and administrators.
+        </div>
+    </div>
+    <div class="home-hero-visual" aria-hidden="true">
+        <div class="hero-orbit hero-orbit-one"></div>
+        <div class="hero-orbit hero-orbit-two"></div>
+        <div class="hero-book">
+            <span>OT</span>
+            <small>Learning</small>
+        </div>
+        <div class="hero-float-card hero-float-top">Upcoming events</div>
+        <div class="hero-float-card hero-float-bottom">New announcement</div>
+    </div>
+</section>
+
+<section class="home-section">
+    <div class="home-section-heading text-center">
+        <span class="section-kicker">YOUR WORKSPACE</span>
+        <h2>Stay organised and informed</h2>
+        <p>Quick access to the tools you use most.</p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-6 col-xl-3">
+            <a asp-controller="Announcements" asp-action="Index" class="home-feature-card feature-blue">
+                <span class="home-feature-icon">A</span>
+                <span class="home-feature-copy">
+                    <strong>Announcements</strong>
+                    <small>Read the latest course and platform updates.</small>
+                </span>
+                <span class="home-feature-arrow">→</span>
+            </a>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <a asp-controller="Events" asp-action="Index" class="home-feature-card feature-teal">
+                <span class="home-feature-icon">E</span>
+                <span class="home-feature-copy">
+                    <strong>Events</strong>
+                    <small>Discover workshops and learning sessions.</small>
+                </span>
+                <span class="home-feature-arrow">→</span>
+            </a>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <a asp-controller="EventProposals" asp-action="Index" class="home-feature-card feature-violet">
+                <span class="home-feature-icon">P</span>
+                <span class="home-feature-copy">
+                    <strong>Event proposals</strong>
+                    <small>Submit ideas and follow their review status.</small>
+                </span>
+                <span class="home-feature-arrow">→</span>
+            </a>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            @if (User.IsInRole(AppRoles.Admin))
+            {
+                <a asp-controller="EventRegistrations" asp-action="Manage" class="home-feature-card feature-amber">
+                    <span class="home-feature-icon">R</span>
+                    <span class="home-feature-copy">
+                        <strong>Registrations</strong>
+                        <small>Review and manage event applications.</small>
+                    </span>
+                    <span class="home-feature-arrow">→</span>
+                </a>
+            }
+            else if (User.Identity?.IsAuthenticated == true)
+            {
+                <a asp-controller="EventRegistrations" asp-action="MyRegistrations" class="home-feature-card feature-amber">
+                    <span class="home-feature-icon">R</span>
+                    <span class="home-feature-copy">
+                        <strong>My registrations</strong>
+                        <small>Track your event application status.</small>
+                    </span>
+                    <span class="home-feature-arrow">→</span>
+                </a>
+            }
+            else
+            {
+                <a asp-controller="Account" asp-action="Login" class="home-feature-card feature-amber">
+                    <span class="home-feature-icon">→</span>
+                    <span class="home-feature-copy">
+                        <strong>Get started</strong>
+                        <small>Sign in to access your learning workspace.</small>
+                    </span>
+                    <span class="home-feature-arrow">→</span>
+                </a>
+            }
+        </div>
+    </div>
+</section>

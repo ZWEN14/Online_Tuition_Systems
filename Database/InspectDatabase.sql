@@ -45,6 +45,9 @@ SELECT TOP (100)
     Mode,
     MaxParticipants,
     Status,
+    CancellationReason,
+    CancelledByUserId,
+    CancelledAt,
     CreatedAt
 FROM dbo.Events
 ORDER BY CreatedAt DESC;

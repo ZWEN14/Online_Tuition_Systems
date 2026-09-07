@@ -40,9 +40,12 @@
 
             @if (tuitionEvent.Status == EventStatus.Published)
             {
-                <form asp-action="Cancel" asp-route-id="@tuitionEvent.Id" method="post">
-                    <button type="submit" class="btn btn-warning">Cancel event</button>
-                </form>
+                <button type="button"
+                        class="btn btn-outline-danger"
+                        data-bs-toggle="modal"
+                        data-bs-target="#cancelEventModal">
+                    Cancel event
+                </button>
             }
 
             @if (tuitionEvent.Status is EventStatus.Published or EventStatus.Cancelled)
@@ -138,6 +141,21 @@
             <dt class="col-sm-3">Participants</dt>
             <dd class="col-sm-9">@Model.ApprovedRegistrationCount / @tuitionEvent.MaxParticipants approved</dd>
 
+            @if (tuitionEvent.Status == EventStatus.Cancelled)
+            {
+                <dt class="col-sm-3">Cancellation reason</dt>
+                <dd class="col-sm-9" style="white-space: pre-wrap">@(tuitionEvent.CancellationReason ?? "Not specified")</dd>
+
+                <dt class="col-sm-3">Cancelled at</dt>
+                <dd class="col-sm-9">@(tuitionEvent.CancelledAt?.ToLocalTime().ToString("dd MMM yyyy HH:mm") ?? "Not specified")</dd>
+
+                @if (User.IsInRole(AppRoles.Admin))
+                {
+                    <dt class="col-sm-3">Cancelled by</dt>
+                    <dd class="col-sm-9">@(tuitionEvent.CancelledByUserId ?? "Not specified")</dd>
+                }
+            }
+
             @if (User.IsInRole(AppRoles.Admin))
             {
                 <dt class="col-sm-3">Total registrations</dt>
@@ -162,3 +180,37 @@
         </dl>
     </div>
 </div>
+
+@if (User.IsInRole(AppRoles.Admin) && tuitionEvent.Status == EventStatus.Published)
+{
+    <div class="modal fade" id="cancelEventModal" tabindex="-1" aria-labelledby="cancelEventModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form asp-action="Cancel" asp-route-id="@tuitionEvent.Id" method="post">
+                    <div class="modal-header">
+                        <h2 class="modal-title fs-5" id="cancelEventModalLabel">Cancel @tuitionEvent.Title?</h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input asp-for="Cancellation.Id" type="hidden" />
+                        <p class="text-muted">
+                            Cancellation is allowed only before the event starts. The proposal submitter
+                            and all Pending or Approved registrants will be notified.
+                        </p>
+                        <label asp-for="Cancellation.Reason" class="form-label"></label>
+                        <textarea asp-for="Cancellation.Reason" class="form-control" rows="4" placeholder="Explain why this event must be cancelled."></textarea>
+                        <span asp-validation-for="Cancellation.Reason" class="text-danger"></span>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Keep event</button>
+                        <button type="submit" class="btn btn-danger">Confirm cancellation</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

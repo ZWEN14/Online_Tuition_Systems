@@ -22,6 +22,15 @@ public class ApproveEventProposalViewModel : IValidatableObject
     public RegistrationAudience RegistrationAudience { get; set; }
         = RegistrationAudience.All;
 
+    [Display(Name = "Event mode")]
+    public EventMode Mode { get; set; } = EventMode.Physical;
+
+    [StringLength(255)]
+    public string? Location { get; set; }
+
+    [Display(Name = "Meeting platform")]
+    public MeetingPlatform? MeetingPlatform { get; set; }
+
     [StringLength(2048)]
     [Url]
     [Display(Name = "Meeting URL")]
@@ -30,6 +39,9 @@ public class ApproveEventProposalViewModel : IValidatableObject
     [Range(1, 1000)]
     [Display(Name = "Maximum participants")]
     public int MaxParticipants { get; set; } = 30;
+
+    [Display(Name = "Publish an announcement for this event")]
+    public bool PublishAsAnnouncement { get; set; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
@@ -53,6 +65,30 @@ public class ApproveEventProposalViewModel : IValidatableObject
             yield return new ValidationResult(
                 "Registration deadline must be earlier than the final start.",
                 new[] { nameof(ApplicationDeadline) });
+        }
+
+        if (Mode is EventMode.Physical or EventMode.Hybrid
+            && string.IsNullOrWhiteSpace(Location))
+        {
+            yield return new ValidationResult(
+                "Location is required for a physical or hybrid event.",
+                new[] { nameof(Location) });
+        }
+
+        if (Mode is EventMode.Online or EventMode.Hybrid
+            && !MeetingPlatform.HasValue)
+        {
+            yield return new ValidationResult(
+                "Meeting platform is required for an online or hybrid event.",
+                new[] { nameof(MeetingPlatform) });
+        }
+
+        if (Mode is EventMode.Online or EventMode.Hybrid
+            && string.IsNullOrWhiteSpace(MeetingUrl))
+        {
+            yield return new ValidationResult(
+                "Meeting URL is required for an online or hybrid event.",
+                new[] { nameof(MeetingUrl) });
         }
     }
 }

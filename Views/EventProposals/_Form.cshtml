@@ -3,6 +3,11 @@
 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 <input asp-for="Id" type="hidden" />
 
+<div class="alert alert-info border-0 mb-4">
+    Share the event idea and why it would benefit learners. The Admin will decide
+    the final mode, venue, registration deadline, capacity and online meeting details.
+</div>
+
 <div class="row g-3">
     <div class="col-md-8">
         <label asp-for="Title" class="form-label"></label>
@@ -29,7 +34,7 @@
         <span asp-validation-for="Reason" class="text-danger"></span>
     </div>
 
-    <div class="col-md-4">
+    <div class="col-md-6">
         <label asp-for="PreferredStartsAt" class="form-label"></label>
         <input asp-for="PreferredStartsAt"
                asp-format="{0:yyyy-MM-ddTHH:mm}"
@@ -38,7 +43,7 @@
         <span asp-validation-for="PreferredStartsAt" class="text-danger"></span>
     </div>
 
-    <div class="col-md-4">
+    <div class="col-md-6">
         <label asp-for="PreferredEndsAt" class="form-label"></label>
         <input asp-for="PreferredEndsAt"
                asp-format="{0:yyyy-MM-ddTHH:mm}"
@@ -47,58 +52,11 @@
         <span asp-validation-for="PreferredEndsAt" class="text-danger"></span>
     </div>
 
-    <div class="col-md-4">
-        <label asp-for="ProposedApplicationDeadline" class="form-label"></label>
-        <input asp-for="ProposedApplicationDeadline"
-               asp-format="{0:yyyy-MM-ddTHH:mm}"
-               type="datetime-local"
-               class="form-control" />
-        <span asp-validation-for="ProposedApplicationDeadline" class="text-danger"></span>
-    </div>
-
-    <div class="col-md-4">
+    <div class="col-md-6">
         <label asp-for="ProposedRegistrationAudience" class="form-label"></label>
         <select asp-for="ProposedRegistrationAudience"
                 asp-items="Html.GetEnumSelectList<RegistrationAudience>()"
                 class="form-select"></select>
         <span asp-validation-for="ProposedRegistrationAudience" class="text-danger"></span>
-    </div>
-
-    <div class="col-md-4">
-        <label asp-for="Mode" class="form-label"></label>
-        <select asp-for="Mode"
-                asp-items="Html.GetEnumSelectList<EventMode>()"
-                class="form-select"></select>
-        <span asp-validation-for="Mode" class="text-danger"></span>
-    </div>
-
-    <div class="col-md-4">
-        <label asp-for="ProposedMaxParticipants" class="form-label"></label>
-        <input asp-for="ProposedMaxParticipants" class="form-control" />
-        <span asp-validation-for="ProposedMaxParticipants" class="text-danger"></span>
-    </div>
-
-    <div class="col-md-6">
-        <label asp-for="Location" class="form-label"></label>
-        <input asp-for="Location" class="form-control" />
-        <div class="form-text">Required for Physical or Hybrid mode.</div>
-        <span asp-validation-for="Location" class="text-danger"></span>
-    </div>
-
-    <div class="col-md-6">
-        <label asp-for="MeetingPlatform" class="form-label"></label>
-        <select asp-for="MeetingPlatform"
-                asp-items="Html.GetEnumSelectList<MeetingPlatform>()"
-                class="form-select">
-            <option value="">-- Select when online --</option>
-        </select>
-        <span asp-validation-for="MeetingPlatform" class="text-danger"></span>
-    </div>
-
-    <div class="col-12">
-        <div class="form-check">
-            <input asp-for="PublishAsAnnouncement" class="form-check-input" />
-            <label asp-for="PublishAsAnnouncement" class="form-check-label"></label>
-        </div>
     </div>
 </div>

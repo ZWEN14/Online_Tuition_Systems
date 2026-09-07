@@ -29,28 +29,9 @@ public class EventProposalFormViewModel : IValidatableObject
     [Display(Name = "Preferred end")]
     public DateTimeOffset? PreferredEndsAt { get; set; }
 
-    [Display(Name = "Proposed registration deadline")]
-    public DateTimeOffset? ProposedApplicationDeadline { get; set; }
-
-    [Display(Name = "Who may register")]
+    [Display(Name = "Suggested audience")]
     public RegistrationAudience ProposedRegistrationAudience { get; set; }
         = RegistrationAudience.All;
-
-    [Display(Name = "Event mode")]
-    public EventMode Mode { get; set; } = EventMode.Physical;
-
-    [StringLength(255)]
-    public string? Location { get; set; }
-
-    [Display(Name = "Meeting platform")]
-    public MeetingPlatform? MeetingPlatform { get; set; }
-
-    [Range(1, 1000)]
-    [Display(Name = "Proposed maximum participants")]
-    public int ProposedMaxParticipants { get; set; } = 30;
-
-    [Display(Name = "Publish an announcement when approved")]
-    public bool PublishAsAnnouncement { get; set; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
@@ -79,37 +60,5 @@ public class EventProposalFormViewModel : IValidatableObject
                 new[] { nameof(PreferredEndsAt) });
         }
 
-        if (ProposedApplicationDeadline.HasValue
-            && ProposedApplicationDeadline.Value <= now)
-        {
-            yield return new ValidationResult(
-                "The proposed deadline must be in the future.",
-                new[] { nameof(ProposedApplicationDeadline) });
-        }
-
-        if (ProposedApplicationDeadline.HasValue
-            && PreferredStartsAt.HasValue
-            && ProposedApplicationDeadline.Value >= PreferredStartsAt.Value)
-        {
-            yield return new ValidationResult(
-                "The proposed deadline must be earlier than the preferred start.",
-                new[] { nameof(ProposedApplicationDeadline) });
-        }
-
-        if (Mode is EventMode.Physical or EventMode.Hybrid
-            && string.IsNullOrWhiteSpace(Location))
-        {
-            yield return new ValidationResult(
-                "Location is required for a physical or hybrid event.",
-                new[] { nameof(Location) });
-        }
-
-        if (Mode is EventMode.Online or EventMode.Hybrid
-            && !MeetingPlatform.HasValue)
-        {
-            yield return new ValidationResult(
-                "Meeting platform is required for an online or hybrid event.",
-                new[] { nameof(MeetingPlatform) });
-        }
     }
 }

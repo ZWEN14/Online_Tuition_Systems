@@ -73,6 +73,14 @@ public class Event
 
     public EventStatus Status { get; set; } = EventStatus.Draft;
 
+    [StringLength(450)]
+    public string? CancelledByUserId { get; set; }
+
+    [StringLength(2_000)]
+    public string? CancellationReason { get; set; }
+
+    public DateTimeOffset? CancelledAt { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;

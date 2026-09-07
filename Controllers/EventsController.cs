@@ -103,7 +103,11 @@ public class EventsController : Controller
             CanRegister = unavailableReason is null,
             CanViewMeetingUrl = User.IsInRole(AppRoles.Admin)
                 || currentRegistration?.Status == EventRegistrationStatus.Approved,
-            RegistrationUnavailableReason = unavailableReason
+            RegistrationUnavailableReason = unavailableReason,
+            Cancellation = new CancelEventViewModel
+            {
+                Id = tuitionEvent.Id
+            }
         });
     }
 
@@ -230,9 +234,28 @@ public class EventsController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Roles = AppRoles.Admin)]
-    public async Task<IActionResult> Cancel(int id)
+    public async Task<IActionResult> Cancel(
+        int id,
+        [Bind(Prefix = "Cancellation")] CancelEventViewModel model)
     {
+        if (id != model.Id)
+        {
+            return NotFound();
+        }
+
+        if (!ModelState.IsValid)
+        {
+            TempData["ErrorMessage"] = ModelState
+                .SelectMany(item => item.Value?.Errors ?? [])
+                .Select(item => item.ErrorMessage)
+                .FirstOrDefault()
+                ?? "Enter a valid cancellation reason.";
+
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
         var tuitionEvent = await _context.Events
+            .Include(item => item.SourceProposal)
             .SingleOrDefaultAsync(item => item.Id == id);
 
         if (tuitionEvent is null)
@@ -246,8 +269,26 @@ public class EventsController : Controller
             return RedirectToAction(nameof(Details), new { id });
         }
 
+        var currentTime = DateTimeOffset.UtcNow;
+
+        if (tuitionEvent.StartsAt <= currentTime)
+        {
+            TempData["ErrorMessage"] = "An event cannot be cancelled after it has started.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        var adminUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(adminUserId))
+        {
+            return Forbid();
+        }
+
         tuitionEvent.Status = EventStatus.Cancelled;
-        tuitionEvent.UpdatedAt = DateTimeOffset.UtcNow;
+        tuitionEvent.CancelledByUserId = adminUserId;
+        tuitionEvent.CancellationReason = model.Reason.Trim();
+        tuitionEvent.CancelledAt = currentTime;
+        tuitionEvent.UpdatedAt = currentTime;
         await _notificationService.EventCancelledAsync(tuitionEvent);
         await _context.SaveChangesAsync();
 

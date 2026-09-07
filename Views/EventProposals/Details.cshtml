@@ -35,7 +35,7 @@
     <div class="col-lg-7">
         <div class="card shadow-sm mb-4">
             <div class="card-body">
-                <h2 class="h5">Proposal information</h2>
+                <h2 class="h5">Event suggestion</h2>
                 <dl class="row mb-0">
                     <dt class="col-sm-4">Description</dt>
                     <dd class="col-sm-8" style="white-space: pre-wrap">@proposal.Description</dd>
@@ -48,30 +48,12 @@
                         @(proposal.PreferredStartsAt?.ToLocalTime().ToString("dd MMM yyyy HH:mm") ?? "Not specified")
                         @if (proposal.PreferredEndsAt.HasValue)
                         {
-                            <span> – @proposal.PreferredEndsAt.Value.ToLocalTime().ToString("dd MMM yyyy HH:mm")</span>
+                            <span> — @proposal.PreferredEndsAt.Value.ToLocalTime().ToString("dd MMM yyyy HH:mm")</span>
                         }
                     </dd>
 
-                    <dt class="col-sm-4">Deadline</dt>
-                    <dd class="col-sm-8">@(proposal.ProposedApplicationDeadline?.ToLocalTime().ToString("dd MMM yyyy HH:mm") ?? "Not specified")</dd>
-
-                    <dt class="col-sm-4">Audience</dt>
+                    <dt class="col-sm-4">Suggested audience</dt>
                     <dd class="col-sm-8">@proposal.ProposedRegistrationAudience</dd>
-
-                    <dt class="col-sm-4">Mode</dt>
-                    <dd class="col-sm-8">@proposal.Mode</dd>
-
-                    <dt class="col-sm-4">Location</dt>
-                    <dd class="col-sm-8">@(proposal.Location ?? "—")</dd>
-
-                    <dt class="col-sm-4">Meeting platform</dt>
-                    <dd class="col-sm-8">@(proposal.MeetingPlatform?.ToString() ?? "—")</dd>
-
-                    <dt class="col-sm-4">Maximum participants</dt>
-                    <dd class="col-sm-8">@proposal.ProposedMaxParticipants</dd>
-
-                    <dt class="col-sm-4">Announcement</dt>
-                    <dd class="col-sm-8">@(proposal.PublishAsAnnouncement ? "Publish when approved" : "No")</dd>
 
                     <dt class="col-sm-4">Revisions</dt>
                     <dd class="col-sm-8">@proposal.RevisionCount</dd>
@@ -86,11 +68,11 @@
                     <h2 class="h5">Review result</h2>
                     <dl class="row mb-0">
                         <dt class="col-sm-4">Reviewed by</dt>
-                        <dd class="col-sm-8">@(proposal.ReviewedByUserId ?? "—")</dd>
+                        <dd class="col-sm-8">@(proposal.ReviewedByUserId ?? "Not specified")</dd>
                         <dt class="col-sm-4">Reviewed at</dt>
-                        <dd class="col-sm-8">@(proposal.ReviewedAt?.ToLocalTime().ToString("dd MMM yyyy HH:mm") ?? "—")</dd>
+                        <dd class="col-sm-8">@(proposal.ReviewedAt?.ToLocalTime().ToString("dd MMM yyyy HH:mm") ?? "Not specified")</dd>
                         <dt class="col-sm-4">Review note</dt>
-                        <dd class="col-sm-8">@(proposal.ReviewNote ?? "—")</dd>
+                        <dd class="col-sm-8">@(proposal.ReviewNote ?? "Not specified")</dd>
                         @if (proposal.CreatedEventId.HasValue)
                         {
                             <dt class="col-sm-4">Created event</dt>
@@ -108,9 +90,10 @@
     {
         <div class="col-lg-5">
             <div class="card shadow-sm border-success mb-4">
-                <div class="card-header bg-success-subtle"><strong>Approve proposal</strong></div>
+                <div class="card-header bg-success-subtle"><strong>Approve and organise event</strong></div>
                 <form asp-action="Approve" asp-route-id="@proposal.Id" method="post">
                     <div class="card-body">
+                        <p class="small text-muted">Confirm the operational details before creating the Draft Event.</p>
                         <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
                         <input asp-for="Approval.Id" type="hidden" />
 
@@ -135,15 +118,37 @@
                             <span asp-validation-for="Approval.RegistrationAudience" class="text-danger"></span>
                         </div>
                         <div class="mb-3">
-                            <label asp-for="Approval.MaxParticipants" class="form-label"></label>
-                            <input asp-for="Approval.MaxParticipants" class="form-control" />
-                            <span asp-validation-for="Approval.MaxParticipants" class="text-danger"></span>
+                            <label asp-for="Approval.Mode" class="form-label"></label>
+                            <select asp-for="Approval.Mode" asp-items="Html.GetEnumSelectList<EventMode>()" class="form-select"></select>
+                            <span asp-validation-for="Approval.Mode" class="text-danger"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="Approval.Location" class="form-label"></label>
+                            <input asp-for="Approval.Location" class="form-control" />
+                            <div class="form-text">Required for Physical or Hybrid mode.</div>
+                            <span asp-validation-for="Approval.Location" class="text-danger"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="Approval.MeetingPlatform" class="form-label"></label>
+                            <select asp-for="Approval.MeetingPlatform" asp-items="Html.GetEnumSelectList<MeetingPlatform>()" class="form-select">
+                                <option value="">-- Select when online --</option>
+                            </select>
+                            <span asp-validation-for="Approval.MeetingPlatform" class="text-danger"></span>
                         </div>
                         <div class="mb-3">
                             <label asp-for="Approval.MeetingUrl" class="form-label"></label>
                             <input asp-for="Approval.MeetingUrl" class="form-control" />
                             <div class="form-text">Required for Online or Hybrid mode.</div>
                             <span asp-validation-for="Approval.MeetingUrl" class="text-danger"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="Approval.MaxParticipants" class="form-label"></label>
+                            <input asp-for="Approval.MaxParticipants" class="form-control" />
+                            <span asp-validation-for="Approval.MaxParticipants" class="text-danger"></span>
+                        </div>
+                        <div class="form-check">
+                            <input asp-for="Approval.PublishAsAnnouncement" class="form-check-input" />
+                            <label asp-for="Approval.PublishAsAnnouncement" class="form-check-label"></label>
                         </div>
                     </div>
                     <div class="card-footer bg-white text-end">

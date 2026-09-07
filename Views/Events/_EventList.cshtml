@@ -11,18 +11,29 @@ else
     <div class="row g-3">
         @foreach (var tuitionEvent in Model.Items)
         {
+            var statusClass = tuitionEvent.Status switch
+            {
+                EventStatus.Published => "status-published",
+                EventStatus.Cancelled => "status-cancelled",
+                EventStatus.Archived => "status-archived",
+                _ => "status-draft"
+            };
+
             <div class="col-md-6 col-xl-4">
-                <div class="card h-100 shadow-sm">
+                <div class="card event-card h-100">
                     <div class="card-body">
                         <div class="d-flex justify-content-between gap-2">
                             <h2 class="h5">@tuitionEvent.Title</h2>
-                            <span class="badge text-bg-secondary align-self-start">@tuitionEvent.Status</span>
+                            <span class="badge status-badge @statusClass align-self-start">@tuitionEvent.Status</span>
                         </div>
-                        <p class="text-muted mb-2">@tuitionEvent.StartsAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")</p>
-                        <p class="mb-0">@tuitionEvent.Mode &middot; @tuitionEvent.RegistrationAudience</p>
+                        <p class="event-date mb-3">@tuitionEvent.StartsAt.ToLocalTime().ToString("dd MMM yyyy · hh:mm tt")</p>
+                        <div class="d-flex flex-wrap gap-2">
+                            <span class="event-meta-pill">@tuitionEvent.Mode</span>
+                            <span class="event-meta-pill">@tuitionEvent.RegistrationAudience</span>
+                        </div>
                     </div>
-                    <div class="card-footer bg-white text-end">
-                        <a asp-action="Details" asp-route-id="@tuitionEvent.Id" class="btn btn-sm btn-outline-primary">Details</a>
+                    <div class="card-footer event-card-footer text-end">
+                        <a asp-action="Details" asp-route-id="@tuitionEvent.Id" class="btn btn-sm btn-outline-primary">View details</a>
                     </div>
                 </div>
             </div>
@@ -34,7 +45,8 @@ else
         <ul class="pagination pagination-sm mb-0">
             @for (var pageNumber = 1; pageNumber <= Model.TotalPages; pageNumber++)
             {
-                <li class="page-item @(pageNumber == Model.Page ? "active" : null)">
+                <li class="page-item @(pageNumber == Model.Page ? "active" : null)"
+                    aria-current="@(pageNumber == Model.Page ? "page" : null)">
                     <a class="page-link"
                        asp-action="Index"
                        asp-route-search="@Model.Search"
