@@ -1,0 +1,23 @@
+# .NET build output
+**/bin/
+**/obj/
+
+# Visual Studio user and workspace files
+.vs/
+*.user
+*.suo
+
+# Test and coverage output
+TestResults/
+coverage/
+coverage.*
+
+# Local runtime output
+debug.log
+*.log
+
+# Local secrets and environment overrides
+.env
+.env.*
+appsettings.Local.json
+appsettings.*.Local.json
