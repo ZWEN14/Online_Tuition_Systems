@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Online_Tuition_Systems.Authorization;
 using Online_Tuition_Systems.Data;
 using Online_Tuition_Systems.Models;
+using Online_Tuition_Systems.Services;
 using Online_Tuition_Systems.ViewModels.Events;
 
 namespace Online_Tuition_Systems.Controllers;
@@ -13,10 +14,14 @@ namespace Online_Tuition_Systems.Controllers;
 public class EventsController : Controller
 {
     private readonly ApplicationDbContext _context;
+    private readonly INotificationService _notificationService;
 
-    public EventsController(ApplicationDbContext context)
+    public EventsController(
+        ApplicationDbContext context,
+        INotificationService notificationService)
     {
         _context = context;
+        _notificationService = notificationService;
     }
 
     [HttpGet]
@@ -215,6 +220,7 @@ public class EventsController : Controller
 
         tuitionEvent.Status = EventStatus.Published;
         tuitionEvent.UpdatedAt = DateTimeOffset.UtcNow;
+        await _notificationService.EventPublishedAsync(tuitionEvent);
         await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] = "Event published successfully.";
@@ -242,6 +248,7 @@ public class EventsController : Controller
 
         tuitionEvent.Status = EventStatus.Cancelled;
         tuitionEvent.UpdatedAt = DateTimeOffset.UtcNow;
+        await _notificationService.EventCancelledAsync(tuitionEvent);
         await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] = "Event cancelled successfully.";

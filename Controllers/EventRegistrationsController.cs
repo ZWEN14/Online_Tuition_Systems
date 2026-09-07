@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Online_Tuition_Systems.Authorization;
 using Online_Tuition_Systems.Data;
 using Online_Tuition_Systems.Models;
+using Online_Tuition_Systems.Services;
 using Online_Tuition_Systems.ViewModels.EventRegistrations;
 
 namespace Online_Tuition_Systems.Controllers;
@@ -14,10 +15,14 @@ namespace Online_Tuition_Systems.Controllers;
 public class EventRegistrationsController : Controller
 {
     private readonly ApplicationDbContext _context;
+    private readonly INotificationService _notificationService;
 
-    public EventRegistrationsController(ApplicationDbContext context)
+    public EventRegistrationsController(
+        ApplicationDbContext context,
+        INotificationService notificationService)
     {
         _context = context;
+        _notificationService = notificationService;
     }
 
     [HttpGet]
@@ -110,30 +115,49 @@ public class EventRegistrationsController : Controller
 
         var currentTime = DateTimeOffset.UtcNow;
 
-        if (existingRegistration is null)
+        EventRegistration registration;
+        var isNewRegistration = existingRegistration is null;
+
+        if (isNewRegistration)
         {
-            _context.EventRegistrations.Add(new EventRegistration
+            registration = new EventRegistration
             {
                 EventId = tuitionEvent.Id,
+                Event = tuitionEvent,
                 UserId = user.Id,
+                User = user,
                 Message = CleanOptionalText(model.Message),
                 Status = EventRegistrationStatus.Pending,
                 CreatedAt = currentTime,
                 UpdatedAt = currentTime
-            });
+            };
+
+            _context.EventRegistrations.Add(registration);
         }
         else
         {
-            existingRegistration.Message = CleanOptionalText(model.Message);
-            existingRegistration.Status = EventRegistrationStatus.Pending;
-            existingRegistration.ReviewedByUserId = null;
-            existingRegistration.ReviewedAt = null;
-            existingRegistration.ReviewNote = null;
-            existingRegistration.UpdatedAt = currentTime;
+            registration = existingRegistration!;
+            registration.Event = tuitionEvent;
+            registration.User = user;
+            registration.Message = CleanOptionalText(model.Message);
+            registration.Status = EventRegistrationStatus.Pending;
+            registration.ReviewedByUserId = null;
+            registration.ReviewedAt = null;
+            registration.ReviewNote = null;
+            registration.UpdatedAt = currentTime;
         }
 
         try
         {
+            if (isNewRegistration)
+            {
+                await _notificationService.RegistrationSubmittedAsync(registration);
+            }
+            else
+            {
+                await _notificationService.RegistrationUpdatedAsync(registration);
+            }
+
             await _context.SaveChangesAsync();
         }
         catch (DbUpdateException)
@@ -239,6 +263,7 @@ public class EventRegistrationsController : Controller
 
         var registration = await _context.EventRegistrations
             .Include(item => item.Event)
+            .Include(item => item.User)
             .SingleOrDefaultAsync(item =>
                 item.Id == id
                 && item.UserId == user.Id);
@@ -279,6 +304,7 @@ public class EventRegistrationsController : Controller
         registration.ReviewNote = null;
         registration.UpdatedAt = DateTimeOffset.UtcNow;
 
+        await _notificationService.RegistrationUpdatedAsync(registration);
         await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] =
@@ -300,6 +326,7 @@ public class EventRegistrationsController : Controller
 
         var registration = await _context.EventRegistrations
             .Include(item => item.Event)
+            .Include(item => item.User)
             .SingleOrDefaultAsync(item => item.Id == id && item.UserId == user.Id);
 
         if (registration is null)
@@ -322,6 +349,7 @@ public class EventRegistrationsController : Controller
 
         registration.Status = EventRegistrationStatus.Cancelled;
         registration.UpdatedAt = DateTimeOffset.UtcNow;
+        await _notificationService.RegistrationCancelledAsync(registration);
         await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] = "Your event registration was cancelled.";
@@ -391,6 +419,7 @@ public class EventRegistrationsController : Controller
         registration.ReviewNote = null;
         registration.UpdatedAt = DateTimeOffset.UtcNow;
 
+        await _notificationService.RegistrationReviewedAsync(registration);
         await _context.SaveChangesAsync();
         await transaction.CommitAsync();
 
@@ -404,6 +433,8 @@ public class EventRegistrationsController : Controller
     public async Task<IActionResult> Reject(RejectEventRegistrationViewModel model)
     {
         var registration = await _context.EventRegistrations
+            .Include(item => item.Event)
+            .Include(item => item.User)
             .SingleOrDefaultAsync(item => item.Id == model.Id);
 
         if (registration is null)
@@ -440,6 +471,7 @@ public class EventRegistrationsController : Controller
         registration.ReviewNote = model.ReviewNote.Trim();
         registration.UpdatedAt = DateTimeOffset.UtcNow;
 
+        await _notificationService.RegistrationReviewedAsync(registration);
         await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] = "The event registration was rejected.";

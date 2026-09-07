@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Online_Tuition_Systems.Authorization;
 using Online_Tuition_Systems.Data;
 using Online_Tuition_Systems.Models;
+using Online_Tuition_Systems.Services;
 using Online_Tuition_Systems.ViewModels.EventProposals;
 
 namespace Online_Tuition_Systems.Controllers;
@@ -14,10 +15,14 @@ namespace Online_Tuition_Systems.Controllers;
 public class EventProposalsController : Controller
 {
     private readonly ApplicationDbContext _context;
+    private readonly INotificationService _notificationService;
 
-    public EventProposalsController(ApplicationDbContext context)
+    public EventProposalsController(
+        ApplicationDbContext context,
+        INotificationService notificationService)
     {
         _context = context;
+        _notificationService = notificationService;
     }
 
     [HttpGet]
@@ -81,6 +86,8 @@ public class EventProposalsController : Controller
 
         _context.EventProposals.Add(proposal);
         await _context.SaveChangesAsync();
+        await _notificationService.ProposalSubmittedAsync(proposal);
+        await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] = "Event proposal submitted for Admin review.";
         return RedirectToAction(nameof(Details), new { id = proposal.Id });
@@ -127,6 +134,7 @@ public class EventProposalsController : Controller
         proposal.LastRevisedAt = DateTimeOffset.UtcNow;
         proposal.UpdatedAt = DateTimeOffset.UtcNow;
 
+        await _notificationService.ProposalUpdatedAsync(proposal);
         await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] = "Pending proposal updated successfully.";
@@ -223,9 +231,11 @@ public class EventProposalsController : Controller
         _context.Events.Add(tuitionEvent);
         await _context.SaveChangesAsync();
 
+        Announcement? publishedAnnouncement = null;
+
         if (pendingProposal.PublishAsAnnouncement)
         {
-            _context.Announcements.Add(new Announcement
+            publishedAnnouncement = new Announcement
             {
                 CourseId = pendingProposal.CourseId,
                 EventId = tuitionEvent.Id,
@@ -239,7 +249,9 @@ public class EventProposalsController : Controller
                 ExpiresAt = tuitionEvent.EndsAt,
                 CreatedAt = currentTime,
                 UpdatedAt = currentTime
-            });
+            };
+
+            _context.Announcements.Add(publishedAnnouncement);
         }
 
         pendingProposal.Status = EventProposalStatus.Approved;
@@ -248,6 +260,14 @@ public class EventProposalsController : Controller
         pendingProposal.ReviewNote = null;
         pendingProposal.CreatedEventId = tuitionEvent.Id;
         pendingProposal.UpdatedAt = currentTime;
+
+        await _context.SaveChangesAsync();
+        await _notificationService.ProposalReviewedAsync(pendingProposal);
+
+        if (publishedAnnouncement is not null)
+        {
+            await _notificationService.AnnouncementPublishedAsync(publishedAnnouncement);
+        }
 
         await _context.SaveChangesAsync();
         await transaction.CommitAsync();
@@ -305,6 +325,7 @@ public class EventProposalsController : Controller
         proposal.ReviewNote = model.ReviewNote.Trim();
         proposal.UpdatedAt = currentTime;
 
+        await _notificationService.ProposalReviewedAsync(proposal);
         await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] = "Proposal rejected.";

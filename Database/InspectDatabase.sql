@@ -84,6 +84,21 @@ FROM dbo.Announcements
 ORDER BY CreatedAt DESC;
 GO
 
+-- In-app notifications. The join identifies which account owns each notification.
+SELECT TOP (100)
+    notification.Id,
+    account.Email AS RecipientEmail,
+    account.Role AS RecipientRole,
+    notification.Type,
+    notification.Title,
+    notification.Message,
+    notification.ReadAt,
+    notification.CreatedAt
+FROM dbo.Notifications AS notification
+INNER JOIN dbo.Users AS account ON account.Id = notification.UserId
+ORDER BY notification.CreatedAt DESC;
+GO
+
 -- Quick row counts for each module table.
 SELECT 'Users' AS TableName, COUNT(*) AS [RowCount] FROM dbo.Users
 UNION ALL
@@ -93,5 +108,7 @@ SELECT 'Events', COUNT(*) FROM dbo.Events
 UNION ALL
 SELECT 'EventRegistrations', COUNT(*) FROM dbo.EventRegistrations
 UNION ALL
-SELECT 'Announcements', COUNT(*) FROM dbo.Announcements;
+SELECT 'Announcements', COUNT(*) FROM dbo.Announcements
+UNION ALL
+SELECT 'Notifications', COUNT(*) FROM dbo.Notifications;
 GO

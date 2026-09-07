@@ -23,4 +23,7 @@ public class UserAccount
 
     public ICollection<EventRegistration> EventRegistrations { get; set; }
         = new List<EventRegistration>();
+
+    public ICollection<UserNotification> Notifications { get; set; }
+        = new List<UserNotification>();
 }

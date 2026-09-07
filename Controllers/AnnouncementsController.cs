@@ -5,6 +5,7 @@ using System.Security.Claims;
 using Online_Tuition_Systems.Authorization;
 using Online_Tuition_Systems.Data;
 using Online_Tuition_Systems.Models;
+using Online_Tuition_Systems.Services;
 using Online_Tuition_Systems.ViewModels.Announcements;
 
 namespace Online_Tuition_Systems.Controllers;
@@ -13,10 +14,14 @@ namespace Online_Tuition_Systems.Controllers;
 public class AnnouncementsController : Controller
 {
     private readonly ApplicationDbContext _context;
+    private readonly INotificationService _notificationService;
 
-    public AnnouncementsController(ApplicationDbContext context)
+    public AnnouncementsController(
+        ApplicationDbContext context,
+        INotificationService notificationService)
     {
         _context = context;
+        _notificationService = notificationService;
     }
 
     [HttpGet]
@@ -208,6 +213,7 @@ public class AnnouncementsController : Controller
         announcement.PublishedAt = currentTime;
         announcement.UpdatedAt = currentTime;
 
+        await _notificationService.AnnouncementPublishedAsync(announcement);
         await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] = "Announcement published successfully.";

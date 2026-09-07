@@ -14,6 +14,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Event> Events => Set<Event>();
     public DbSet<EventProposal> EventProposals => Set<EventProposal>();
     public DbSet<EventRegistration> EventRegistrations => Set<EventRegistration>();
+    public DbSet<UserNotification> Notifications => Set<UserNotification>();
     public DbSet<UserAccount> Users => Set<UserAccount>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -118,6 +119,17 @@ public class ApplicationDbContext : DbContext
 
         user.HasIndex(item => item.Email)
             .IsUnique();
+
+        var notification = modelBuilder.Entity<UserNotification>();
+
+        notification.Property(item => item.Type)
+            .HasConversion<string>()
+            .HasMaxLength(40);
+
+        notification.HasOne(item => item.User)
+            .WithMany(item => item.Notifications)
+            .HasForeignKey(item => item.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
 
     }
 }

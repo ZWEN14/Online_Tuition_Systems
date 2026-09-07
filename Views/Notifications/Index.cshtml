@@ -1,0 +1,132 @@
+@model NotificationIndexViewModel
+@{
+    ViewData["Title"] = "Notifications";
+}
+
+<section class="notification-hero mb-4">
+    <div>
+        <span class="notification-eyebrow">YOUR UPDATES</span>
+        <h1 class="mb-2">Notifications</h1>
+        <p class="mb-0">Keep track of announcements, events, proposals and registrations.</p>
+    </div>
+    <div class="notification-count-panel">
+        <strong>@Model.UnreadCount</strong>
+        <span>unread</span>
+    </div>
+</section>
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @successMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+    <nav class="notification-filters" aria-label="Notification filters">
+        <a class="notification-filter @(Model.Filter == "all" ? "active" : null)"
+           asp-action="Index" asp-route-filter="all">All</a>
+        <a class="notification-filter @(Model.Filter == "unread" ? "active" : null)"
+           asp-action="Index" asp-route-filter="unread">
+            Unread
+            @if (Model.UnreadCount > 0)
+            {
+                <span class="badge rounded-pill text-bg-primary ms-1">@Model.UnreadCount</span>
+            }
+        </a>
+    </nav>
+
+    @if (Model.UnreadCount > 0)
+    {
+        <form asp-action="MarkAllAsRead" method="post">
+            <button type="submit" class="btn btn-outline-primary btn-sm px-3">
+                Mark all as read
+            </button>
+        </form>
+    }
+</div>
+
+@if (Model.Items.Count == 0)
+{
+    <div class="notification-empty">
+        <div class="notification-empty-icon" aria-hidden="true">✓</div>
+        <h2 class="h5">You're all caught up</h2>
+        <p class="text-secondary mb-0">
+            @(Model.Filter == "unread"
+                ? "There are no unread notifications."
+                : "New activity will appear here when it happens.")
+        </p>
+    </div>
+}
+else
+{
+    <div class="notification-list">
+        @foreach (var notification in Model.Items)
+        {
+            var category = GetCategory(notification.Type);
+            <form asp-action="Open" asp-route-id="@notification.Id" method="post">
+                <button type="submit"
+                        class="notification-card @(notification.IsUnread ? "notification-card-unread" : null)">
+                    <span class="notification-type-icon notification-type-@category.ToLowerInvariant()"
+                          aria-hidden="true">@category[0]</span>
+                    <span class="notification-card-body">
+                        <span class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                            <strong>@notification.Title</strong>
+                            @if (notification.IsUnread)
+                            {
+                                <span class="notification-new-badge">New</span>
+                            }
+                        </span>
+                        <span class="notification-message">@notification.Message</span>
+                        @if (!string.IsNullOrWhiteSpace(notification.Details))
+                        {
+                            <span class="notification-details">@notification.Details</span>
+                        }
+                        <time datetime="@notification.CreatedAt.ToString("O")">
+                            @notification.CreatedAt.ToLocalTime().ToString("dd MMM yyyy, h:mm tt")
+                        </time>
+                    </span>
+                    <span class="notification-chevron" aria-hidden="true">›</span>
+                </button>
+            </form>
+        }
+    </div>
+}
+
+@if (Model.TotalPages > 1)
+{
+    <nav class="mt-4" aria-label="Notification pages">
+        <ul class="pagination justify-content-center">
+            <li class="page-item @(Model.Page <= 1 ? "disabled" : null)">
+                <a class="page-link" asp-action="Index" asp-route-filter="@Model.Filter"
+                   asp-route-page="@(Model.Page - 1)">Previous</a>
+            </li>
+            @for (var pageNumber = 1; pageNumber <= Model.TotalPages; pageNumber++)
+            {
+                <li class="page-item @(pageNumber == Model.Page ? "active" : null)">
+                    <a class="page-link" asp-action="Index" asp-route-filter="@Model.Filter"
+                       asp-route-page="@pageNumber">@pageNumber</a>
+                </li>
+            }
+            <li class="page-item @(Model.Page >= Model.TotalPages ? "disabled" : null)">
+                <a class="page-link" asp-action="Index" asp-route-filter="@Model.Filter"
+                   asp-route-page="@(Model.Page + 1)">Next</a>
+            </li>
+        </ul>
+    </nav>
+}
+
+@functions {
+    private static string GetCategory(UserNotificationType type)
+    {
+        return type switch
+        {
+            UserNotificationType.AnnouncementPublished => "Announcement",
+            UserNotificationType.EventPublished or UserNotificationType.EventCancelled => "Event",
+            UserNotificationType.ProposalSubmitted or UserNotificationType.ProposalUpdated
+                or UserNotificationType.ProposalApproved or UserNotificationType.ProposalRejected => "Proposal",
+            _ => "Registration"
+        };
+    }
+}
