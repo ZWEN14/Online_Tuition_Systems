@@ -1,0 +1,66 @@
+@model IReadOnlyList<EventProposal>
+
+@{
+    ViewData["Title"] = "Event proposals";
+}
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1 class="h2 mb-1">Event proposals</h1>
+        <p class="text-muted mb-0">
+            @(User.IsInRole(AppRoles.Admin) ? "All submitted proposals." : "Only proposals submitted by you.")
+        </p>
+    </div>
+    @if (User.IsInRole(AppRoles.Student) || User.IsInRole(AppRoles.Tutor))
+    {
+        <a asp-action="Create" class="btn btn-primary">Submit proposal</a>
+    }
+</div>
+
+@if (Model.Count == 0)
+{
+    <div class="alert alert-info">No event proposals were found.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    @if (User.IsInRole(AppRoles.Admin))
+                    {
+                        <th>Proposed by</th>
+                    }
+                    <th>Mode</th>
+                    <th>Status</th>
+                    <th>Submitted</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var proposal in Model)
+                {
+                    <tr>
+                        <td>@proposal.Title</td>
+                        @if (User.IsInRole(AppRoles.Admin))
+                        {
+                            <td>@proposal.ProposedByUserId</td>
+                        }
+                        <td>@proposal.Mode</td>
+                        <td><span class="badge text-bg-secondary">@proposal.Status</span></td>
+                        <td>@proposal.CreatedAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")</td>
+                        <td class="text-end">
+                            <a asp-action="Details" asp-route-id="@proposal.Id" class="btn btn-sm btn-outline-primary">Details</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

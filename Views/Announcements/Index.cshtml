@@ -1,0 +1,95 @@
+@model AnnouncementIndexViewModel
+
+@{
+    ViewData["Title"] = "Announcements";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h2 mb-1">Announcements</h1>
+        <p class="text-muted mb-0">Search and filter tuition announcements without reloading the page.</p>
+    </div>
+    @if (User.IsInRole(AppRoles.Admin))
+    {
+        <a asp-action="Create" class="btn btn-primary">Create announcement</a>
+    }
+</div>
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="alert alert-success" role="alert">@successMessage</div>
+}
+
+<form asp-action="Index"
+      method="get"
+      class="card shadow-sm mb-4"
+      data-ajax-list-form
+      data-ajax-url="@Url.Action("List")"
+      data-index-url="@Url.Action("Index")"
+      data-default-sort="newest">
+    <div class="card-body">
+        <input asp-for="Page" type="hidden" data-page-input />
+
+        <div class="row g-3">
+            <div class="col-lg-4">
+                <label asp-for="Search" class="form-label">Keyword</label>
+                <input asp-for="Search"
+                       class="form-control"
+                       maxlength="100"
+                       autocomplete="off"
+                       placeholder="Search title or content"
+                       data-search-input />
+            </div>
+
+            @if (User.IsInRole(AppRoles.Admin))
+            {
+                <div class="col-sm-6 col-lg-2">
+                    <label asp-for="Audience" class="form-label"></label>
+                    <select asp-for="Audience" asp-items="Html.GetEnumSelectList<AnnouncementAudience>()" class="form-select">
+                        <option value="">All audiences</option>
+                    </select>
+                </div>
+            }
+
+            <div class="col-sm-6 col-lg-2">
+                <label asp-for="Priority" class="form-label"></label>
+                <select asp-for="Priority" asp-items="Html.GetEnumSelectList<AnnouncementPriority>()" class="form-select">
+                    <option value="">All priorities</option>
+                </select>
+            </div>
+
+            @if (User.IsInRole(AppRoles.Admin))
+            {
+                <div class="col-sm-6 col-lg-2">
+                    <label asp-for="Status" class="form-label"></label>
+                    <select asp-for="Status" asp-items="Html.GetEnumSelectList<AnnouncementStatus>()" class="form-select">
+                        <option value="">All statuses</option>
+                    </select>
+                </div>
+            }
+
+            <div class="col-sm-6 col-lg-2">
+                <label asp-for="Sort" class="form-label">Sort by</label>
+                <select asp-for="Sort" class="form-select">
+                    <option value="newest">Newest</option>
+                    <option value="oldest">Oldest</option>
+                    <option value="title">Title A-Z</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-3">
+            <button type="submit" class="btn btn-primary">Search</button>
+            <button type="button" class="btn btn-outline-secondary" data-ajax-reset>Clear</button>
+            <span class="ms-auto align-self-center small text-muted" data-ajax-status aria-live="polite"></span>
+        </div>
+    </div>
+</form>
+
+<div data-ajax-list-results aria-live="polite">
+    <partial name="_AnnouncementList" model="Model" />
+</div>
+
+@section Scripts {
+    <script src="~/js/ajax-filter-list.js" asp-append-version="true"></script>
+}

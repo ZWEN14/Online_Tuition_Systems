@@ -1,0 +1,27 @@
+@model EventProposalFormViewModel
+
+@{
+    ViewData["Title"] = "Submit event proposal";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1 class="h2 mb-1">Submit event proposal</h1>
+        <p class="text-muted mb-0">The proposal will remain Pending until an Admin reviews it.</p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
+</div>
+
+<form asp-action="Create" method="post" class="card shadow-sm">
+    <div class="card-body">
+        <partial name="_Form" model="Model" />
+    </div>
+    <div class="card-footer bg-white d-flex justify-content-end gap-2">
+        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary">Submit proposal</button>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

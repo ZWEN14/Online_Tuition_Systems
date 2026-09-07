@@ -1,0 +1,175 @@
+@model EventProposalDetailsViewModel
+
+@{
+    ViewData["Title"] = "Proposal details";
+    var proposal = Model.Proposal;
+}
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <h1 class="h2 mb-0">@proposal.Title</h1>
+            <span class="badge text-bg-secondary">@proposal.Status</span>
+        </div>
+        <p class="text-muted mb-0">Submitted by @proposal.ProposedByUserId</p>
+    </div>
+    <div class="d-flex gap-2">
+        @if (!User.IsInRole(AppRoles.Admin) && proposal.Status == EventProposalStatus.Pending)
+        {
+            <a asp-action="Edit" asp-route-id="@proposal.Id" class="btn btn-primary">Edit</a>
+        }
+        <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h2 class="h5">Proposal information</h2>
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Description</dt>
+                    <dd class="col-sm-8" style="white-space: pre-wrap">@proposal.Description</dd>
+
+                    <dt class="col-sm-4">Reason</dt>
+                    <dd class="col-sm-8" style="white-space: pre-wrap">@proposal.Reason</dd>
+
+                    <dt class="col-sm-4">Preferred schedule</dt>
+                    <dd class="col-sm-8">
+                        @(proposal.PreferredStartsAt?.ToLocalTime().ToString("dd MMM yyyy HH:mm") ?? "Not specified")
+                        @if (proposal.PreferredEndsAt.HasValue)
+                        {
+                            <span> – @proposal.PreferredEndsAt.Value.ToLocalTime().ToString("dd MMM yyyy HH:mm")</span>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4">Deadline</dt>
+                    <dd class="col-sm-8">@(proposal.ProposedApplicationDeadline?.ToLocalTime().ToString("dd MMM yyyy HH:mm") ?? "Not specified")</dd>
+
+                    <dt class="col-sm-4">Audience</dt>
+                    <dd class="col-sm-8">@proposal.ProposedRegistrationAudience</dd>
+
+                    <dt class="col-sm-4">Mode</dt>
+                    <dd class="col-sm-8">@proposal.Mode</dd>
+
+                    <dt class="col-sm-4">Location</dt>
+                    <dd class="col-sm-8">@(proposal.Location ?? "—")</dd>
+
+                    <dt class="col-sm-4">Meeting platform</dt>
+                    <dd class="col-sm-8">@(proposal.MeetingPlatform?.ToString() ?? "—")</dd>
+
+                    <dt class="col-sm-4">Maximum participants</dt>
+                    <dd class="col-sm-8">@proposal.ProposedMaxParticipants</dd>
+
+                    <dt class="col-sm-4">Announcement</dt>
+                    <dd class="col-sm-8">@(proposal.PublishAsAnnouncement ? "Publish when approved" : "No")</dd>
+
+                    <dt class="col-sm-4">Revisions</dt>
+                    <dd class="col-sm-8">@proposal.RevisionCount</dd>
+                </dl>
+            </div>
+        </div>
+
+        @if (proposal.Status != EventProposalStatus.Pending)
+        {
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="h5">Review result</h2>
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">Reviewed by</dt>
+                        <dd class="col-sm-8">@(proposal.ReviewedByUserId ?? "—")</dd>
+                        <dt class="col-sm-4">Reviewed at</dt>
+                        <dd class="col-sm-8">@(proposal.ReviewedAt?.ToLocalTime().ToString("dd MMM yyyy HH:mm") ?? "—")</dd>
+                        <dt class="col-sm-4">Review note</dt>
+                        <dd class="col-sm-8">@(proposal.ReviewNote ?? "—")</dd>
+                        @if (proposal.CreatedEventId.HasValue)
+                        {
+                            <dt class="col-sm-4">Created event</dt>
+                            <dd class="col-sm-8">
+                                <a asp-controller="Events" asp-action="Details" asp-route-id="@proposal.CreatedEventId">View Event #@proposal.CreatedEventId</a>
+                            </dd>
+                        }
+                    </dl>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (User.IsInRole(AppRoles.Admin) && proposal.Status == EventProposalStatus.Pending)
+    {
+        <div class="col-lg-5">
+            <div class="card shadow-sm border-success mb-4">
+                <div class="card-header bg-success-subtle"><strong>Approve proposal</strong></div>
+                <form asp-action="Approve" asp-route-id="@proposal.Id" method="post">
+                    <div class="card-body">
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                        <input asp-for="Approval.Id" type="hidden" />
+
+                        <div class="mb-3">
+                            <label asp-for="Approval.StartsAt" class="form-label"></label>
+                            <input asp-for="Approval.StartsAt" asp-format="{0:yyyy-MM-ddTHH:mm}" type="datetime-local" class="form-control" />
+                            <span asp-validation-for="Approval.StartsAt" class="text-danger"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="Approval.EndsAt" class="form-label"></label>
+                            <input asp-for="Approval.EndsAt" asp-format="{0:yyyy-MM-ddTHH:mm}" type="datetime-local" class="form-control" />
+                            <span asp-validation-for="Approval.EndsAt" class="text-danger"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="Approval.ApplicationDeadline" class="form-label"></label>
+                            <input asp-for="Approval.ApplicationDeadline" asp-format="{0:yyyy-MM-ddTHH:mm}" type="datetime-local" class="form-control" />
+                            <span asp-validation-for="Approval.ApplicationDeadline" class="text-danger"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="Approval.RegistrationAudience" class="form-label"></label>
+                            <select asp-for="Approval.RegistrationAudience" asp-items="Html.GetEnumSelectList<RegistrationAudience>()" class="form-select"></select>
+                            <span asp-validation-for="Approval.RegistrationAudience" class="text-danger"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="Approval.MaxParticipants" class="form-label"></label>
+                            <input asp-for="Approval.MaxParticipants" class="form-control" />
+                            <span asp-validation-for="Approval.MaxParticipants" class="text-danger"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="Approval.MeetingUrl" class="form-label"></label>
+                            <input asp-for="Approval.MeetingUrl" class="form-control" />
+                            <div class="form-text">Required for Online or Hybrid mode.</div>
+                            <span asp-validation-for="Approval.MeetingUrl" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white text-end">
+                        <button type="submit" class="btn btn-success">Approve and create Draft Event</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card shadow-sm border-danger">
+                <div class="card-header bg-danger-subtle"><strong>Reject proposal</strong></div>
+                <form asp-action="Reject" asp-route-id="@proposal.Id" method="post">
+                    <div class="card-body">
+                        <input asp-for="Rejection.Id" type="hidden" />
+                        <label asp-for="Rejection.ReviewNote" class="form-label"></label>
+                        <textarea asp-for="Rejection.ReviewNote" class="form-control" rows="4"></textarea>
+                        <span asp-validation-for="Rejection.ReviewNote" class="text-danger"></span>
+                    </div>
+                    <div class="card-footer bg-white text-end">
+                        <button type="submit" class="btn btn-danger">Reject proposal</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -21,6 +21,15 @@ body {
   margin-bottom: 60px;
 }
 
+.announcement-preview {
+  max-width: 34rem;
+}
+
+.announcement-content {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
   color: var(--bs-secondary-color);
   text-align: end;

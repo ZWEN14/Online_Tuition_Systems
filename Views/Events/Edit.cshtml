@@ -1,0 +1,105 @@
+@model EditEventViewModel
+
+@{
+    ViewData["Title"] = "Edit event";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1 class="h2 mb-1">Edit event</h1>
+        <p class="text-muted mb-0">Archived events cannot be edited.</p>
+    </div>
+    <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Back</a>
+</div>
+
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post" class="card shadow-sm">
+    <div class="card-body">
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+        <input asp-for="Id" type="hidden" />
+
+        <div class="row g-3">
+            <div class="col-md-8">
+                <label asp-for="Title" class="form-label"></label>
+                <input asp-for="Title" class="form-control" />
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="CourseId" class="form-label"></label>
+                <input asp-for="CourseId" class="form-control" />
+                <span asp-validation-for="CourseId" class="text-danger"></span>
+            </div>
+
+            <div class="col-12">
+                <label asp-for="Description" class="form-label"></label>
+                <textarea asp-for="Description" class="form-control" rows="5"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="StartsAt" class="form-label"></label>
+                <input asp-for="StartsAt" asp-format="{0:yyyy-MM-ddTHH:mm}" type="datetime-local" class="form-control" />
+                <span asp-validation-for="StartsAt" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="EndsAt" class="form-label"></label>
+                <input asp-for="EndsAt" asp-format="{0:yyyy-MM-ddTHH:mm}" type="datetime-local" class="form-control" />
+                <span asp-validation-for="EndsAt" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="ApplicationDeadline" class="form-label"></label>
+                <input asp-for="ApplicationDeadline" asp-format="{0:yyyy-MM-ddTHH:mm}" type="datetime-local" class="form-control" />
+                <span asp-validation-for="ApplicationDeadline" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="RegistrationAudience" class="form-label"></label>
+                <select asp-for="RegistrationAudience" asp-items="Html.GetEnumSelectList<RegistrationAudience>()" class="form-select"></select>
+                <span asp-validation-for="RegistrationAudience" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="Mode" class="form-label"></label>
+                <select asp-for="Mode" asp-items="Html.GetEnumSelectList<EventMode>()" class="form-select"></select>
+                <span asp-validation-for="Mode" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="MaxParticipants" class="form-label"></label>
+                <input asp-for="MaxParticipants" class="form-control" />
+                <span asp-validation-for="MaxParticipants" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="Location" class="form-label"></label>
+                <input asp-for="Location" class="form-control" />
+                <span asp-validation-for="Location" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="MeetingPlatform" class="form-label"></label>
+                <select asp-for="MeetingPlatform" asp-items="Html.GetEnumSelectList<MeetingPlatform>()" class="form-select">
+                    <option value="">-- Select when online --</option>
+                </select>
+                <span asp-validation-for="MeetingPlatform" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="MeetingUrl" class="form-label"></label>
+                <input asp-for="MeetingUrl" class="form-control" />
+                <span asp-validation-for="MeetingUrl" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-footer bg-white d-flex justify-content-end gap-2">
+        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary">Save event</button>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
