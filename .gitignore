@@ -21,3 +21,6 @@ debug.log
 .env.*
 appsettings.Local.json
 appsettings.*.Local.json
+
+# Temporary Laravel reference project (not part of the ASP.NET deliverable)
+Anywhere-Edureach/
