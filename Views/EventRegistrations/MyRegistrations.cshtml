@@ -55,7 +55,10 @@ else
 
                     <tr>
                         <td>
-                            <a asp-controller="Events" asp-action="Details" asp-route-id="@registration.EventId">
+                            <a asp-controller="Events"
+                               asp-action="Details"
+                               asp-route-id="@registration.EventId"
+                               class="btn btn-sm btn-outline-primary">
                                 @registration.Event.Title
                             </a>
                         </td>

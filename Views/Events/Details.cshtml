@@ -143,7 +143,10 @@
                     }
                     else
                     {
-                        <a href="@tuitionEvent.MeetingUrl" target="_blank" rel="noopener noreferrer">Open meeting</a>
+                        <a href="@tuitionEvent.MeetingUrl"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           class="btn btn-sm btn-outline-success">Open meeting</a>
                     }
                 </dd>
             }
@@ -181,7 +184,10 @@
             {
                 <dt class="col-sm-3">Source proposal</dt>
                 <dd class="col-sm-9">
-                    <a asp-controller="EventProposals" asp-action="Details" asp-route-id="@tuitionEvent.SourceProposal.Id">View Proposal #@tuitionEvent.SourceProposal.Id</a>
+                    <a asp-controller="EventProposals"
+                       asp-action="Details"
+                       asp-route-id="@tuitionEvent.SourceProposal.Id"
+                       class="btn btn-sm btn-outline-primary">View Proposal #@tuitionEvent.SourceProposal.Id</a>
                 </dd>
             }
 
@@ -189,7 +195,10 @@
             {
                 <dt class="col-sm-3">Announcement</dt>
                 <dd class="col-sm-9">
-                    <a asp-controller="Announcements" asp-action="Details" asp-route-id="@tuitionEvent.Announcement.Id">View announcement</a>
+                    <a asp-controller="Announcements"
+                       asp-action="Details"
+                       asp-route-id="@tuitionEvent.Announcement.Id"
+                       class="btn btn-sm btn-outline-primary">View announcement</a>
                 </dd>
             }
         </dl>
