@@ -5,6 +5,7 @@ namespace Online_Tuition_Systems.Models;
 public enum EventProposalStatus
 {
     Pending,
+    ChangesRequested,
     Approved,
     Rejected,
     Cancelled
@@ -32,26 +33,28 @@ public class EventProposal
     [StringLength(2_000)]
     public string Reason { get; set; } = string.Empty;
 
-    public DateTimeOffset? PreferredStartsAt { get; set; }
+    public DateTimeOffset? StartsAt { get; set; }
 
-    public DateTimeOffset? PreferredEndsAt { get; set; }
+    public DateTimeOffset? EndsAt { get; set; }
 
-    public DateTimeOffset? ProposedApplicationDeadline { get; set; }
+    public DateTimeOffset? ApplicationDeadline { get; set; }
 
-    public RegistrationAudience ProposedRegistrationAudience { get; set; }
+    public RegistrationAudience RegistrationAudience { get; set; }
         = RegistrationAudience.All;
 
-    public EventMode Mode { get; set; } = EventMode.Physical;
+    public EventMode? Mode { get; set; }
 
     [StringLength(255)]
     public string? Location { get; set; }
 
     public MeetingPlatform? MeetingPlatform { get; set; }
 
-    [Range(1, 1000)]
-    public int ProposedMaxParticipants { get; set; } = 1;
+    [StringLength(2048)]
+    [Url]
+    public string? MeetingUrl { get; set; }
 
-    public bool PublishAsAnnouncement { get; set; }
+    [Range(1, 1000)]
+    public int? MaxParticipants { get; set; }
 
     public EventProposalStatus Status { get; set; } = EventProposalStatus.Pending;
 

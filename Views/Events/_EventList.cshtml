@@ -11,20 +11,12 @@ else
     <div class="row g-3">
         @foreach (var tuitionEvent in Model.Items)
         {
-            var statusClass = tuitionEvent.Status switch
-            {
-                EventStatus.Published => "status-published",
-                EventStatus.Cancelled => "status-cancelled",
-                EventStatus.Archived => "status-archived",
-                _ => "status-draft"
-            };
-
             <div class="col-md-6 col-xl-4">
                 <div class="card event-card h-100">
                     <div class="card-body">
                         <div class="d-flex justify-content-between gap-2">
                             <h2 class="h5">@tuitionEvent.Title</h2>
-                            <span class="badge status-badge @statusClass align-self-start">@tuitionEvent.Status</span>
+                            <span class="badge status-badge status-@tuitionEvent.Status.ToString().ToLowerInvariant() align-self-start">@tuitionEvent.Status</span>
                         </div>
                         <p class="event-date mb-3">@tuitionEvent.StartsAt.ToLocalTime().ToString("dd MMM yyyy · hh:mm tt")</p>
                         <div class="d-flex flex-wrap gap-2">

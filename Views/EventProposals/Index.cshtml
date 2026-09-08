@@ -9,15 +9,16 @@
     <div class="alert alert-success">@successMessage</div>
 }
 
+<div class="module-page-shell">
 <section class="module-header module-header-violet mb-4">
     <div>
         <span class="module-kicker">IDEAS &amp; REVIEW</span>
         <h1 class="h2 mb-1">Event proposals</h1>
         <p class="mb-0">
-            @(User.IsInRole(AppRoles.Admin) ? "All submitted proposals." : "Only proposals submitted by you.")
+            @(User.IsInRole(AppRoles.Admin) ? "Review event plans submitted by Tutors." : "Manage events that you propose and organise.")
         </p>
     </div>
-    @if (User.IsInRole(AppRoles.Student) || User.IsInRole(AppRoles.Tutor))
+    @if (User.IsInRole(AppRoles.Tutor))
     {
         <a asp-action="Create" class="btn btn-primary">Submit proposal</a>
     }
@@ -38,7 +39,7 @@ else
                     {
                         <th>Proposed by</th>
                     }
-                    <th>Suggested audience</th>
+                    <th>Audience</th>
                     <th>Status</th>
                     <th>Submitted</th>
                     <th></th>
@@ -47,21 +48,18 @@ else
             <tbody>
                 @foreach (var proposal in Model)
                 {
-                    var proposalStatusClass = proposal.Status switch
-                    {
-                        EventProposalStatus.Approved => "status-published",
-                        EventProposalStatus.Rejected => "status-cancelled",
-                        _ => "status-draft"
-                    };
-
                     <tr>
                         <td>@proposal.Title</td>
                         @if (User.IsInRole(AppRoles.Admin))
                         {
                             <td>@proposal.ProposedByUserId</td>
                         }
-                        <td>@proposal.ProposedRegistrationAudience</td>
-                        <td><span class="badge status-badge @proposalStatusClass">@proposal.Status</span></td>
+                        <td>@proposal.RegistrationAudience</td>
+                        <td>
+                            <span class="badge status-badge status-@proposal.Status.ToString().ToLowerInvariant()">
+                                @(proposal.Status == EventProposalStatus.ChangesRequested ? "Changes requested" : proposal.Status)
+                            </span>
+                        </td>
                         <td>@proposal.CreatedAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")</td>
                         <td class="text-end">
                             <a asp-action="Details" asp-route-id="@proposal.Id" class="btn btn-sm btn-outline-primary">Details</a>
@@ -72,3 +70,4 @@ else
         </table>
     </div>
 }
+</div>

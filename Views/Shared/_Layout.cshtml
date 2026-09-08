@@ -34,24 +34,50 @@
                             <li class="nav-item">
                                 <a class="nav-link app-nav-link" asp-area="" asp-controller="Announcements" asp-action="Index">Announcements</a>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link app-nav-link" asp-area="" asp-controller="Events" asp-action="Index">Events</a>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link app-nav-link dropdown-toggle"
+                                   href="#"
+                                   role="button"
+                                   data-bs-toggle="dropdown"
+                                   aria-expanded="false">
+                                    Events
+                                </a>
+                                <ul class="dropdown-menu app-nav-dropdown">
+                                    <li>
+                                        <a class="dropdown-item" asp-area="" asp-controller="Events" asp-action="Index">
+                                            <strong>All Events</strong>
+                                            <small>Browse available learning events</small>
+                                        </a>
+                                    </li>
+                                    @if (User.IsInRole(AppRoles.Student) || User.IsInRole(AppRoles.Tutor))
+                                    {
+                                        <li>
+                                            <a class="dropdown-item" asp-area="" asp-controller="EventRegistrations" asp-action="MyRegistrations">
+                                                <strong>My Registrations</strong>
+                                                <small>View your event registrations</small>
+                                            </a>
+                                        </li>
+                                    }
+                                    @if (User.IsInRole(AppRoles.Tutor))
+                                    {
+                                        <li>
+                                            <a class="dropdown-item" asp-area="" asp-controller="EventRegistrations" asp-action="Manage">
+                                                <strong>Manage Registrations</strong>
+                                                <small>Review applications for your events</small>
+                                            </a>
+                                        </li>
+                                    }
+                                    @if (User.IsInRole(AppRoles.Admin) || User.IsInRole(AppRoles.Tutor))
+                                    {
+                                        <li>
+                                            <a class="dropdown-item" asp-area="" asp-controller="EventProposals" asp-action="Index">
+                                                <strong>Event Proposal</strong>
+                                                <small>@(User.IsInRole(AppRoles.Admin) ? "Review Tutor event plans" : "Submit and track your event plans")</small>
+                                            </a>
+                                        </li>
+                                    }
+                                </ul>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link app-nav-link" asp-area="" asp-controller="EventProposals" asp-action="Index">Proposals</a>
-                            </li>
-                            @if (User.IsInRole(AppRoles.Admin))
-                            {
-                                <li class="nav-item">
-                                    <a class="nav-link app-nav-link" asp-area="" asp-controller="EventRegistrations" asp-action="Manage">Registrations</a>
-                                </li>
-                            }
-                            else if (User.IsInRole(AppRoles.Student) || User.IsInRole(AppRoles.Tutor))
-                            {
-                                <li class="nav-item">
-                                    <a class="nav-link app-nav-link" asp-area="" asp-controller="EventRegistrations" asp-action="MyRegistrations">My Registrations</a>
-                                </li>
-                            }
                         }
                     </ul>
                     <div class="d-flex align-items-center gap-2">

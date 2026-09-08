@@ -166,7 +166,7 @@ public class EventRegistrationsController : Controller
             return RedirectToAction("Details", "Events", new { id = model.EventId });
         }
 
-        TempData["SuccessMessage"] = "Your event registration was submitted for Admin review.";
+        TempData["SuccessMessage"] = "Your event registration was submitted to the Event Organizer.";
         return RedirectToAction(nameof(MyRegistrations));
     }
 
@@ -308,7 +308,7 @@ public class EventRegistrationsController : Controller
         await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] =
-            "Your registration was updated and submitted for Admin review.";
+            "Your registration was updated and resubmitted to the Event Organizer.";
         return RedirectToAction(nameof(MyRegistrations));
     }
 
@@ -357,13 +357,21 @@ public class EventRegistrationsController : Controller
     }
 
     [HttpGet]
-    [Authorize(Roles = AppRoles.Admin)]
+    [Authorize(Roles = AppRoles.Tutor)]
     public async Task<IActionResult> Manage(int? eventId)
     {
+        var organizerUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(organizerUserId))
+        {
+            return Forbid();
+        }
+
         var query = _context.EventRegistrations
             .AsNoTracking()
             .Include(item => item.Event)
             .Include(item => item.User)
+            .Where(item => item.Event.OrganizerUserId == organizerUserId)
             .AsQueryable();
 
         if (eventId.HasValue)
@@ -382,12 +390,12 @@ public class EventRegistrationsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize(Roles = AppRoles.Admin)]
+    [Authorize(Roles = AppRoles.Tutor)]
     public async Task<IActionResult> Approve(int id)
     {
-        var admin = await GetCurrentUserAsync();
+        var organizer = await GetCurrentUserAsync();
 
-        if (admin is null)
+        if (organizer is null)
         {
             return Forbid();
         }
@@ -405,6 +413,11 @@ public class EventRegistrationsController : Controller
             return NotFound();
         }
 
+        if (registration.Event.OrganizerUserId != organizer.Email)
+        {
+            return Forbid();
+        }
+
         var errorMessage = await GetApprovalError(registration);
 
         if (errorMessage is not null)
@@ -414,7 +427,7 @@ public class EventRegistrationsController : Controller
         }
 
         registration.Status = EventRegistrationStatus.Approved;
-        registration.ReviewedByUserId = admin.Id;
+        registration.ReviewedByUserId = organizer.Id;
         registration.ReviewedAt = DateTimeOffset.UtcNow;
         registration.ReviewNote = null;
         registration.UpdatedAt = DateTimeOffset.UtcNow;
@@ -429,7 +442,7 @@ public class EventRegistrationsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize(Roles = AppRoles.Admin)]
+    [Authorize(Roles = AppRoles.Tutor)]
     public async Task<IActionResult> Reject(RejectEventRegistrationViewModel model)
     {
         var registration = await _context.EventRegistrations
@@ -440,6 +453,18 @@ public class EventRegistrationsController : Controller
         if (registration is null)
         {
             return NotFound();
+        }
+
+        var organizer = await GetCurrentUserAsync();
+
+        if (organizer is null)
+        {
+            return Forbid();
+        }
+
+        if (registration.Event.OrganizerUserId != organizer.Email)
+        {
+            return Forbid();
         }
 
         if (registration.Status != EventRegistrationStatus.Pending)
@@ -458,15 +483,8 @@ public class EventRegistrationsController : Controller
             return RedirectToAction(nameof(Manage), new { eventId = registration.EventId });
         }
 
-        var admin = await GetCurrentUserAsync();
-
-        if (admin is null)
-        {
-            return Forbid();
-        }
-
         registration.Status = EventRegistrationStatus.Rejected;
-        registration.ReviewedByUserId = admin.Id;
+        registration.ReviewedByUserId = organizer.Id;
         registration.ReviewedAt = DateTimeOffset.UtcNow;
         registration.ReviewNote = model.ReviewNote.Trim();
         registration.UpdatedAt = DateTimeOffset.UtcNow;
@@ -500,6 +518,11 @@ public class EventRegistrationsController : Controller
         if (tuitionEvent.Status != EventStatus.Published)
         {
             return "Registration is only available for published events.";
+        }
+
+        if (tuitionEvent.OrganizerUserId == user.Email)
+        {
+            return "The Event Organizer cannot register for their own event.";
         }
 
         if (tuitionEvent.StartsAt <= DateTimeOffset.UtcNow)

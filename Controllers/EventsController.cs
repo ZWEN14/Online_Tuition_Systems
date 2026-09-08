@@ -73,6 +73,10 @@ public class EventsController : Controller
 
         EventRegistration? currentRegistration = null;
         UserAccount? currentUser = null;
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var isOrganizer = User.IsInRole(AppRoles.Tutor)
+            && !string.IsNullOrWhiteSpace(currentUserId)
+            && tuitionEvent.OrganizerUserId == currentUserId;
 
         if (!User.IsInRole(AppRoles.Admin))
         {
@@ -102,7 +106,9 @@ public class EventsController : Controller
             TotalRegistrationCount = totalRegistrationCount,
             CanRegister = unavailableReason is null,
             CanViewMeetingUrl = User.IsInRole(AppRoles.Admin)
+                || isOrganizer
                 || currentRegistration?.Status == EventRegistrationStatus.Approved,
+            IsOrganizer = isOrganizer,
             RegistrationUnavailableReason = unavailableReason,
             Cancellation = new CancelEventViewModel
             {
@@ -112,21 +118,30 @@ public class EventsController : Controller
     }
 
     [HttpGet]
-    [Authorize(Roles = AppRoles.Admin)]
+    [Authorize(Roles = AppRoles.Tutor)]
     public async Task<IActionResult> Edit(int id)
     {
+        var organizerUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(organizerUserId))
+        {
+            return Forbid();
+        }
+
         var tuitionEvent = await _context.Events
             .AsNoTracking()
-            .SingleOrDefaultAsync(item => item.Id == id);
+            .SingleOrDefaultAsync(item =>
+                item.Id == id
+                && item.OrganizerUserId == organizerUserId);
 
         if (tuitionEvent is null)
         {
             return NotFound();
         }
 
-        if (tuitionEvent.Status == EventStatus.Archived)
+        if (tuitionEvent.Status is EventStatus.Cancelled or EventStatus.Archived)
         {
-            TempData["ErrorMessage"] = "Archived events cannot be edited.";
+            TempData["ErrorMessage"] = "Cancelled or archived events cannot be edited.";
             return RedirectToAction(nameof(Details), new { id });
         }
 
@@ -150,7 +165,7 @@ public class EventsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize(Roles = AppRoles.Admin)]
+    [Authorize(Roles = AppRoles.Tutor)]
     public async Task<IActionResult> Edit(int id, EditEventViewModel model)
     {
         if (id != model.Id)
@@ -163,39 +178,87 @@ public class EventsController : Controller
             return View(model);
         }
 
+        var organizerUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(organizerUserId))
+        {
+            return Forbid();
+        }
+
         var tuitionEvent = await _context.Events
-            .SingleOrDefaultAsync(item => item.Id == id);
+            .SingleOrDefaultAsync(item =>
+                item.Id == id
+                && item.OrganizerUserId == organizerUserId);
 
         if (tuitionEvent is null)
         {
             return NotFound();
         }
 
-        if (tuitionEvent.Status == EventStatus.Archived)
+        if (tuitionEvent.Status is EventStatus.Cancelled or EventStatus.Archived)
         {
-            TempData["ErrorMessage"] = "Archived events cannot be edited.";
+            TempData["ErrorMessage"] = "Cancelled or archived events cannot be edited.";
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        tuitionEvent.CourseId = model.CourseId;
-        tuitionEvent.Title = model.Title.Trim();
-        tuitionEvent.Description = model.Description.Trim();
-        tuitionEvent.StartsAt = model.StartsAt.ToUniversalTime();
-        tuitionEvent.EndsAt = model.EndsAt.ToUniversalTime();
-        tuitionEvent.ApplicationDeadline = model.ApplicationDeadline?.ToUniversalTime();
-        tuitionEvent.RegistrationAudience = model.RegistrationAudience;
-        tuitionEvent.Mode = model.Mode;
-        tuitionEvent.Location = model.Mode == EventMode.Online
+        var approvedRegistrationCount = await _context.EventRegistrations
+            .CountAsync(item =>
+                item.EventId == tuitionEvent.Id
+                && item.Status == EventRegistrationStatus.Approved);
+
+        if (model.MaxParticipants < approvedRegistrationCount)
+        {
+            ModelState.AddModelError(
+                nameof(model.MaxParticipants),
+                $"Capacity cannot be lower than the {approvedRegistrationCount} approved registrations.");
+            return View(model);
+        }
+
+        var title = model.Title.Trim();
+        var description = model.Description.Trim();
+        var startsAt = model.StartsAt.ToUniversalTime();
+        var endsAt = model.EndsAt.ToUniversalTime();
+        var applicationDeadline = model.ApplicationDeadline?.ToUniversalTime();
+        var location = model.Mode == EventMode.Online
             ? null
             : CleanOptionalText(model.Location);
-        tuitionEvent.MeetingPlatform = model.Mode == EventMode.Physical
+        var meetingPlatform = model.Mode == EventMode.Physical
             ? null
             : model.MeetingPlatform;
-        tuitionEvent.MeetingUrl = model.Mode == EventMode.Physical
+        var meetingUrl = model.Mode == EventMode.Physical
             ? null
             : CleanOptionalText(model.MeetingUrl);
+        var hasChanges = tuitionEvent.CourseId != model.CourseId
+            || tuitionEvent.Title != title
+            || tuitionEvent.Description != description
+            || tuitionEvent.StartsAt != startsAt
+            || tuitionEvent.EndsAt != endsAt
+            || tuitionEvent.ApplicationDeadline != applicationDeadline
+            || tuitionEvent.RegistrationAudience != model.RegistrationAudience
+            || tuitionEvent.Mode != model.Mode
+            || tuitionEvent.Location != location
+            || tuitionEvent.MeetingPlatform != meetingPlatform
+            || tuitionEvent.MeetingUrl != meetingUrl
+            || tuitionEvent.MaxParticipants != model.MaxParticipants;
+
+        tuitionEvent.CourseId = model.CourseId;
+        tuitionEvent.Title = title;
+        tuitionEvent.Description = description;
+        tuitionEvent.StartsAt = startsAt;
+        tuitionEvent.EndsAt = endsAt;
+        tuitionEvent.ApplicationDeadline = applicationDeadline;
+        tuitionEvent.RegistrationAudience = model.RegistrationAudience;
+        tuitionEvent.Mode = model.Mode;
+        tuitionEvent.Location = location;
+        tuitionEvent.MeetingPlatform = meetingPlatform;
+        tuitionEvent.MeetingUrl = meetingUrl;
         tuitionEvent.MaxParticipants = model.MaxParticipants;
         tuitionEvent.UpdatedAt = DateTimeOffset.UtcNow;
+
+        if (hasChanges && tuitionEvent.Status == EventStatus.Published)
+        {
+            await _notificationService.EventUpdatedAsync(tuitionEvent);
+        }
 
         await _context.SaveChangesAsync();
 
@@ -205,11 +268,20 @@ public class EventsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize(Roles = AppRoles.Admin)]
+    [Authorize(Roles = AppRoles.Tutor)]
     public async Task<IActionResult> Publish(int id)
     {
+        var organizerUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(organizerUserId))
+        {
+            return Forbid();
+        }
+
         var tuitionEvent = await _context.Events
-            .SingleOrDefaultAsync(item => item.Id == id);
+            .SingleOrDefaultAsync(item =>
+                item.Id == id
+                && item.OrganizerUserId == organizerUserId);
 
         if (tuitionEvent is null)
         {
@@ -219,6 +291,14 @@ public class EventsController : Controller
         if (tuitionEvent.Status != EventStatus.Draft)
         {
             TempData["ErrorMessage"] = "Only draft events can be published.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        var publishError = GetPublishError(tuitionEvent);
+
+        if (publishError is not null)
+        {
+            TempData["ErrorMessage"] = publishError;
             return RedirectToAction(nameof(Details), new { id });
         }
 
@@ -233,7 +313,7 @@ public class EventsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize(Roles = AppRoles.Admin)]
+    [Authorize(Roles = AppRoles.AdminOrTutor)]
     public async Task<IActionResult> Cancel(
         int id,
         [Bind(Prefix = "Cancellation")] CancelEventViewModel model)
@@ -263,6 +343,16 @@ public class EventsController : Controller
             return NotFound();
         }
 
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var isAdmin = User.IsInRole(AppRoles.Admin);
+        var isOrganizer = User.IsInRole(AppRoles.Tutor)
+            && tuitionEvent.OrganizerUserId == currentUserId;
+
+        if (!isAdmin && !isOrganizer)
+        {
+            return Forbid();
+        }
+
         if (tuitionEvent.Status != EventStatus.Published)
         {
             TempData["ErrorMessage"] = "Only published events can be cancelled.";
@@ -277,15 +367,13 @@ public class EventsController : Controller
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        var adminUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-        if (string.IsNullOrWhiteSpace(adminUserId))
+        if (string.IsNullOrWhiteSpace(currentUserId))
         {
             return Forbid();
         }
 
         tuitionEvent.Status = EventStatus.Cancelled;
-        tuitionEvent.CancelledByUserId = adminUserId;
+        tuitionEvent.CancelledByUserId = currentUserId;
         tuitionEvent.CancellationReason = model.Reason.Trim();
         tuitionEvent.CancelledAt = currentTime;
         tuitionEvent.UpdatedAt = currentTime;
@@ -332,7 +420,16 @@ public class EventsController : Controller
             return query;
         }
 
-        if (User.IsInRole(AppRoles.Student) || User.IsInRole(AppRoles.Tutor))
+        if (User.IsInRole(AppRoles.Tutor))
+        {
+            var organizerUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            return query.Where(item =>
+                item.Status == EventStatus.Published
+                || item.OrganizerUserId == organizerUserId);
+        }
+
+        if (User.IsInRole(AppRoles.Student))
         {
             return query.Where(item => item.Status == EventStatus.Published);
         }
@@ -392,6 +489,45 @@ public class EventsController : Controller
         return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 
+    private static string? GetPublishError(Event tuitionEvent)
+    {
+        if (tuitionEvent.StartsAt <= DateTimeOffset.UtcNow)
+        {
+            return "Update the event start time before publishing.";
+        }
+
+        if (tuitionEvent.EndsAt <= tuitionEvent.StartsAt)
+        {
+            return "The event end must be later than its start.";
+        }
+
+        if (!tuitionEvent.ApplicationDeadline.HasValue
+            || tuitionEvent.ApplicationDeadline.Value >= tuitionEvent.StartsAt)
+        {
+            return "Set a valid registration deadline before publishing.";
+        }
+
+        if (tuitionEvent.MaxParticipants < 1)
+        {
+            return "Set the maximum number of participants before publishing.";
+        }
+
+        if (tuitionEvent.Mode is EventMode.Physical or EventMode.Hybrid
+            && string.IsNullOrWhiteSpace(tuitionEvent.Location))
+        {
+            return "Set the location before publishing this physical or hybrid event.";
+        }
+
+        if (tuitionEvent.Mode is EventMode.Online or EventMode.Hybrid
+            && (!tuitionEvent.MeetingPlatform.HasValue
+                || string.IsNullOrWhiteSpace(tuitionEvent.MeetingUrl)))
+        {
+            return "Set the meeting platform and URL before publishing this online or hybrid event.";
+        }
+
+        return null;
+    }
+
     private async Task<UserAccount?> GetCurrentUserAsync()
     {
         var email = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -414,7 +550,15 @@ public class EventsController : Controller
     {
         if (User.IsInRole(AppRoles.Admin))
         {
-            return "Admin accounts review registrations instead of registering.";
+            return "Admin accounts do not register for events.";
+        }
+
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (User.IsInRole(AppRoles.Tutor)
+            && tuitionEvent.OrganizerUserId == currentUserId)
+        {
+            return "The Event Organizer cannot register for their own event.";
         }
 
         if (currentUser is null

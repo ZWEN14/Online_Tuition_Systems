@@ -40,6 +40,9 @@ public class Event
     [StringLength(450)]
     public string? CreatedByUserId { get; set; }
 
+    [StringLength(450)]
+    public string? OrganizerUserId { get; set; }
+
     [Required]
     [StringLength(150)]
     public string Title { get; set; } = string.Empty;

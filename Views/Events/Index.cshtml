@@ -18,7 +18,11 @@
         <span class="module-kicker">LEARNING EXPERIENCES</span>
         <h1 class="h2 mb-1">Events</h1>
         <p class="mb-0">
-            @(User.IsInRole(AppRoles.Admin) ? "Admin can search events in every status." : "Only published events are searchable.")
+            @(User.IsInRole(AppRoles.Admin)
+                ? "Admin can search events in every status."
+                : User.IsInRole(AppRoles.Tutor)
+                    ? "Browse published events and manage events that you organise."
+                    : "Only published events are searchable.")
         </p>
     </div>
 </section>

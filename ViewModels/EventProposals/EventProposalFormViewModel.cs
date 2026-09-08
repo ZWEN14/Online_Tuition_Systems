@@ -23,42 +23,93 @@ public class EventProposalFormViewModel : IValidatableObject
     [Display(Name = "Reason for proposing this event")]
     public string Reason { get; set; } = string.Empty;
 
-    [Display(Name = "Preferred start")]
-    public DateTimeOffset? PreferredStartsAt { get; set; }
+    [Required]
+    [Display(Name = "Event start")]
+    public DateTimeOffset? StartsAt { get; set; }
 
-    [Display(Name = "Preferred end")]
-    public DateTimeOffset? PreferredEndsAt { get; set; }
+    [Required]
+    [Display(Name = "Event end")]
+    public DateTimeOffset? EndsAt { get; set; }
 
-    [Display(Name = "Suggested audience")]
-    public RegistrationAudience ProposedRegistrationAudience { get; set; }
+    [Required]
+    [Display(Name = "Registration deadline")]
+    public DateTimeOffset? ApplicationDeadline { get; set; }
+
+    [Display(Name = "Who may register")]
+    public RegistrationAudience RegistrationAudience { get; set; }
         = RegistrationAudience.All;
+
+    [Required]
+    [Display(Name = "Event mode")]
+    public EventMode? Mode { get; set; }
+
+    [StringLength(255)]
+    public string? Location { get; set; }
+
+    [Display(Name = "Meeting platform")]
+    public MeetingPlatform? MeetingPlatform { get; set; }
+
+    [StringLength(2048)]
+    [Url]
+    [Display(Name = "Meeting URL")]
+    public string? MeetingUrl { get; set; }
+
+    [Required]
+    [Range(1, 1000)]
+    [Display(Name = "Maximum participants")]
+    public int? MaxParticipants { get; set; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         var now = DateTimeOffset.Now;
 
-        if (PreferredStartsAt.HasValue != PreferredEndsAt.HasValue)
+        if (StartsAt.HasValue && StartsAt.Value <= now)
         {
             yield return new ValidationResult(
-                "Enter both the preferred start and end, or leave both empty.",
-                new[] { nameof(PreferredStartsAt), nameof(PreferredEndsAt) });
+                "Event start must be in the future.",
+                new[] { nameof(StartsAt) });
         }
 
-        if (PreferredStartsAt.HasValue && PreferredStartsAt.Value <= now)
+        if (StartsAt.HasValue
+            && EndsAt.HasValue
+            && EndsAt.Value <= StartsAt.Value)
         {
             yield return new ValidationResult(
-                "Preferred start must be in the future.",
-                new[] { nameof(PreferredStartsAt) });
+                "Event end must be later than the start.",
+                new[] { nameof(EndsAt) });
         }
 
-        if (PreferredStartsAt.HasValue
-            && PreferredEndsAt.HasValue
-            && PreferredEndsAt.Value <= PreferredStartsAt.Value)
+        if (ApplicationDeadline.HasValue
+            && ApplicationDeadline.Value <= now)
         {
             yield return new ValidationResult(
-                "Preferred end must be later than the preferred start.",
-                new[] { nameof(PreferredEndsAt) });
+                "Registration deadline must be in the future.",
+                new[] { nameof(ApplicationDeadline) });
         }
 
+        if (ApplicationDeadline.HasValue
+            && StartsAt.HasValue
+            && ApplicationDeadline.Value >= StartsAt.Value)
+        {
+            yield return new ValidationResult(
+                "Registration deadline must be earlier than the event start.",
+                new[] { nameof(ApplicationDeadline) });
+        }
+
+        if (Mode is EventMode.Physical or EventMode.Hybrid
+            && string.IsNullOrWhiteSpace(Location))
+        {
+            yield return new ValidationResult(
+                "Location is required for a physical or hybrid event.",
+                new[] { nameof(Location) });
+        }
+
+        if (Mode is EventMode.Online or EventMode.Hybrid
+            && !MeetingPlatform.HasValue)
+        {
+            yield return new ValidationResult(
+                "Meeting platform is required for an online or hybrid event.",
+                new[] { nameof(MeetingPlatform) });
+        }
     }
 }

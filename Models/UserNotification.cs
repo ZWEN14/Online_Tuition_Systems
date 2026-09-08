@@ -7,10 +7,13 @@ namespace Online_Tuition_Systems.Models;
 public enum UserNotificationType
 {
     AnnouncementPublished,
+    AnnouncementUpdated,
     EventPublished,
+    EventUpdated,
     EventCancelled,
     ProposalSubmitted,
     ProposalUpdated,
+    ProposalChangesRequested,
     ProposalApproved,
     ProposalRejected,
     RegistrationSubmitted,

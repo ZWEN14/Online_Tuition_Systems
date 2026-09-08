@@ -11,7 +11,7 @@ using Online_Tuition_Systems.ViewModels.EventProposals;
 
 namespace Online_Tuition_Systems.Controllers;
 
-[Authorize(Roles = AppRoles.ModuleUsers)]
+[Authorize(Roles = AppRoles.AdminOrTutor)]
 public class EventProposalsController : Controller
 {
     private readonly ApplicationDbContext _context;
@@ -50,7 +50,7 @@ public class EventProposalsController : Controller
     }
 
     [HttpGet]
-    [Authorize(Roles = AppRoles.StudentOrTutor)]
+    [Authorize(Roles = AppRoles.Tutor)]
     public IActionResult Create()
     {
         return View(new EventProposalFormViewModel());
@@ -58,7 +58,7 @@ public class EventProposalsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize(Roles = AppRoles.StudentOrTutor)]
+    [Authorize(Roles = AppRoles.Tutor)]
     public async Task<IActionResult> Create(EventProposalFormViewModel model)
     {
         if (!ModelState.IsValid)
@@ -94,10 +94,10 @@ public class EventProposalsController : Controller
     }
 
     [HttpGet]
-    [Authorize(Roles = AppRoles.StudentOrTutor)]
+    [Authorize(Roles = AppRoles.Tutor)]
     public async Task<IActionResult> Edit(int id)
     {
-        var proposal = await FindOwnedPendingProposal(id, asNoTracking: true);
+        var proposal = await FindOwnedEditableProposal(id, asNoTracking: true);
 
         if (proposal is null)
         {
@@ -109,7 +109,7 @@ public class EventProposalsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize(Roles = AppRoles.StudentOrTutor)]
+    [Authorize(Roles = AppRoles.Tutor)]
     public async Task<IActionResult> Edit(int id, EventProposalFormViewModel model)
     {
         if (id != model.Id)
@@ -122,22 +122,32 @@ public class EventProposalsController : Controller
             return View(model);
         }
 
-        var proposal = await FindOwnedPendingProposal(id, asNoTracking: false);
+        var proposal = await FindOwnedEditableProposal(id, asNoTracking: false);
 
         if (proposal is null)
         {
             return NotFound();
         }
 
+        var wasChangesRequested = proposal.Status == EventProposalStatus.ChangesRequested;
+
         CopyFormToProposal(model, proposal);
+        proposal.Status = EventProposalStatus.Pending;
         proposal.RevisionCount++;
         proposal.LastRevisedAt = DateTimeOffset.UtcNow;
         proposal.UpdatedAt = DateTimeOffset.UtcNow;
 
+        if (wasChangesRequested)
+        {
+            proposal.ReviewedByUserId = null;
+            proposal.ReviewedAt = null;
+            proposal.ReviewNote = null;
+        }
+
         await _notificationService.ProposalUpdatedAsync(proposal);
         await _context.SaveChangesAsync();
 
-        TempData["SuccessMessage"] = "Pending proposal updated successfully.";
+        TempData["SuccessMessage"] = "Proposal updated and resubmitted for Admin review.";
         return RedirectToAction(nameof(Details), new { id });
     }
 
@@ -165,6 +175,14 @@ public class EventProposalsController : Controller
         if (proposal.Status != EventProposalStatus.Pending)
         {
             TempData["ErrorMessage"] = "Only pending proposals can be approved.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        var completenessError = GetProposalCompletenessError(proposal);
+
+        if (completenessError is not null)
+        {
+            TempData["ErrorMessage"] = completenessError;
             return RedirectToAction(nameof(Details), new { id });
         }
 
@@ -199,28 +217,37 @@ public class EventProposalsController : Controller
             return RedirectToAction(nameof(Details), new { id });
         }
 
+        completenessError = GetProposalCompletenessError(pendingProposal);
+
+        if (completenessError is not null)
+        {
+            TempData["ErrorMessage"] = completenessError;
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
         var currentTime = DateTimeOffset.UtcNow;
         var tuitionEvent = new Event
         {
             CourseId = pendingProposal.CourseId,
             CreatedByUserId = adminUserId,
+            OrganizerUserId = pendingProposal.ProposedByUserId,
             Title = pendingProposal.Title,
             Description = pendingProposal.Description,
-            StartsAt = model.StartsAt.ToUniversalTime(),
-            EndsAt = model.EndsAt.ToUniversalTime(),
-            ApplicationDeadline = model.ApplicationDeadline?.ToUniversalTime(),
-            RegistrationAudience = model.RegistrationAudience,
-            Mode = model.Mode,
-            Location = model.Mode == EventMode.Online
+            StartsAt = pendingProposal.StartsAt!.Value,
+            EndsAt = pendingProposal.EndsAt!.Value,
+            ApplicationDeadline = pendingProposal.ApplicationDeadline,
+            RegistrationAudience = pendingProposal.RegistrationAudience,
+            Mode = pendingProposal.Mode!.Value,
+            Location = pendingProposal.Mode == EventMode.Online
                 ? null
-                : CleanOptionalText(model.Location),
-            MeetingPlatform = model.Mode == EventMode.Physical
+                : CleanOptionalText(pendingProposal.Location),
+            MeetingPlatform = pendingProposal.Mode == EventMode.Physical
                 ? null
-                : model.MeetingPlatform,
-            MeetingUrl = model.Mode == EventMode.Physical
+                : pendingProposal.MeetingPlatform,
+            MeetingUrl = pendingProposal.Mode == EventMode.Physical
                 ? null
-                : CleanOptionalText(model.MeetingUrl),
-            MaxParticipants = model.MaxParticipants,
+                : CleanOptionalText(pendingProposal.MeetingUrl),
+            MaxParticipants = pendingProposal.MaxParticipants!.Value,
             Status = EventStatus.Draft,
             CreatedAt = currentTime,
             UpdatedAt = currentTime
@@ -229,49 +256,75 @@ public class EventProposalsController : Controller
         _context.Events.Add(tuitionEvent);
         await _context.SaveChangesAsync();
 
-        Announcement? publishedAnnouncement = null;
-
-        if (model.PublishAsAnnouncement)
-        {
-            publishedAnnouncement = new Announcement
-            {
-                CourseId = pendingProposal.CourseId,
-                EventId = tuitionEvent.Id,
-                CreatedByUserId = adminUserId,
-                Title = tuitionEvent.Title,
-                Content = tuitionEvent.Description,
-                Audience = ToAnnouncementAudience(tuitionEvent.RegistrationAudience),
-                Priority = AnnouncementPriority.Normal,
-                Status = AnnouncementStatus.Published,
-                PublishedAt = currentTime,
-                ExpiresAt = tuitionEvent.EndsAt,
-                CreatedAt = currentTime,
-                UpdatedAt = currentTime
-            };
-
-            _context.Announcements.Add(publishedAnnouncement);
-        }
-
         pendingProposal.Status = EventProposalStatus.Approved;
         pendingProposal.ReviewedByUserId = adminUserId;
         pendingProposal.ReviewedAt = currentTime;
-        pendingProposal.ReviewNote = null;
+        pendingProposal.ReviewNote = CleanOptionalText(model.ReviewNote);
         pendingProposal.CreatedEventId = tuitionEvent.Id;
         pendingProposal.UpdatedAt = currentTime;
 
         await _context.SaveChangesAsync();
         await _notificationService.ProposalReviewedAsync(pendingProposal);
 
-        if (publishedAnnouncement is not null)
-        {
-            await _notificationService.AnnouncementPublishedAsync(publishedAnnouncement);
-        }
-
         await _context.SaveChangesAsync();
         await transaction.CommitAsync();
 
         TempData["SuccessMessage"] = "Proposal approved and a draft event was created.";
         return RedirectToAction("Details", "Events", new { id = tuitionEvent.Id });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = AppRoles.Admin)]
+    public async Task<IActionResult> RequestChanges(
+        int id,
+        [Bind(Prefix = "Changes")] RequestProposalChangesViewModel model)
+    {
+        if (id != model.Id)
+        {
+            return NotFound();
+        }
+
+        var proposal = await _context.EventProposals
+            .SingleOrDefaultAsync(item => item.Id == id);
+
+        if (proposal is null)
+        {
+            return NotFound();
+        }
+
+        if (proposal.Status != EventProposalStatus.Pending)
+        {
+            TempData["ErrorMessage"] = "Changes can only be requested for a pending proposal.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return View(
+                "Details",
+                BuildDetailsViewModel(proposal, changes: model));
+        }
+
+        var adminUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(adminUserId))
+        {
+            return Forbid();
+        }
+
+        var currentTime = DateTimeOffset.UtcNow;
+        proposal.Status = EventProposalStatus.ChangesRequested;
+        proposal.ReviewedByUserId = adminUserId;
+        proposal.ReviewedAt = currentTime;
+        proposal.ReviewNote = model.ReviewNote.Trim();
+        proposal.UpdatedAt = currentTime;
+
+        await _notificationService.ProposalReviewedAsync(proposal);
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = "Changes were requested from the Tutor.";
+        return RedirectToAction(nameof(Details), new { id });
     }
 
     [HttpPost]
@@ -343,7 +396,7 @@ public class EventProposalsController : Controller
 
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        if ((User.IsInRole(AppRoles.Student) || User.IsInRole(AppRoles.Tutor))
+        if (User.IsInRole(AppRoles.Tutor)
             && !string.IsNullOrWhiteSpace(userId))
         {
             return query.Where(item => item.ProposedByUserId == userId);
@@ -352,7 +405,7 @@ public class EventProposalsController : Controller
         return query.Where(item => false);
     }
 
-    private Task<EventProposal?> FindOwnedPendingProposal(int id, bool asNoTracking)
+    private Task<EventProposal?> FindOwnedEditableProposal(int id, bool asNoTracking)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         IQueryable<EventProposal> query = _context.EventProposals;
@@ -365,38 +418,28 @@ public class EventProposalsController : Controller
         return query.SingleOrDefaultAsync(item =>
             item.Id == id
             && item.ProposedByUserId == userId
-            && item.Status == EventProposalStatus.Pending);
+            && (item.Status == EventProposalStatus.Pending
+                || item.Status == EventProposalStatus.ChangesRequested));
     }
 
     private static EventProposalDetailsViewModel BuildDetailsViewModel(
         EventProposal proposal,
         ApproveEventProposalViewModel? approval = null,
-        RejectEventProposalViewModel? rejection = null)
+        RejectEventProposalViewModel? rejection = null,
+        RequestProposalChangesViewModel? changes = null)
     {
-        var defaultStart = proposal.PreferredStartsAt?.ToLocalTime()
-            ?? DateTimeOffset.Now.AddDays(7);
-        var defaultEnd = proposal.PreferredEndsAt?.ToLocalTime()
-            ?? defaultStart.AddHours(2);
-
         return new EventProposalDetailsViewModel
         {
             Proposal = proposal,
             Approval = approval ?? new ApproveEventProposalViewModel
             {
-                Id = proposal.Id,
-                StartsAt = defaultStart,
-                EndsAt = defaultEnd,
-                ApplicationDeadline = proposal.ProposedApplicationDeadline?.ToLocalTime(),
-                RegistrationAudience = proposal.ProposedRegistrationAudience,
-                Mode = proposal.Mode,
-                Location = proposal.Location,
-                MeetingPlatform = proposal.MeetingPlatform,
-                MaxParticipants = proposal.ProposedMaxParticipants > 1
-                    ? proposal.ProposedMaxParticipants
-                    : 30,
-                PublishAsAnnouncement = proposal.PublishAsAnnouncement
+                Id = proposal.Id
             },
             Rejection = rejection ?? new RejectEventProposalViewModel
+            {
+                Id = proposal.Id
+            },
+            Changes = changes ?? new RequestProposalChangesViewModel
             {
                 Id = proposal.Id
             }
@@ -412,9 +455,15 @@ public class EventProposalsController : Controller
             Title = proposal.Title,
             Description = proposal.Description,
             Reason = proposal.Reason,
-            PreferredStartsAt = proposal.PreferredStartsAt?.ToLocalTime(),
-            PreferredEndsAt = proposal.PreferredEndsAt?.ToLocalTime(),
-            ProposedRegistrationAudience = proposal.ProposedRegistrationAudience
+            StartsAt = proposal.StartsAt?.ToLocalTime(),
+            EndsAt = proposal.EndsAt?.ToLocalTime(),
+            ApplicationDeadline = proposal.ApplicationDeadline?.ToLocalTime(),
+            RegistrationAudience = proposal.RegistrationAudience,
+            Mode = proposal.Mode,
+            Location = proposal.Location,
+            MeetingPlatform = proposal.MeetingPlatform,
+            MeetingUrl = proposal.MeetingUrl,
+            MaxParticipants = proposal.MaxParticipants
         };
     }
 
@@ -426,9 +475,21 @@ public class EventProposalsController : Controller
         proposal.Title = model.Title.Trim();
         proposal.Description = model.Description.Trim();
         proposal.Reason = model.Reason.Trim();
-        proposal.PreferredStartsAt = model.PreferredStartsAt?.ToUniversalTime();
-        proposal.PreferredEndsAt = model.PreferredEndsAt?.ToUniversalTime();
-        proposal.ProposedRegistrationAudience = model.ProposedRegistrationAudience;
+        proposal.StartsAt = model.StartsAt?.ToUniversalTime();
+        proposal.EndsAt = model.EndsAt?.ToUniversalTime();
+        proposal.ApplicationDeadline = model.ApplicationDeadline?.ToUniversalTime();
+        proposal.RegistrationAudience = model.RegistrationAudience;
+        proposal.Mode = model.Mode;
+        proposal.Location = model.Mode == EventMode.Online
+            ? null
+            : CleanOptionalText(model.Location);
+        proposal.MeetingPlatform = model.Mode == EventMode.Physical
+            ? null
+            : model.MeetingPlatform;
+        proposal.MeetingUrl = model.Mode == EventMode.Physical
+            ? null
+            : CleanOptionalText(model.MeetingUrl);
+        proposal.MaxParticipants = model.MaxParticipants;
     }
 
     private static string? CleanOptionalText(string? value)
@@ -436,14 +497,42 @@ public class EventProposalsController : Controller
         return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 
-    private static AnnouncementAudience ToAnnouncementAudience(
-        RegistrationAudience audience)
+    private static string? GetProposalCompletenessError(EventProposal proposal)
     {
-        return audience switch
+        if (!proposal.StartsAt.HasValue
+            || !proposal.EndsAt.HasValue
+            || !proposal.ApplicationDeadline.HasValue
+            || !proposal.Mode.HasValue
+            || !proposal.MaxParticipants.HasValue)
         {
-            RegistrationAudience.Student => AnnouncementAudience.Student,
-            RegistrationAudience.Tutor => AnnouncementAudience.Tutor,
-            _ => AnnouncementAudience.All
-        };
+            return "The Tutor must complete the event schedule, deadline, mode and capacity before approval.";
+        }
+
+        if (proposal.StartsAt.Value <= DateTimeOffset.UtcNow
+            || proposal.EndsAt.Value <= proposal.StartsAt.Value
+            || proposal.ApplicationDeadline.Value <= DateTimeOffset.UtcNow
+            || proposal.ApplicationDeadline.Value >= proposal.StartsAt.Value)
+        {
+            return "The proposed schedule or registration deadline is no longer valid. Request changes from the Tutor.";
+        }
+
+        if (proposal.MaxParticipants.Value < 1)
+        {
+            return "Maximum participants must be at least one.";
+        }
+
+        if (proposal.Mode is EventMode.Physical or EventMode.Hybrid
+            && string.IsNullOrWhiteSpace(proposal.Location))
+        {
+            return "A physical or hybrid proposal requires a location.";
+        }
+
+        if (proposal.Mode is EventMode.Online or EventMode.Hybrid
+            && !proposal.MeetingPlatform.HasValue)
+        {
+            return "An online or hybrid proposal requires a meeting platform.";
+        }
+
+        return null;
     }
 }

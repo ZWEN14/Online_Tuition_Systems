@@ -9,4 +9,6 @@ public class EventProposalDetailsViewModel
     public ApproveEventProposalViewModel Approval { get; set; } = new();
 
     public RejectEventProposalViewModel Rejection { get; set; } = new();
+
+    public RequestProposalChangesViewModel Changes { get; set; } = new();
 }

@@ -56,6 +56,8 @@ h1, h2, h3, h4, h5, h6 {
 
 .app-main {
   flex: 1;
+  width: 100%;
+  max-width: 76rem;
   padding-top: 2rem;
   padding-bottom: 3rem;
 }
@@ -65,7 +67,7 @@ h1, h2, h3, h4, h5, h6 {
   top: 0;
   z-index: 1030;
   min-height: 4.5rem;
-  padding: .65rem max(1rem, calc((100vw - 1320px) / 2));
+  padding: .65rem max(1rem, calc((100vw - 1216px) / 2));
   border-bottom: 1px solid rgba(210, 220, 232, .85);
   background: rgba(255, 255, 255, .92);
   box-shadow: 0 .25rem 1.25rem rgba(33, 50, 74, .055);
@@ -128,6 +130,38 @@ h1, h2, h3, h4, h5, h6 {
 .app-nav-link:focus {
   color: var(--app-primary) !important;
   background: var(--app-primary-soft);
+}
+
+.app-nav-dropdown {
+  min-width: 17rem;
+  padding: .55rem;
+  border: 1px solid var(--app-border);
+  border-radius: .85rem;
+  box-shadow: 0 1rem 2.5rem rgba(31, 49, 73, .15);
+}
+
+.app-nav-dropdown .dropdown-item {
+  display: flex;
+  flex-direction: column;
+  gap: .08rem;
+  padding: .65rem .75rem;
+  color: #34445a;
+  border-radius: .6rem;
+}
+
+.app-nav-dropdown .dropdown-item:hover,
+.app-nav-dropdown .dropdown-item:focus {
+  color: var(--app-primary);
+  background: var(--app-primary-soft);
+}
+
+.app-nav-dropdown .dropdown-item strong {
+  font-size: .86rem;
+}
+
+.app-nav-dropdown .dropdown-item small {
+  color: #7b899a;
+  font-size: .72rem;
 }
 
 .app-account-nav { gap: .2rem; }
@@ -581,16 +615,113 @@ h1, h2, h3, h4, h5, h6 {
   padding: .36rem .58rem;
   font-size: .68rem;
   font-weight: 750;
+  border: 1px solid transparent;
   border-radius: 99px;
 }
 
-.status-published { color: #08715f; background: #d9f6ed; }
-.status-draft { color: #8a5b12; background: #fff0cd; }
-.status-cancelled { color: #a72f43; background: #ffe1e7; }
-.status-archived { color: #57667a; background: #e9edf2; }
-.priority-high { color: #a72f43; background: #ffe1e7; }
-.priority-normal { color: #2058a8; background: #e2eeff; }
-.priority-low { color: #57667a; background: #edf1f5; }
+.status-draft { color: #525f70; border-color: #d4dae2; background: #edf0f4; }
+.status-pending { color: #8a5300; border-color: #f1d28d; background: #fff1cf; }
+.status-changesrequested { color: #0b6670; border-color: #9bdde2; background: #dcf6f8; }
+.status-approved { color: #11633f; border-color: #a8dfc3; background: #dcf5e8; }
+.status-published { color: #174f99; border-color: #b9d3f6; background: #e3efff; }
+.status-rejected { color: #a02b3d; border-color: #f1bac4; background: #ffe4e9; }
+.status-cancelled { color: #68409a; border-color: #d7c1ef; background: #f0e7fb; }
+.status-archived { color: #3f4855; border-color: #c8ced6; background: #e2e6eb; }
+
+.priority-normal { color: #3f4e68; border-color: #d5dce6; background: #eef2f7; }
+.priority-important { color: #9a5b00; border-color: #f1cc82; background: #fff0c8; }
+.priority-urgent { color: #a52b38; border-color: #efb3bc; background: #ffe1e6; }
+
+.module-page-shell {
+  width: 100%;
+  max-width: 76rem;
+  margin-inline: auto;
+}
+
+.module-form-shell {
+  width: 100%;
+  max-width: 62rem;
+  margin-inline: auto;
+}
+
+.module-detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+  padding: 1.5rem 1.75rem;
+  border: 1px solid var(--app-border);
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 .35rem 1.25rem rgba(31, 47, 70, .045);
+}
+
+.review-section-title {
+  margin-bottom: 1rem;
+  color: #32445d;
+  font-size: .75rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.proposal-facts {
+  display: grid;
+  gap: .75rem;
+}
+
+.proposal-facts > div {
+  padding: .8rem 1rem;
+  border: 1px solid #e3e9f0;
+  border-radius: .75rem;
+  background: #f8fafc;
+}
+
+.proposal-facts dt {
+  margin-bottom: .2rem;
+  color: #728095;
+  font-size: .68rem;
+  font-weight: 750;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.proposal-facts dd {
+  margin: 0;
+  color: #314158;
+  font-weight: 650;
+}
+
+.proposal-approval-card,
+.proposal-rejection-card {
+  overflow: hidden;
+}
+
+.proposal-changes-card {
+  border-color: #bce8eb;
+  background: linear-gradient(180deg, #f4fcfd 0%, #fff 100%);
+}
+
+.proposal-approval-card { border-top: .25rem solid #36a269; }
+.proposal-rejection-card { border-top: .25rem solid #d35767; }
+
+.proposal-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom-color: #e7ecf2;
+  background: #f8fafc;
+}
+
+.proposal-announcement-option {
+  padding: .85rem 1rem .85rem 2.6rem;
+  border: 1px solid #dfe7f0;
+  border-radius: .75rem;
+  background: #f8fafc;
+}
 
 .event-card {
   overflow: hidden;
@@ -639,6 +770,7 @@ h1, h2, h3, h4, h5, h6 {
   .home-hero h1 { font-size: 2.35rem; }
   .home-section { padding: 3rem 1rem; }
   .module-header { align-items: flex-start; flex-direction: column; padding: 1.5rem; }
+  .module-detail-header { flex-direction: column; padding: 1.25rem; }
 }
 
 /* Notification centre */

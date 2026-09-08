@@ -65,6 +65,10 @@ else
         @foreach (var notification in Model.Items)
         {
             var category = GetCategory(notification.Type);
+            var unreadLabel = notification.Type is UserNotificationType.AnnouncementUpdated
+                or UserNotificationType.EventUpdated
+                    ? "Updated"
+                    : "New";
             <form asp-action="Open" asp-route-id="@notification.Id" method="post">
                 <button type="submit"
                         class="notification-card @(notification.IsUnread ? "notification-card-unread" : null)">
@@ -75,7 +79,7 @@ else
                             <strong>@notification.Title</strong>
                             @if (notification.IsUnread)
                             {
-                                <span class="notification-new-badge">New</span>
+                                <span class="notification-new-badge">@unreadLabel</span>
                             }
                         </span>
                         <span class="notification-message">@notification.Message</span>
@@ -122,9 +126,11 @@ else
     {
         return type switch
         {
-            UserNotificationType.AnnouncementPublished => "Announcement",
-            UserNotificationType.EventPublished or UserNotificationType.EventCancelled => "Event",
+            UserNotificationType.AnnouncementPublished or UserNotificationType.AnnouncementUpdated => "Announcement",
+            UserNotificationType.EventPublished or UserNotificationType.EventUpdated
+                or UserNotificationType.EventCancelled => "Event",
             UserNotificationType.ProposalSubmitted or UserNotificationType.ProposalUpdated
+                or UserNotificationType.ProposalChangesRequested
                 or UserNotificationType.ProposalApproved or UserNotificationType.ProposalRejected => "Proposal",
             _ => "Registration"
         };

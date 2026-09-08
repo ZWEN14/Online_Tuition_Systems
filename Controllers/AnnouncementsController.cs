@@ -176,12 +176,26 @@ public class AnnouncementsController : Controller
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        announcement.Title = model.Title.Trim();
-        announcement.Content = model.Content.Trim();
+        var title = model.Title.Trim();
+        var content = model.Content.Trim();
+        var expiresAt = model.ExpiresAt?.ToUniversalTime();
+        var hasChanges = announcement.Title != title
+            || announcement.Content != content
+            || announcement.Audience != model.Audience
+            || announcement.Priority != model.Priority
+            || announcement.ExpiresAt != expiresAt;
+
+        announcement.Title = title;
+        announcement.Content = content;
         announcement.Audience = model.Audience;
         announcement.Priority = model.Priority;
-        announcement.ExpiresAt = model.ExpiresAt?.ToUniversalTime();
+        announcement.ExpiresAt = expiresAt;
         announcement.UpdatedAt = DateTimeOffset.UtcNow;
+
+        if (hasChanges && announcement.Status == AnnouncementStatus.Published)
+        {
+            await _notificationService.AnnouncementUpdatedAsync(announcement);
+        }
 
         await _context.SaveChangesAsync();
 

@@ -16,6 +16,8 @@ public class EventDetailsViewModel
 
     public bool CanViewMeetingUrl { get; set; }
 
+    public bool IsOrganizer { get; set; }
+
     public string? RegistrationUnavailableReason { get; set; }
 
     public CancelEventViewModel Cancellation { get; set; } = new();

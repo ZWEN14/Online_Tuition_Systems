@@ -73,6 +73,7 @@ public class ApplicationDbContext : DbContext
 
         tuitionEvent.HasIndex(item => item.Status);
         tuitionEvent.HasIndex(item => item.RegistrationAudience);
+        tuitionEvent.HasIndex(item => item.OrganizerUserId);
         tuitionEvent.HasIndex(item => new
         {
             item.CourseId,
@@ -82,7 +83,7 @@ public class ApplicationDbContext : DbContext
 
         var proposal = modelBuilder.Entity<EventProposal>();
 
-        proposal.Property(item => item.ProposedRegistrationAudience)
+        proposal.Property(item => item.RegistrationAudience)
             .HasConversion<string>()
             .HasMaxLength(20);
 

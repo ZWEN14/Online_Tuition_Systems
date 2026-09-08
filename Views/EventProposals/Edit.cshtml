@@ -4,10 +4,11 @@
     ViewData["Title"] = "Edit event proposal";
 }
 
+<div class="module-form-shell">
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <h1 class="h2 mb-1">Edit event proposal</h1>
-        <p class="text-muted mb-0">Refine your event idea while it is still Pending.</p>
+        <p class="text-muted mb-0">Update your plan and resubmit it for Admin review.</p>
     </div>
     <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Back</a>
 </div>
@@ -21,6 +22,7 @@
         <button type="submit" class="btn btn-primary">Save changes</button>
     </div>
 </form>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

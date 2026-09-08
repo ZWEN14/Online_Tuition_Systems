@@ -28,28 +28,14 @@ else
             <tbody>
                 @foreach (var announcement in Model.Items)
                 {
-                    var statusClass = announcement.Status switch
-                    {
-                        AnnouncementStatus.Published => "status-published",
-                        AnnouncementStatus.Archived => "status-archived",
-                        _ => "status-draft"
-                    };
-
-                    var priorityClass = announcement.Priority switch
-                    {
-                        AnnouncementPriority.Urgent => "priority-high",
-                        AnnouncementPriority.Important => "priority-normal",
-                        _ => "priority-low"
-                    };
-
                     <tr>
                         <td>
                             <div class="fw-semibold">@announcement.Title</div>
                             <div class="small text-muted text-truncate announcement-preview">@announcement.Content</div>
                         </td>
                         <td>@announcement.Audience</td>
-                        <td><span class="badge priority-badge @priorityClass">@announcement.Priority</span></td>
-                        <td><span class="badge status-badge @statusClass">@announcement.Status</span></td>
+                        <td><span class="badge priority-badge priority-@announcement.Priority.ToString().ToLowerInvariant()">@announcement.Priority</span></td>
+                        <td><span class="badge status-badge status-@announcement.Status.ToString().ToLowerInvariant()">@announcement.Status</span></td>
                         <td>@announcement.CreatedAt.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")</td>
                         <td class="text-end text-nowrap">
                             <a asp-action="Details" asp-route-id="@announcement.Id" class="btn btn-sm btn-outline-primary">Details</a>

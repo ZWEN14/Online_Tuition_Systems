@@ -5,6 +5,7 @@
     var tuitionEvent = Model.Event!;
 }
 
+<div class="module-form-shell">
 <h1 class="h2">Register for event</h1>
 
 <div class="card shadow-sm mb-3">
@@ -31,6 +32,7 @@
         <a asp-controller="Events" asp-action="Details" asp-route-id="@Model.EventId" class="btn btn-outline-secondary">Cancel</a>
     </div>
 </form>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

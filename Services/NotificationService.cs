@@ -27,6 +27,19 @@ public class NotificationService : INotificationService
             $"/Announcements/Details/{announcement.Id}");
     }
 
+    public async Task AnnouncementUpdatedAsync(Announcement announcement)
+    {
+        var userIds = await AudienceUserIds(announcement.Audience);
+
+        AddNotifications(
+            userIds,
+            UserNotificationType.AnnouncementUpdated,
+            $"Announcement updated: {announcement.Title}",
+            "A published announcement has been updated.",
+            $"Priority: {announcement.Priority}",
+            $"/Announcements/Details/{announcement.Id}");
+    }
+
     public async Task EventPublishedAsync(Event tuitionEvent)
     {
         var hasPublishedAnnouncement = await _context.Announcements
@@ -50,6 +63,29 @@ public class NotificationService : INotificationService
             $"/Events/Details/{tuitionEvent.Id}");
     }
 
+    public async Task EventUpdatedAsync(Event tuitionEvent)
+    {
+        var userIds = await AudienceUserIds(tuitionEvent.RegistrationAudience);
+        var registrantUserIds = await _context.EventRegistrations
+            .Where(item =>
+                item.EventId == tuitionEvent.Id
+                && (item.Status == EventRegistrationStatus.Pending
+                    || item.Status == EventRegistrationStatus.Approved))
+            .Select(item => item.UserId)
+            .Distinct()
+            .ToListAsync();
+
+        userIds.AddRange(registrantUserIds);
+
+        AddNotifications(
+            userIds,
+            UserNotificationType.EventUpdated,
+            $"Event updated: {tuitionEvent.Title}",
+            "A published event has been updated. Please review the latest details.",
+            $"{tuitionEvent.Mode} event on {tuitionEvent.StartsAt.ToLocalTime():dd MMM yyyy, h:mm tt}",
+            $"/Events/Details/{tuitionEvent.Id}");
+    }
+
     public async Task EventCancelledAsync(Event tuitionEvent)
     {
         var registrantUserIds = await _context.EventRegistrations
@@ -69,30 +105,29 @@ public class NotificationService : INotificationService
             $"Reason: {tuitionEvent.CancellationReason}",
             "/EventRegistrations/MyRegistrations");
 
-        var sourceProposal = tuitionEvent.SourceProposal
-            ?? await _context.EventProposals
-                .AsNoTracking()
-                .SingleOrDefaultAsync(item => item.CreatedEventId == tuitionEvent.Id);
+        var organizerEmail = tuitionEvent.OrganizerUserId;
 
-        var proposerEmail = sourceProposal?.ProposedByUserId;
-
-        if (string.IsNullOrWhiteSpace(proposerEmail))
+        if (string.IsNullOrWhiteSpace(organizerEmail))
         {
             return;
         }
 
-        var proposerUserId = await UserIdForEmail(proposerEmail);
+        var organizerUserId = await UserIdForEmail(organizerEmail);
 
-        if (proposerUserId.HasValue
-            && !registrantUserIds.Contains(proposerUserId.Value))
+        if (organizerUserId.HasValue
+            && !string.Equals(
+                organizerEmail,
+                tuitionEvent.CancelledByUserId,
+                StringComparison.OrdinalIgnoreCase)
+            && !registrantUserIds.Contains(organizerUserId.Value))
         {
             AddNotifications(
-                new[] { proposerUserId.Value },
+                new[] { organizerUserId.Value },
                 UserNotificationType.EventCancelled,
                 $"Event cancelled: {tuitionEvent.Title}",
-                "An event created from your proposal has been cancelled.",
+                "An event you organise has been cancelled.",
                 $"Reason: {tuitionEvent.CancellationReason}",
-                $"/EventProposals/Details/{sourceProposal!.Id}");
+                $"/Events/Details/{tuitionEvent.Id}");
         }
     }
 
@@ -103,7 +138,7 @@ public class NotificationService : INotificationService
             UserNotificationType.ProposalSubmitted,
             $"New event proposal: {proposal.Title}",
             $"{proposal.ProposedByUserId} submitted an event proposal for review.",
-            $"Suggested audience: {proposal.ProposedRegistrationAudience}",
+            $"Audience: {proposal.RegistrationAudience}; mode: {proposal.Mode?.ToString() ?? "Incomplete"}",
             $"/EventProposals/Details/{proposal.Id}");
     }
 
@@ -127,23 +162,30 @@ public class NotificationService : INotificationService
             return;
         }
 
-        var approved = proposal.Status == EventProposalStatus.Approved;
+        var type = proposal.Status switch
+        {
+            EventProposalStatus.Approved => UserNotificationType.ProposalApproved,
+            EventProposalStatus.ChangesRequested => UserNotificationType.ProposalChangesRequested,
+            _ => UserNotificationType.ProposalRejected
+        };
 
         AddNotifications(
             new[] { userId.Value },
-            approved
-                ? UserNotificationType.ProposalApproved
-                : UserNotificationType.ProposalRejected,
+            type,
             $"Event proposal {proposal.Status}: {proposal.Title}",
-            $"Your event proposal was {proposal.Status.ToString().ToLowerInvariant()}.",
+            proposal.Status == EventProposalStatus.ChangesRequested
+                ? "Admin requested changes to your event proposal."
+                : $"Your event proposal was {proposal.Status.ToString().ToLowerInvariant()}.",
             proposal.ReviewNote,
             $"/EventProposals/Details/{proposal.Id}");
     }
 
     public async Task RegistrationSubmittedAsync(EventRegistration registration)
     {
+        var organizerUserIds = await OrganizerUserIds(registration.Event);
+
         AddNotifications(
-            await AdminUserIds(),
+            organizerUserIds,
             UserNotificationType.RegistrationSubmitted,
             $"New registration: {registration.Event.Title}",
             $"{registration.User.Email} submitted an event registration.",
@@ -153,8 +195,10 @@ public class NotificationService : INotificationService
 
     public async Task RegistrationUpdatedAsync(EventRegistration registration)
     {
+        var organizerUserIds = await OrganizerUserIds(registration.Event);
+
         AddNotifications(
-            await AdminUserIds(),
+            organizerUserIds,
             UserNotificationType.RegistrationUpdated,
             $"Registration updated: {registration.Event.Title}",
             $"{registration.User.Email} updated an event registration.",
@@ -164,8 +208,10 @@ public class NotificationService : INotificationService
 
     public async Task RegistrationCancelledAsync(EventRegistration registration)
     {
+        var organizerUserIds = await OrganizerUserIds(registration.Event);
+
         AddNotifications(
-            await AdminUserIds(),
+            organizerUserIds,
             UserNotificationType.RegistrationCancelled,
             $"Registration cancelled: {registration.Event.Title}",
             $"{registration.User.Email} cancelled an event registration.",
@@ -197,6 +243,17 @@ public class NotificationService : INotificationService
             .Where(item => item.Role == AppRoles.Admin)
             .Select(item => item.Id)
             .ToListAsync();
+    }
+
+    private async Task<List<int>> OrganizerUserIds(Event tuitionEvent)
+    {
+        if (string.IsNullOrWhiteSpace(tuitionEvent.OrganizerUserId))
+        {
+            return [];
+        }
+
+        var userId = await UserIdForEmail(tuitionEvent.OrganizerUserId);
+        return userId.HasValue ? [userId.Value] : [];
     }
 
     private async Task<List<int>> AudienceUserIds(AnnouncementAudience audience)

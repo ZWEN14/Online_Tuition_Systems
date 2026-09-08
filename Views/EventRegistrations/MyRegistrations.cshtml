@@ -60,7 +60,7 @@ else
                             </a>
                         </td>
                         <td>@registration.Event.StartsAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")</td>
-                        <td><span class="badge text-bg-secondary">@registration.Status</span></td>
+                        <td><span class="badge status-badge status-@registration.Status.ToString().ToLowerInvariant()">@registration.Status</span></td>
                         <td>@(registration.ReviewNote ?? "-")</td>
                         <td class="text-end">
                             <div class="d-inline-flex gap-2">

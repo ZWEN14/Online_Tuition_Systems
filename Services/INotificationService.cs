@@ -5,7 +5,9 @@ namespace Online_Tuition_Systems.Services;
 public interface INotificationService
 {
     Task AnnouncementPublishedAsync(Announcement announcement);
+    Task AnnouncementUpdatedAsync(Announcement announcement);
     Task EventPublishedAsync(Event tuitionEvent);
+    Task EventUpdatedAsync(Event tuitionEvent);
     Task EventCancelledAsync(Event tuitionEvent);
     Task ProposalSubmittedAsync(EventProposal proposal);
     Task ProposalUpdatedAsync(EventProposal proposal);

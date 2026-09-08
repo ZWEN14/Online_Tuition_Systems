@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Online_Tuition_Systems.Data;
 
@@ -11,9 +12,11 @@ using Online_Tuition_Systems.Data;
 namespace Online_Tuition_Systems.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260908094634_AddEventProposalPlanningHints")]
+    partial class AddEventProposalPlanningHints
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -154,10 +157,6 @@ namespace Online_Tuition_Systems.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<string>("OrganizerUserId")
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<string>("RegistrationAudience")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -181,8 +180,6 @@ namespace Online_Tuition_Systems.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("OrganizerUserId");
-
                     b.HasIndex("RegistrationAudience");
 
                     b.HasIndex("Status");
@@ -200,9 +197,6 @@ namespace Online_Tuition_Systems.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTimeOffset?>("ApplicationDeadline")
-                        .HasColumnType("datetimeoffset");
-
                     b.Property<int?>("CourseId")
                         .HasColumnType("int");
 
@@ -217,45 +211,36 @@ namespace Online_Tuition_Systems.Migrations
                         .HasMaxLength(10000)
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTimeOffset?>("EndsAt")
-                        .HasColumnType("datetimeoffset");
+                    b.Property<int?>("EstimatedParticipants")
+                        .HasColumnType("int");
 
                     b.Property<DateTimeOffset?>("LastRevisedAt")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<string>("Location")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
+                    b.Property<DateTimeOffset?>("PreferredEndsAt")
+                        .HasColumnType("datetimeoffset");
 
-                    b.Property<int?>("MaxParticipants")
-                        .HasColumnType("int");
-
-                    b.Property<string>("MeetingPlatform")
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
-
-                    b.Property<string>("MeetingUrl")
-                        .HasMaxLength(2048)
-                        .HasColumnType("nvarchar(2048)");
-
-                    b.Property<string>("Mode")
+                    b.Property<string>("PreferredMode")
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTimeOffset?>("PreferredStartsAt")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<string>("ProposedByUserId")
                         .IsRequired()
                         .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<string>("ProposedRegistrationAudience")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.Property<string>("Reason")
                         .IsRequired()
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
-
-                    b.Property<string>("RegistrationAudience")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("ReviewNote")
                         .HasMaxLength(2000)
@@ -270,9 +255,6 @@ namespace Online_Tuition_Systems.Migrations
 
                     b.Property<int>("RevisionCount")
                         .HasColumnType("int");
-
-                    b.Property<DateTimeOffset?>("StartsAt")
-                        .HasColumnType("datetimeoffset");
 
                     b.Property<string>("Status")
                         .IsRequired()
