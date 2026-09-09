@@ -17,27 +17,16 @@ public class NotificationBellViewComponent : ViewComponent
 
     public async Task<IViewComponentResult> InvokeAsync()
     {
-        var email = UserClaimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userIdValue = UserClaimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        if (string.IsNullOrWhiteSpace(email))
-        {
-            return Content(string.Empty);
-        }
-
-        var userId = await _context.Users
-            .AsNoTracking()
-            .Where(item => item.Email == email)
-            .Select(item => (int?)item.Id)
-            .SingleOrDefaultAsync();
-
-        if (!userId.HasValue)
+        if (!int.TryParse(userIdValue, out var userId))
         {
             return Content(string.Empty);
         }
 
         var query = _context.Notifications
             .AsNoTracking()
-            .Where(item => item.UserId == userId.Value);
+            .Where(item => item.UserId == userId);
 
         return View(new NotificationBellViewModel
         {

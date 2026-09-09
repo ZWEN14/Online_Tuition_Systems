@@ -496,22 +496,21 @@ public class EventRegistrationsController : Controller
         return RedirectToAction(nameof(Manage), new { eventId = registration.EventId });
     }
 
-    private async Task<UserAccount?> GetCurrentUserAsync()
+    private async Task<User?> GetCurrentUserAsync()
     {
-        var email = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        if (string.IsNullOrWhiteSpace(email))
+        if (!int.TryParse(userIdValue, out var userId))
         {
             return null;
         }
 
-        return await _context.Users
-            .SingleOrDefaultAsync(item => item.Email == email);
+        return await _context.Users.SingleOrDefaultAsync(item => item.Id == userId);
     }
 
     private async Task<string?> GetRegistrationUnavailableReason(
         Event tuitionEvent,
-        UserAccount user,
+        User user,
         EventRegistration? existingRegistration,
         bool allowPendingRegistration = false)
     {
@@ -520,7 +519,7 @@ public class EventRegistrationsController : Controller
             return "Registration is only available for published events.";
         }
 
-        if (tuitionEvent.OrganizerUserId == user.Email)
+        if (tuitionEvent.OrganizerUserId == user.Id.ToString())
         {
             return "The Event Organizer cannot register for their own event.";
         }
@@ -590,11 +589,11 @@ public class EventRegistrationsController : Controller
             : null;
     }
 
-    private static bool AudienceAllows(Event tuitionEvent, string role)
+    private static bool AudienceAllows(Event tuitionEvent, UserRole role)
     {
         return tuitionEvent.RegistrationAudience == RegistrationAudience.All
             || tuitionEvent.RegistrationAudience.ToString()
-                .Equals(role, StringComparison.OrdinalIgnoreCase);
+                .Equals(role.ToString(), StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool CanEditRegistration(EventRegistration registration)

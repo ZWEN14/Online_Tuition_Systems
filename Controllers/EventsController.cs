@@ -72,7 +72,7 @@ public class EventsController : Controller
             .CountAsync(item => item.EventId == tuitionEvent.Id);
 
         EventRegistration? currentRegistration = null;
-        UserAccount? currentUser = null;
+        User? currentUser = null;
         var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var isOrganizer = User.IsInRole(AppRoles.Tutor)
             && !string.IsNullOrWhiteSpace(currentUserId)
@@ -528,23 +528,21 @@ public class EventsController : Controller
         return null;
     }
 
-    private async Task<UserAccount?> GetCurrentUserAsync()
+    private async Task<User?> GetCurrentUserAsync()
     {
-        var email = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        if (string.IsNullOrWhiteSpace(email))
+        if (!int.TryParse(userIdValue, out var userId))
         {
             return null;
         }
 
-        return await _context.Users
-            .AsNoTracking()
-            .SingleOrDefaultAsync(item => item.Email == email);
+        return await _context.Users.AsNoTracking().SingleOrDefaultAsync(item => item.Id == userId);
     }
 
     private string? GetRegistrationUnavailableReason(
         Event tuitionEvent,
-        UserAccount? currentUser,
+        User? currentUser,
         EventRegistration? currentRegistration,
         int approvedRegistrationCount)
     {
@@ -585,7 +583,7 @@ public class EventsController : Controller
 
         if (tuitionEvent.RegistrationAudience != RegistrationAudience.All
             && !tuitionEvent.RegistrationAudience.ToString()
-                .Equals(currentUser.Role, StringComparison.OrdinalIgnoreCase))
+                .Equals(currentUser.Role.ToString(), StringComparison.OrdinalIgnoreCase))
         {
             return "This event is not open to your user role.";
         }

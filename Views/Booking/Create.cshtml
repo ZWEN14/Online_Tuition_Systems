@@ -1,0 +1,102 @@
+@model BookingCreateVM
+@{
+    ViewBag.Title = "Booking | Create";
+    var days = new[] { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
+    var selectedSlot = Model.Timeslots.FirstOrDefault(x => x.Id == Model.SelectedTimeslotId);
+    var durationHours = selectedSlot == null ? 0 : (decimal)(selectedSlot.EndTime - selectedSlot.StartTime).TotalHours;
+    var subject = Model.SelectedSubject;
+}
+
+<div class="page-header"><span class="text-uppercase small fw-semibold text-primary">New booking</span><h1 class="mb-1">Request a Session</h1><p class="mb-0">Choose a tutor, an available time, and a date for your lesson.</p></div>
+
+<div class="card form-card">
+    <div class="card-body p-4 p-md-5">
+        <form method="get" asp-controller="Booking" asp-action="Create" class="mb-3" data-ajax="true" data-ajax-target="#bookingOptions">
+            <input type="hidden" name="subjectId" value="@Model.SelectedSubjectId" />
+            <label class="form-label fw-semibold">1. Choose a tutor</label>
+            <select name="tutorId" class="form-select" onchange="this.form.submit()">
+                <option value="">-- Select a tutor --</option>
+                @foreach (var tutor in Model.Tutors)
+                {
+                    <option value="@tutor.Id" selected="@(Model.SelectedTutorId == tutor.Id)">
+                        @tutor.Name
+                    </option>
+                }
+            </select>
+        </form>
+
+        <div id="bookingOptions">
+            @if (Model.SelectedTutorId.HasValue)
+            {
+                @if (Model.Timeslots.Any())
+                {
+                    <form method="get" asp-controller="Booking" asp-action="Create" class="mb-3" data-ajax="true" data-ajax-target="#bookingOptions">
+                        <input type="hidden" name="tutorId" value="@Model.SelectedTutorId" />
+                        <input type="hidden" name="subjectId" value="@Model.SelectedSubjectId" />
+                        <label class="form-label fw-semibold">2. Choose a timeslot</label>
+                        <select name="timeslotId" class="form-select" onchange="this.form.submit()">
+                            <option value="">-- Select a timeslot --</option>
+                            @foreach (var slot in Model.Timeslots)
+                            {
+                                <option value="@slot.Id" selected="@(Model.SelectedTimeslotId == slot.Id)">
+                                    @days[slot.DayOfWeek], @slot.StartTime.ToString(@"hh\:mm") - @slot.EndTime.ToString(@"hh\:mm")
+                                </option>
+                            }
+                        </select>
+                    </form>
+                }
+                else
+                {
+                    <div class="empty-state border rounded">This tutor has no active availability right now.</div>
+                }
+            }
+
+            @if (selectedSlot != null && Model.AvailableDates.Any())
+            {
+                <form method="post" asp-controller="Booking" asp-action="Create">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="TutorId" value="@Model.SelectedTutorId" />
+                    <input type="hidden" name="SubjectId" value="@Model.SelectedSubjectId" />
+                    <input type="hidden" name="TimeslotId" value="@Model.SelectedTimeslotId" />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">3. Choose a date</label>
+                        <select name="BookingDate" class="form-select" required>
+                            <option value="">-- Select a date --</option>
+                            @foreach (var date in Model.AvailableDates)
+                            {
+                                <option value="@date.ToString("yyyy-MM-dd")">@date.ToString("dd MMM yyyy (dddd)")</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="booking-summaries">
+                        <div>
+                            <div class="border rounded p-3">
+                                <h5 class="mb-3">Booking summary</h5>
+                                <p class="mb-1">Subject: <strong>@(subject?.Name ?? "Not selected")</strong></p>
+                                <p class="mb-1">Tutor: <strong>@(Model.Tutors.FirstOrDefault(t => t.Id == Model.SelectedTutorId)?.Name ?? "Not selected")</strong></p>
+                                <p class="mb-1">Date: <strong data-booking-date>Choose a date</strong></p>
+                                <p class="mb-1">Day and time: <strong>@days[selectedSlot.DayOfWeek], @selectedSlot.StartTime.ToString(@"hh\:mm") - @selectedSlot.EndTime.ToString(@"hh\:mm")</strong></p>
+                                <p class="mb-0">Duration: <strong>@durationHours.ToString("0.0") hour(s)</strong></p>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="bg-primary-subtle rounded p-3">
+                                <h5 class="mb-3">Payment summary</h5>
+                                <p class="mb-1">Hourly rate: <strong>RM @(Model.SelectedSubject?.BaseCost.ToString("0.00") ?? "0.00")/hour</strong></p>
+                                <p class="mb-1">Duration: <strong>@durationHours.ToString("0.0") hour(s)</strong></p>
+                                <p class="mb-0"><strong>Estimated total: RM @(((subject?.BaseCost ?? 0m) * durationHours).ToString("0.00"))</strong></p>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn btn-dark mt-3">Send Booking Request</button>
+                    <p class="small text-muted mt-2">Payment will be required after tutor acceptance.</p>
+                </form>
+            }
+            else if (Model.SelectedTimeslotId.HasValue)
+            {
+                <p class="text-muted">No available dates in the next 2 weeks for this timeslot.</p>
+            }
+        </div>
+    </div>
+</div>

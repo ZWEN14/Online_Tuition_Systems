@@ -1,0 +1,389 @@
+@model List<Timeslot>
+
+@{
+    ViewBag.Title = "Timeslot | Index";
+    var days = new[] { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
+    var firstHour = TimeSpan.FromHours(8);
+    var lastHour = TimeSpan.FromHours(23);
+    var blockMinutes = 30;
+    var rowCount = (int)((lastHour - firstHour).TotalMinutes / blockMinutes);
+    var hourCount = (int)((lastHour - firstHour).TotalHours);
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 gap-3">
+    <div>
+        <h1>My Availability</h1>
+        <p class="text-muted mb-0">Manage active and inactive recurring weekly timeslots.</p>
+    </div>
+    <a class="btn btn-dark text-nowrap" asp-action="Insert">+ Add Availability</a>
+</div>
+
+<div class="d-flex gap-3 mb-3 small">
+    <span><span class="availability-legend active"></span> Active</span>
+    <span><span class="availability-legend inactive"></span> Inactive</span>
+</div>
+
+<div class="timetable-wrapper">
+    <table class="timetable">
+        <thead>
+            <tr>
+                <th class="day-column">Day</th>
+
+                @for (var hour = 0; hour < hourCount; hour++)
+                {
+                    var time = firstHour.Add(TimeSpan.FromHours(hour));
+
+                    <th scope="col"
+                        colspan="2"
+                        class="time-column"
+                        aria-label="@time.ToString(@"hh\:mm")">
+                        @time.ToString(@"h\:mm")
+                    </th>
+                }
+            </tr>
+        </thead>
+
+        <tbody>
+            @for (var day = 0; day < days.Length; day++)
+            {
+                <tr>
+                    <th scope="row" class="day-label">
+                        @days[day]
+                    </th>
+
+                    @for (var column = 0; column < rowCount; column++)
+                    {
+                        var time = firstHour.Add(
+                            TimeSpan.FromMinutes(column * blockMinutes)
+                        );
+
+                        var slot = Model.FirstOrDefault(
+                            x => x.DayOfWeek == day &&
+                                 x.StartTime == time
+                        );
+
+                        var coveringSlot = Model.FirstOrDefault(
+                            x => x.DayOfWeek == day &&
+                                 x.StartTime < time &&
+                                 x.EndTime > time
+                        );
+
+                        if (slot != null)
+                        {
+                            var columnSpan = Math.Max(1, (int)((slot.EndTime - slot.StartTime).TotalMinutes / blockMinutes));
+
+                            <td colspan="@columnSpan"
+                                class="availability-cell">
+
+                                <button type="button"
+                                        class="availability-block @(slot.IsActive ? "active" : "inactive")"
+                                        data-id="@slot.Id"
+                                        data-active="@slot.IsActive.ToString().ToLower()">
+
+                                    <strong>
+                                        @slot.StartTime.ToString(@"hh\:mm") -
+                                        @slot.EndTime.ToString(@"hh\:mm")
+                                    </strong>
+
+                                </button>
+
+                            </td>
+                        }
+                        else if (coveringSlot == null)
+                        {
+                            <td class="empty-cell"
+                                aria-label="No availability">
+                            </td>
+                        }
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div id="timeslotActions" class="timeslot-actions">
+
+    <form method="post"
+          asp-action="Activate"
+          id="activateForm"
+          data-ajax-timeslot="true">
+        @Html.AntiForgeryToken()
+
+        <input type="hidden"
+               name="id"
+               id="activateId" />
+
+        <button type="submit"
+                id="activateButton"
+                class="timeslot-action-button">
+        </button>
+    </form>
+
+    <form method="post"
+          asp-action="Delete"
+          id="deleteForm"
+          onsubmit="return confirm('Delete this timeslot?');">
+        @Html.AntiForgeryToken()
+
+        <input type="hidden"
+               name="id"
+               id="deleteId" />
+
+        <button type="submit"
+                class="timeslot-action-button delete">
+            Delete
+        </button>
+    </form>
+
+</div>
+
+<script>
+
+    const actions =
+        document.getElementById('timeslotActions');
+
+    const activateId =
+        document.getElementById('activateId');
+
+    const deleteId =
+        document.getElementById('deleteId');
+
+    const activateButton =
+        document.getElementById('activateButton');
+
+    const activateForm =
+        document.getElementById('activateForm');
+
+
+    /*
+     * Remember which timeslot currently has
+     * the floating action window open.
+     */
+    let openedTimeslotId = null;
+
+    activateForm.addEventListener('submit', async function (event) {
+        event.preventDefault();
+        activateButton.disabled = true;
+
+        try {
+            const response = await fetch(this.action, {
+                method: 'POST',
+                body: new FormData(this),
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            const result = await response.json();
+            if (!response.ok || !result.success) throw new Error(result.message || 'Unable to update timeslot.');
+
+            const slot = document.querySelector(`.availability-block[data-id="${result.id}"]`);
+            if (slot) {
+                slot.dataset.active = result.isActive;
+                slot.classList.toggle('active', result.isActive);
+                slot.classList.toggle('inactive', !result.isActive);
+                activateButton.textContent = result.isActive ? 'Deactivate' : 'Activate';
+            }
+            actions.classList.remove('show');
+            openedTimeslotId = null;
+            window.showAjaxMessage?.(result.message, true);
+        } catch {
+            window.showAjaxMessage?.('The timeslot could not be updated. Please try again.', false);
+        } finally {
+            activateButton.disabled = false;
+        }
+    });
+
+
+    document
+        .querySelectorAll('.availability-block')
+        .forEach(function (slot) {
+
+            slot.addEventListener(
+                'click',
+                function (event) {
+
+                    event.stopPropagation();
+
+
+                    const id =
+                        this.dataset.id;
+
+
+                    /*
+                     * If the user clicks the same
+                     * timeslot again, close the menu.
+                     */
+                    if (
+                        actions.classList.contains('show') &&
+                        openedTimeslotId === id
+                    ) {
+
+                        actions.classList.remove('show');
+
+                        openedTimeslotId = null;
+
+                        return;
+                    }
+
+
+                    /*
+                     * Remember this timeslot.
+                     */
+                    openedTimeslotId = id;
+
+
+                    const active =
+                        this.dataset.active === 'true';
+
+
+                    /*
+                     * Set the IDs for the forms.
+                     */
+                    activateId.value = id;
+                    deleteId.value = id;
+
+
+                    /*
+                     * Change Activate/Deactivate
+                     * depending on current status.
+                     */
+                    activateButton.textContent =
+                        active
+                            ? 'Deactivate'
+                            : 'Activate';
+
+
+                    /*
+                     * Get position of the clicked
+                     * timeslot.
+                     */
+                    const rect =
+                        this.getBoundingClientRect();
+
+
+                    let left =
+                        rect.left;
+
+                    let top =
+                        rect.bottom + 5;
+
+
+                    /*
+                     * Prevent the menu from going
+                     * outside the right side.
+                     */
+                    if (
+                        left + 130 >
+                        window.innerWidth
+                    ) {
+
+                        left =
+                            window.innerWidth - 135;
+
+                    }
+
+
+                    /*
+                     * If there isn't enough space
+                     * below, show it above.
+                     */
+                    if (
+                        top + 80 >
+                        window.innerHeight
+                    ) {
+
+                        top =
+                            rect.top - 85;
+
+                    }
+
+
+                    /*
+                     * Prevent it from going
+                     * outside the left side.
+                     */
+                    if (left < 5) {
+
+                        left = 5;
+
+                    }
+
+
+                    actions.style.left =
+                        left + 'px';
+
+                    actions.style.top =
+                        top + 'px';
+
+
+                    actions.classList.add('show');
+
+                }
+            );
+
+        });
+
+
+    /*
+     * Clicking anywhere outside the
+     * timeslot and action menu closes it.
+     */
+    document.addEventListener(
+        'click',
+        function (event) {
+
+            if (
+                !actions.contains(event.target) &&
+                !event.target.closest('.availability-block')
+            ) {
+
+                actions.classList.remove('show');
+
+                openedTimeslotId = null;
+
+            }
+
+        }
+    );
+
+
+    /*
+     * Also close the action menu when
+     * the user scrolls.
+     *
+     * This prevents the floating window
+     * from being left behind while the
+     * timetable moves.
+     */
+    window.addEventListener(
+        'scroll',
+        function () {
+
+            actions.classList.remove('show');
+
+            openedTimeslotId = null;
+
+        }
+    );
+
+
+    /*
+     * Close the action menu when the
+     * browser window is resized.
+     */
+    window.addEventListener(
+        'resize',
+        function () {
+
+            actions.classList.remove('show');
+
+            openedTimeslotId = null;
+
+        }
+    );
+
+</script>
+
+@if (!Model.Any())
+{
+    <p class="text-muted mt-3">No availability set yet. Select <strong>+ Add Availability</strong> to create your first timeslot.</p>
+}

@@ -31,7 +31,7 @@ public class UserNotification
     public int UserId { get; set; }
 
     [ForeignKey(nameof(UserId))]
-    public UserAccount User { get; set; } = null!;
+    public User User { get; set; } = null!;
 
     public UserNotificationType Type { get; set; }
 

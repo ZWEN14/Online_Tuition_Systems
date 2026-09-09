@@ -1,0 +1,857 @@
+@model TimeslotInsertVM
+
+@{
+    ViewBag.Title = "Timeslot | Insert";
+
+    var days = new[]
+    {
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday"
+    };
+
+    var firstHour = TimeSpan.FromHours(8);
+    var lastHour = TimeSpan.FromHours(23);
+    var blockMinutes = 30;
+
+    var rowCount = (int)((lastHour - firstHour).TotalMinutes / blockMinutes);
+    var hourCount = (int)((lastHour - firstHour).TotalHours);
+
+    var existingTimeslots =
+        ViewBag.ExistingTimeslots as List<Timeslot>
+        ?? new List<Timeslot>();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 gap-3">
+    <div>
+        <h1>Add Availability</h1>
+        <p class="text-muted mb-0">
+            Select a starting time from the timetable, then choose the duration.
+        </p>
+    </div>
+
+    <a asp-action="Index" class="btn btn-outline-secondary text-nowrap">
+        Back
+    </a>
+</div>
+
+@if (TempData["Info"] != null)
+{
+    <div class="alert alert-info">
+        @TempData["Info"]
+    </div>
+}
+
+<form method="post" id="timeslotForm">
+
+    @Html.AntiForgeryToken()
+
+    <div asp-validation-summary="ModelOnly"
+         class="text-danger mb-3">
+    </div>
+
+    <!-- Hidden values submitted to the controller -->
+    <input asp-for="DayOfWeek"
+           type="hidden"
+           id="selectedDay" />
+
+    <input asp-for="StartTime"
+           type="hidden"
+           id="selectedStart" />
+
+    <input asp-for="EndTime"
+           type="hidden"
+           id="selectedEnd" />
+
+    <div class="row g-4">
+
+        <!-- TIMETABLE -->
+        <div class="col-12">
+
+            <div class="mb-3">
+                <h5 class="mb-1">Select Starting Time</h5>
+                <small class="text-muted">
+                    Click any available 30-minute block to select the starting time.
+                </small>
+            </div>
+
+            <div class="timetable-wrapper">
+
+                <table class="timetable insert-timetable">
+
+                    <thead>
+                        <tr>
+
+                            <th class="day-column">
+                                Day
+                            </th>
+
+                            @for (var hour = 0; hour < hourCount; hour++)
+                            {
+                                var time = firstHour.Add(
+                                    TimeSpan.FromHours(hour)
+                                );
+
+                                <th scope="col"
+                                    colspan="2"
+                                    class="time-column"
+                                    aria-label="@time.ToString(@"hh\:mm")">
+
+                                    @time.ToString(@"h\:mm")
+
+                                </th>
+                            }
+
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        @for (var day = 0; day < days.Length; day++)
+                        {
+                            <tr>
+
+                                <th scope="row"
+                                    class="day-label">
+                                    @days[day]
+                                </th>
+
+                                @for (var column = 0; column < rowCount; column++)
+                                {
+                                    var time = firstHour.Add(
+                                        TimeSpan.FromMinutes(
+                                            column * blockMinutes
+                                        )
+                                    );
+
+                                    var slot = existingTimeslots.FirstOrDefault(
+                                        x => x.DayOfWeek == day &&
+                                             x.StartTime == time
+                                    );
+
+                                    var coveringSlot = existingTimeslots.FirstOrDefault(
+                                        x => x.DayOfWeek == day &&
+                                             x.StartTime < time &&
+                                             x.EndTime > time
+                                    );
+
+                                    if (slot != null)
+                                    {
+                                        var columnSpan = Math.Max(
+                                            1,
+                                            (int)(
+                                                (slot.EndTime - slot.StartTime)
+                                                .TotalMinutes / blockMinutes
+                                            )
+                                        );
+
+                                        <td colspan="@columnSpan"
+                                            class="availability-cell">
+
+                                            <div class="insert-existing-slot @(slot.IsActive ? "active" : "inactive")">
+
+                                                <strong>
+                                                    @slot.StartTime.ToString(@"hh\:mm") -
+                                                    @slot.EndTime.ToString(@"hh\:mm")
+                                                </strong>
+
+                                            </div>
+
+                                        </td>
+                                    }
+                                    else if (coveringSlot == null)
+                                    {
+                                        var minimumEndTime = time.Add(TimeSpan.FromHours(1));
+
+                                        /*
+                                         * A starting time is only selectable when at least
+                                         * 1 hour is available before 11:00 PM or another
+                                         * existing timeslot.
+                                         */
+                                        var canStart = minimumEndTime <= lastHour &&
+                                                       !existingTimeslots.Any(x =>
+                                                           x.DayOfWeek == day &&
+                                                           x.StartTime < minimumEndTime &&
+                                                           x.EndTime > time
+                                                       );
+
+                                        <td class="insert-time-cell @(canStart ? "" : "cannot-start")"
+                                            data-day="@day"
+                                            data-time="@time.ToString(@"hh\:mm")">
+
+                                            <button type="button"
+                                                    class="insert-time-block"
+                                                    aria-label="Select @days[day] @time.ToString(@"hh\:mm")"
+                                                    disabled="@(!canStart)">
+                                            </button>
+
+                                        </td>
+                                    }
+                                }
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+        <!-- SELECTION INFORMATION -->
+        <div class="col-12">
+
+            <div id="availabilityDetails" class="card availability-details-card border-0 shadow-sm d-none">
+
+                <div class="card-body">
+
+                    <h5 class="card-title mb-4">
+                        Availability Details
+                    </h5>
+
+                    <div class="row g-4 align-items-end">
+
+                        <!-- Day -->
+                        <div class="col-12 col-md-3">
+
+                            <small class="text-muted d-block mb-1">
+                                Day
+                            </small>
+
+                            <div id="displayDay"
+                                 class="fw-semibold">
+                                Not selected
+                            </div>
+
+                        </div>
+
+
+                        <!-- Start Time -->
+                        <div class="col-6 col-md-2">
+
+                            <small class="text-muted d-block mb-1">
+                                Start Time
+                            </small>
+
+                            <div id="displayStart"
+                                 class="fw-semibold">
+                                Not selected
+                            </div>
+
+                        </div>
+
+
+                        <!-- End Time -->
+                        <div class="col-6 col-md-2">
+
+                            <small class="text-muted d-block mb-1">
+                                End Time
+                            </small>
+
+                            <div id="displayEnd"
+                                 class="fw-semibold">
+                                Not selected
+                            </div>
+
+                        </div>
+
+
+                        <!-- Duration -->
+                        <div class="col-12 col-md-3">
+
+                            <label for="durationSelect"
+                                   class="form-label mb-1">
+                                Duration
+                            </label>
+
+                            <select id="durationSelect"
+                                    class="form-select"
+                                    disabled>
+
+                                <option value="">
+                                    Select duration
+                                </option>
+
+                                <option value="60">
+                                    1 hour
+                                </option>
+
+                                <option value="90">
+                                    1 hour 30 minutes
+                                </option>
+
+                                <option value="120">
+                                    2 hours
+                                </option>
+
+                                <option value="150">
+                                    2 hours 30 minutes
+                                </option>
+
+                                <option value="180">
+                                    3 hours
+                                </option>
+
+                            </select>
+
+                            <span asp-validation-for="EndTime"
+                                  class="text-danger small">
+                            </span>
+
+                        </div>
+
+
+                        <!-- Active -->
+                        <div class="col-6 col-md-auto">
+
+                            <div class="form-check">
+
+                                <input asp-for="IsActive"
+                                       class="form-check-input"
+                                       id="IsActive" />
+
+                                <label asp-for="IsActive"
+                                       class="form-check-label">
+                                    Active
+                                </label>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- Save -->
+                        <div class="col-6 col-md-auto">
+
+                            <button type="submit"
+                                    id="saveButton"
+                                    class="btn btn-dark w-100"
+                                    disabled>
+
+                                Save Availability
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <div id="selectionMessage"
+                         class="alert alert-secondary small mt-4 mb-0">
+
+                        Click an available timetable block to select a starting time.
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</form>
+
+<script>
+
+    const dayNames = [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday"
+    ];
+
+    const timeCells =
+        document.querySelectorAll('.insert-time-cell');
+
+    const durationSelect =
+        document.getElementById('durationSelect');
+
+    const selectedDay =
+        document.getElementById('selectedDay');
+
+    const selectedStart =
+        document.getElementById('selectedStart');
+
+    const selectedEnd =
+        document.getElementById('selectedEnd');
+
+    const availabilityDetails =
+        document.getElementById('availabilityDetails');
+
+    const displayDay =
+        document.getElementById('displayDay');
+
+    const displayStart =
+        document.getElementById('displayStart');
+
+    const displayEnd =
+        document.getElementById('displayEnd');
+
+    const saveButton =
+        document.getElementById('saveButton');
+
+    const selectionMessage =
+        document.getElementById('selectionMessage');
+
+
+    let currentDay = null;
+    let currentStartMinutes = null;
+
+
+    /*
+     * Convert HH:mm into minutes.
+     */
+    function timeToMinutes(time) {
+
+        const parts = time.split(':');
+
+        return (
+            parseInt(parts[0]) * 60 +
+            parseInt(parts[1])
+        );
+    }
+
+
+    /*
+     * Convert minutes back into HH:mm.
+     */
+    function minutesToTime(minutes) {
+
+        const hours =
+            Math.floor(minutes / 60);
+
+        const mins =
+            minutes % 60;
+
+        return (
+            String(hours).padStart(2, '0') +
+            ':' +
+            String(mins).padStart(2, '0')
+        );
+    }
+
+
+    /*
+     * Remove all selection classes.
+     */
+    function clearSelection() {
+
+        document
+            .querySelectorAll(
+                '.insert-time-block.range-start, ' +
+                '.insert-time-block.range-middle, ' +
+                '.insert-time-block.range-end, ' +
+                '.insert-time-block.range-single'
+            )
+            .forEach(function (block) {
+
+                block.classList.remove(
+                    'range-start',
+                    'range-middle',
+                    'range-end',
+                    'range-single'
+                );
+
+            });
+
+    }
+
+
+    /*
+     * Check how many continuous minutes are available
+     * from the selected starting point.
+     *
+     * It stops at:
+     * - an existing timeslot
+     * - the end of the timetable at 23:00
+     *
+     * A disabled cell can still be part of a range. It is disabled only
+     * because it cannot be used as the starting point of a new timeslot.
+     */
+    function getAvailableMinutes() {
+
+        if (
+            currentDay === null ||
+            currentStartMinutes === null
+        ) {
+            return 0;
+        }
+
+
+        let availableMinutes = 0;
+        let checkMinutes = currentStartMinutes;
+
+
+        while (checkMinutes < 23 * 60) {
+
+            const time =
+                minutesToTime(checkMinutes);
+
+            const cell =
+                document.querySelector(
+                    '.insert-time-cell[data-day="' +
+                    currentDay +
+                    '"][data-time="' +
+                    time +
+                    '"]'
+                );
+
+
+            if (!cell) {
+                break;
+            }
+
+
+            /*
+             * A disabled button cannot be used as a starting point, but its
+             * cell can still be part of a range that started earlier.
+             * Existing slots have no insert-time-cell and stop the range.
+             */
+            if (!cell.querySelector('.insert-time-block')) {
+                break;
+            }
+
+
+            availableMinutes += 30;
+            checkMinutes += 30;
+
+        }
+
+
+        return availableMinutes;
+    }
+
+
+    /*
+     * Update duration options according to
+     * continuous available time.
+     */
+    function updateDurationOptions() {
+
+        const availableMinutes =
+            getAvailableMinutes();
+
+
+        Array.from(durationSelect.options)
+            .forEach(function (option) {
+
+                if (!option.value) {
+                    return;
+                }
+
+
+                const duration =
+                    parseInt(option.value);
+
+
+                option.disabled =
+                    duration > availableMinutes;
+
+            });
+
+    }
+
+
+    /*
+     * Highlight the selected duration as one
+     * continuous visual range.
+     */
+    function showSelectedRange(endMinutes) {
+
+        clearSelection();
+
+
+        const selectedBlocks = [];
+
+
+        for (
+            let minutes = currentStartMinutes;
+            minutes < endMinutes;
+            minutes += 30
+        ) {
+
+            const time =
+                minutesToTime(minutes);
+
+
+            const cell =
+                document.querySelector(
+                    '.insert-time-cell[data-day="' +
+                    currentDay +
+                    '"][data-time="' +
+                    time +
+                    '"]'
+                );
+
+
+            if (!cell) {
+                continue;
+            }
+
+
+            const block =
+                cell.querySelector('.insert-time-block');
+
+
+            if (block) {
+
+                selectedBlocks.push(block);
+
+            }
+
+        }
+
+
+        selectedBlocks.forEach(function (
+            block,
+            index
+        ) {
+
+            /*
+             * Only the first block is the
+             * black starting-time block.
+             */
+            if (index === 0) {
+
+                block.classList.add(
+                    'range-start'
+                );
+
+                return;
+            }
+
+
+            /*
+             * Every block after the starting
+             * block belongs to the blue duration.
+             */
+            if (
+                index === selectedBlocks.length - 1
+            ) {
+
+                block.classList.add(
+                    'range-end'
+                );
+
+                return;
+            }
+
+
+            block.classList.add(
+                'range-middle'
+            );
+
+        });
+
+    }
+
+
+    /*
+     * Select starting time.
+     */
+    timeCells.forEach(function (cell) {
+
+        const button =
+            cell.querySelector('.insert-time-block');
+
+
+        /*
+         * Ignore disabled blocks.
+         */
+        if (!button || button.disabled) {
+            return;
+        }
+
+
+        button.addEventListener(
+            'click',
+            function () {
+
+                currentDay =
+                    parseInt(cell.dataset.day);
+
+                currentStartMinutes =
+                    timeToMinutes(
+                        cell.dataset.time
+                    );
+
+                availabilityDetails.classList.remove('d-none');
+
+
+                selectedDay.value =
+                    currentDay;
+
+                selectedStart.value =
+                    cell.dataset.time;
+
+                selectedEnd.value =
+                    "";
+
+
+                displayDay.textContent =
+                    dayNames[currentDay];
+
+                displayStart.textContent =
+                    cell.dataset.time;
+
+                displayEnd.textContent =
+                    "Select duration";
+
+
+                /*
+                 * Enable duration selection.
+                 */
+                durationSelect.disabled = false;
+
+                durationSelect.value = "";
+
+
+                /*
+                 * Disable durations that would reach
+                 * an existing timeslot or 23:00.
+                 */
+                updateDurationOptions();
+
+
+                /*
+                 * Remove any previous selected range
+                 * and show the selected starting block.
+                 */
+                clearSelection();
+
+                button.classList.add(
+                    'range-single'
+                );
+
+                selectionMessage.className =
+                    "alert alert-info small mt-4 mb-0";
+
+                selectionMessage.textContent =
+                    "Starting time selected. Now choose a duration.";
+
+
+                saveButton.disabled = true;
+
+            }
+        );
+
+    });
+
+
+    /*
+     * Select duration.
+     */
+    durationSelect.addEventListener(
+        'change',
+        function () {
+
+            if (
+                currentDay === null ||
+                currentStartMinutes === null ||
+                !this.value
+            ) {
+                return;
+            }
+
+
+            const duration =
+                parseInt(this.value);
+
+            const availableMinutes =
+                getAvailableMinutes();
+
+
+            /*
+             * Additional protection.
+             */
+            if (duration > availableMinutes) {
+
+                selectedEnd.value = "";
+
+                displayEnd.textContent =
+                    "Invalid";
+
+                saveButton.disabled = true;
+
+                return;
+            }
+
+
+            const endMinutes =
+                currentStartMinutes + duration;
+
+            const endTime =
+                minutesToTime(endMinutes);
+
+
+            selectedEnd.value =
+                endTime;
+
+            displayEnd.textContent =
+                endTime;
+
+
+            /*
+             * Show the entire selection as one range.
+             */
+            showSelectedRange(endMinutes);
+
+
+            selectionMessage.className =
+                "alert alert-success small mt-4 mb-0";
+
+            selectionMessage.textContent =
+                dayNames[currentDay] +
+                " " +
+                selectedStart.value +
+                " - " +
+                endTime;
+
+            saveButton.disabled = false;
+
+        }
+    );
+
+
+    /*
+     * Final validation before submission.
+     */
+    document
+        .getElementById('timeslotForm')
+        .addEventListener(
+            'submit',
+            function (event) {
+
+                if (
+                    selectedDay.value === "" ||
+                    selectedStart.value === "" ||
+                    selectedEnd.value === ""
+                ) {
+
+                    event.preventDefault();
+
+                    selectionMessage.className =
+                        "alert alert-danger small mt-4 mb-0";
+
+                    selectionMessage.textContent =
+                        "Please select a starting time and duration.";
+
+                }
+
+            }
+        );
+
+</script>

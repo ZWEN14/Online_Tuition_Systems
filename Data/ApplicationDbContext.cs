@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using AnywhereEdureach.Models;
 using Online_Tuition_Systems.Models;
 
 namespace Online_Tuition_Systems.Data;
@@ -15,7 +16,14 @@ public class ApplicationDbContext : DbContext
     public DbSet<EventProposal> EventProposals => Set<EventProposal>();
     public DbSet<EventRegistration> EventRegistrations => Set<EventRegistration>();
     public DbSet<UserNotification> Notifications => Set<UserNotification>();
-    public DbSet<UserAccount> Users => Set<UserAccount>();
+    public DbSet<User> Users => Set<User>();
+    public DbSet<Student> Students => Set<Student>();
+    public DbSet<Tutor> Tutors => Set<Tutor>();
+    public DbSet<Subject> Subjects => Set<Subject>();
+    public DbSet<TutorSubject> TutorSubjects => Set<TutorSubject>();
+    public DbSet<Timeslot> Timeslots => Set<Timeslot>();
+    public DbSet<Booking> Bookings => Set<Booking>();
+    public DbSet<Notification> BookingNotifications => Set<Notification>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -114,7 +122,7 @@ public class ApplicationDbContext : DbContext
             .HasForeignKey<EventProposal>(item => item.CreatedEventId)
             .OnDelete(DeleteBehavior.SetNull);
 
-        var user = modelBuilder.Entity<UserAccount>();
+        var user = modelBuilder.Entity<User>();
 
         user.ToTable("Users");
 
@@ -128,9 +136,33 @@ public class ApplicationDbContext : DbContext
             .HasMaxLength(40);
 
         notification.HasOne(item => item.User)
-            .WithMany(item => item.Notifications)
+            .WithMany()
             .HasForeignKey(item => item.UserId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Booking>()
+            .HasOne(item => item.Student)
+            .WithMany()
+            .HasForeignKey(item => item.StudentId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Booking>()
+            .HasOne(item => item.Tutor)
+            .WithMany()
+            .HasForeignKey(item => item.TutorId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Booking>()
+            .HasOne(item => item.Timeslot)
+            .WithMany()
+            .HasForeignKey(item => item.TimeslotId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Booking>()
+            .HasOne(item => item.Subject)
+            .WithMany()
+            .HasForeignKey(item => item.SubjectId)
+            .OnDelete(DeleteBehavior.Restrict);
 
     }
 }

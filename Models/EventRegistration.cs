@@ -25,7 +25,7 @@ public class EventRegistration
     public int UserId { get; set; }
 
     [ForeignKey(nameof(UserId))]
-    public UserAccount User { get; set; } = null!;
+    public User User { get; set; } = null!;
 
     [StringLength(1_000)]
     public string? Message { get; set; }

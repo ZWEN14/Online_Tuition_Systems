@@ -53,3 +53,13 @@ Desktop.ini
 *.tmp
 *.temp
 ~$*
+
+# Local safety backup created while consolidating a teammate's legacy EF context
+.merge-backup/
+wwwroot/uploads/
+
+# Duplicate client libraries from the teammate branch (LibMan restores the used copy)
+wwwroot/js/jquery/
+wwwroot/js/jquery-ajax-unobtrusive/
+wwwroot/js/jquery-validate/
+wwwroot/js/jquery-validation-unobtrusive/

@@ -1,7 +1,4 @@
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Online_Tuition_Systems.Authorization;
-using Online_Tuition_Systems.Models;
 
 namespace Online_Tuition_Systems.Data;
 
@@ -13,67 +10,72 @@ public static class DevelopmentAccountSeeder
     {
         await using var scope = services.CreateAsyncScope();
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var passwordHasher = scope.ServiceProvider
-            .GetRequiredService<IPasswordHasher<UserAccount>>();
+        var helper = scope.ServiceProvider.GetRequiredService<Helper>();
 
         var configuredAccounts = new[]
         {
-            ReadAccount(configuration, "TestAdmin", AppRoles.Admin),
-            ReadAccount(configuration, "TestStudent", AppRoles.Student),
-            ReadAccount(configuration, "TestTutor", AppRoles.Tutor)
+            ReadAccount(configuration, "TestAdmin", UserRole.Admin),
+            ReadAccount(configuration, "TestStudent", UserRole.Student),
+            ReadAccount(configuration, "TestTutor", UserRole.Tutor)
         }.OfType<ConfiguredAccount>();
 
-        foreach (var configuredAccount in configuredAccounts)
+        foreach (var account in configuredAccounts)
         {
-            var email = NormalizeEmail(configuredAccount.Email);
-            var accountExists = await context.Users
-                .AnyAsync(user => user.Email == email);
-
-            if (accountExists)
+            var email = account.Email.Trim().ToLowerInvariant();
+            if (await context.Users.AnyAsync(user => user.Email == email))
             {
                 continue;
             }
 
-            var user = new UserAccount
+            var user = new User
             {
+                Name = account.Role.ToString(),
                 Email = email,
-                Role = configuredAccount.Role,
-                CreatedAt = DateTimeOffset.UtcNow
+                Hash = helper.HashPassword(account.Password),
+                Role = account.Role,
+                EmailVerified = true,
+                CreatedAt = DateTime.UtcNow
             };
 
-            user.PasswordHash = passwordHasher.HashPassword(
-                user,
-                configuredAccount.Password);
-
             context.Users.Add(user);
-        }
+            await context.SaveChangesAsync();
 
-        await context.SaveChangesAsync();
+            if (account.Role == UserRole.Student)
+            {
+                context.Students.Add(new Student
+                {
+                    UserId = user.Id,
+                    EducationLevel = "Undergraduate"
+                });
+            }
+            else if (account.Role == UserRole.Tutor)
+            {
+                context.Tutors.Add(new Tutor
+                {
+                    UserId = user.Id,
+                    Rating = 0
+                });
+            }
+
+            await context.SaveChangesAsync();
+        }
     }
 
     private static ConfiguredAccount? ReadAccount(
         IConfiguration configuration,
         string section,
-        string role)
+        UserRole role)
     {
         var email = configuration[$"{section}:Email"];
         var password = configuration[$"{section}:Password"];
 
-        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrEmpty(password))
-        {
-            return null;
-        }
-
-        return new ConfiguredAccount(email, password, role);
-    }
-
-    private static string NormalizeEmail(string email)
-    {
-        return email.Trim().ToLowerInvariant();
+        return string.IsNullOrWhiteSpace(email) || string.IsNullOrEmpty(password)
+            ? null
+            : new ConfiguredAccount(email, password, role);
     }
 
     private sealed record ConfiguredAccount(
         string Email,
         string Password,
-        string Role);
+        UserRole Role);
 }

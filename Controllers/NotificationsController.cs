@@ -117,17 +117,13 @@ public class NotificationsController : Controller
 
     private Task<int?> GetCurrentUserId()
     {
-        var email = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        if (string.IsNullOrWhiteSpace(email))
+        if (!int.TryParse(userIdValue, out var userId))
         {
             return Task.FromResult<int?>(null);
         }
 
-        return _context.Users
-            .AsNoTracking()
-            .Where(item => item.Email == email)
-            .Select(item => (int?)item.Id)
-            .SingleOrDefaultAsync();
+        return Task.FromResult<int?>(userId);
     }
 }

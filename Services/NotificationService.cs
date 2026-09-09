@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using AnywhereEdureach.Models;
 using Online_Tuition_Systems.Authorization;
 using Online_Tuition_Systems.Data;
 using Online_Tuition_Systems.Models;
@@ -105,18 +106,18 @@ public class NotificationService : INotificationService
             $"Reason: {tuitionEvent.CancellationReason}",
             "/EventRegistrations/MyRegistrations");
 
-        var organizerEmail = tuitionEvent.OrganizerUserId;
+        var organizerReference = tuitionEvent.OrganizerUserId;
 
-        if (string.IsNullOrWhiteSpace(organizerEmail))
+        if (string.IsNullOrWhiteSpace(organizerReference))
         {
             return;
         }
 
-        var organizerUserId = await UserIdForEmail(organizerEmail);
+        var organizerUserId = await UserIdForReference(organizerReference);
 
         if (organizerUserId.HasValue
             && !string.Equals(
-                organizerEmail,
+                organizerReference,
                 tuitionEvent.CancelledByUserId,
                 StringComparison.OrdinalIgnoreCase)
             && !registrantUserIds.Contains(organizerUserId.Value))
@@ -155,7 +156,7 @@ public class NotificationService : INotificationService
 
     public async Task ProposalReviewedAsync(EventProposal proposal)
     {
-        var userId = await UserIdForEmail(proposal.ProposedByUserId);
+        var userId = await UserIdForReference(proposal.ProposedByUserId);
 
         if (!userId.HasValue)
         {
@@ -240,7 +241,7 @@ public class NotificationService : INotificationService
     {
         return _context.Users
             .AsNoTracking()
-            .Where(item => item.Role == AppRoles.Admin)
+            .Where(item => item.Role == UserRole.Admin)
             .Select(item => item.Id)
             .ToListAsync();
     }
@@ -252,7 +253,7 @@ public class NotificationService : INotificationService
             return [];
         }
 
-        var userId = await UserIdForEmail(tuitionEvent.OrganizerUserId);
+        var userId = await UserIdForReference(tuitionEvent.OrganizerUserId);
         return userId.HasValue ? [userId.Value] : [];
     }
 
@@ -262,11 +263,11 @@ public class NotificationService : INotificationService
 
         if (audience == AnnouncementAudience.Student)
         {
-            query = query.Where(item => item.Role == AppRoles.Student);
+            query = query.Where(item => item.Role == UserRole.Student);
         }
         else if (audience == AnnouncementAudience.Tutor)
         {
-            query = query.Where(item => item.Role == AppRoles.Tutor);
+            query = query.Where(item => item.Role == UserRole.Tutor);
         }
 
         return await query.Select(item => item.Id).ToListAsync();
@@ -278,30 +279,35 @@ public class NotificationService : INotificationService
 
         if (audience == RegistrationAudience.Student)
         {
-            query = query.Where(item => item.Role == AppRoles.Student);
+            query = query.Where(item => item.Role == UserRole.Student);
         }
         else if (audience == RegistrationAudience.Tutor)
         {
-            query = query.Where(item => item.Role == AppRoles.Tutor);
+            query = query.Where(item => item.Role == UserRole.Tutor);
         }
 
         return await query.Select(item => item.Id).ToListAsync();
     }
 
-    private IQueryable<UserAccount> StudentAndTutorUsers()
+    private IQueryable<User> StudentAndTutorUsers()
     {
         return _context.Users
             .AsNoTracking()
             .Where(item =>
-                item.Role == AppRoles.Student
-                || item.Role == AppRoles.Tutor);
+                item.Role == UserRole.Student
+                || item.Role == UserRole.Tutor);
     }
 
-    private Task<int?> UserIdForEmail(string email)
+    private Task<int?> UserIdForReference(string userReference)
     {
+        if (int.TryParse(userReference, out var userId))
+        {
+            return Task.FromResult<int?>(userId);
+        }
+
         return _context.Users
             .AsNoTracking()
-            .Where(item => item.Email == email)
+            .Where(item => item.Email == userReference)
             .Select(item => (int?)item.Id)
             .SingleOrDefaultAsync();
     }
