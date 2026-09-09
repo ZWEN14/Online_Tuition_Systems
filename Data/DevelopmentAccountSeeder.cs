@@ -22,40 +22,38 @@ public static class DevelopmentAccountSeeder
         foreach (var account in configuredAccounts)
         {
             var email = account.Email.Trim().ToLowerInvariant();
-            if (await context.Users.AnyAsync(user => user.Email == email))
-            {
-                continue;
-            }
-
             var previousEmail = account.PreviousEmail?.Trim().ToLowerInvariant();
-            var existingUser = string.IsNullOrWhiteSpace(previousEmail)
-                ? null
-                : await context.Users.SingleOrDefaultAsync(user => user.Email == previousEmail);
+            var user = await context.Users.SingleOrDefaultAsync(user => user.Email == email);
 
-            if (existingUser is not null)
+            if (user is null && !string.IsNullOrWhiteSpace(previousEmail))
             {
-                existingUser.Email = email;
-                existingUser.Hash = helper.HashPassword(account.Password);
-                existingUser.Role = account.Role;
-                existingUser.EmailVerified = true;
-                await context.SaveChangesAsync();
-                continue;
+                user = await context.Users.SingleOrDefaultAsync(user => user.Email == previousEmail);
             }
 
-            var user = new User
+            if (user is null)
             {
-                Name = account.Role.ToString(),
-                Email = email,
-                Hash = helper.HashPassword(account.Password),
-                Role = account.Role,
-                EmailVerified = true,
-                CreatedAt = DateTime.UtcNow
-            };
+                user = new User
+                {
+                    Name = account.Role.ToString(),
+                    CreatedAt = DateTime.UtcNow
+                };
 
-            context.Users.Add(user);
+                context.Users.Add(user);
+            }
+
+            // Development demo accounts are deterministic so every developer
+            // can sign in with the credentials in appsettings.Development.json.
+            user.Email = email;
+            user.Hash = helper.HashPassword(account.Password);
+            user.Role = account.Role;
+            user.EmailVerified = true;
+            user.IsBlocked = false;
+            user.FailedLoginAttempts = 0;
+            user.LockoutEnd = null;
             await context.SaveChangesAsync();
 
-            if (account.Role == UserRole.Student)
+            if (account.Role == UserRole.Student &&
+                !await context.Students.AnyAsync(student => student.UserId == user.Id))
             {
                 context.Students.Add(new Student
                 {
@@ -63,7 +61,8 @@ public static class DevelopmentAccountSeeder
                     EducationLevel = "Undergraduate"
                 });
             }
-            else if (account.Role == UserRole.Tutor)
+            else if (account.Role == UserRole.Tutor &&
+                     !await context.Tutors.AnyAsync(tutor => tutor.UserId == user.Id))
             {
                 context.Tutors.Add(new Tutor
                 {
