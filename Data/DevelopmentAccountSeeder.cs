@@ -27,6 +27,21 @@ public static class DevelopmentAccountSeeder
                 continue;
             }
 
+            var previousEmail = account.PreviousEmail?.Trim().ToLowerInvariant();
+            var existingUser = string.IsNullOrWhiteSpace(previousEmail)
+                ? null
+                : await context.Users.SingleOrDefaultAsync(user => user.Email == previousEmail);
+
+            if (existingUser is not null)
+            {
+                existingUser.Email = email;
+                existingUser.Hash = helper.HashPassword(account.Password);
+                existingUser.Role = account.Role;
+                existingUser.EmailVerified = true;
+                await context.SaveChangesAsync();
+                continue;
+            }
+
             var user = new User
             {
                 Name = account.Role.ToString(),
@@ -67,15 +82,17 @@ public static class DevelopmentAccountSeeder
         UserRole role)
     {
         var email = configuration[$"{section}:Email"];
+        var previousEmail = configuration[$"{section}:PreviousEmail"];
         var password = configuration[$"{section}:Password"];
 
         return string.IsNullOrWhiteSpace(email) || string.IsNullOrEmpty(password)
             ? null
-            : new ConfiguredAccount(email, password, role);
+            : new ConfiguredAccount(email, previousEmail, password, role);
     }
 
     private sealed record ConfiguredAccount(
         string Email,
+        string? PreviousEmail,
         string Password,
         UserRole Role);
 }
