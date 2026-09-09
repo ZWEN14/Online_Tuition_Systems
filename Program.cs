@@ -60,9 +60,4 @@ app.MapControllerRoute(
         pattern: "{controller=Home}/{action=Welcome}/{id?}")
     .WithStaticAssets();
 
-if (app.Environment.IsDevelopment())
-{
-    await DevelopmentAccountSeeder.SeedAsync(app.Services, app.Configuration);
-}
-
 app.Run();
