@@ -1,0 +1,33 @@
+@model List<Notification>
+
+@{
+    ViewBag.Title = "Notification | Index";
+}
+
+<div class="page-header d-flex justify-content-between align-items-end gap-3">
+    <div><span class="text-uppercase small fw-semibold text-primary">Updates</span><h1 class="mb-1">Notifications</h1><p class="mb-0">Stay up to date with your sessions and account activity.</p></div>
+    @if (Model.Any(n => !n.IsRead))
+    {
+        <form method="post" asp-action="MarkAllAsRead" data-ajax="true">
+            @Html.AntiForgeryToken()
+            <button class="btn btn-outline-primary">Mark all as read</button>
+        </form>
+    }
+</div>
+
+@if (!Model.Any())
+{
+    <div class="empty-state card">No notifications yet.</div>
+}
+@foreach (var n in Model)
+{
+    <div class="notification-item card p-3 mb-2 @(n.IsRead ? "is-read" : "")">
+        <a class="d-flex align-items-start gap-3 text-decoration-none text-reset notification-link" asp-action="Open" asp-route-id="@n.Id">
+            <span class="notification-dot @(n.IsRead ? "muted" : "")"></span>
+            <div class="flex-grow-1">
+                <p class="mb-1 @(n.IsRead ? "" : "fw-bold")">@n.Message</p>
+                <p class="text-muted small mb-1">@n.CreatedAt.ToString("dd MMM yyyy, h:mm tt")</p>
+            </div>
+        </a>
+    </div>
+}

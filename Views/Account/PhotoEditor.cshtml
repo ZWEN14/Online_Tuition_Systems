@@ -1,0 +1,53 @@
+@model ProfileUpdateVM
+
+@{
+    ViewBag.Title = "Account | Photo Editor";
+}
+
+<div id="photoEditorPage" class="photo-editor-page" data-photo-editor-page="true" data-return-url="@Url.Action("UpdateProfile", "Account")">
+    <div class="page-header d-flex justify-content-between align-items-end gap-3">
+        <div>
+            <span class="text-uppercase small fw-semibold text-primary">Profile settings</span>
+            <h1 class="mb-1">Advanced Photo Editor</h1>
+            <p class="mb-0">Drag the image, adjust the crop, rotate it, or capture a new photo.</p>
+        </div>
+        <a class="btn btn-outline-secondary" asp-action="UpdateProfile">Cancel</a>
+    </div>
+
+    <div class="card photo-editor-card">
+        <div class="card-body p-4 p-md-5">
+            <div class="photo-editor-workspace">
+                <div class="photo-editor-stage">
+                    <div id="photoPreview" class="photo-editor-canvas-wrap">
+                        @if (!string.IsNullOrEmpty(Model.PhotoPath))
+                        {
+                            <img id="initialPhoto" src="@Model.PhotoPath" alt="Current profile photo" />
+                        }
+                        else
+                        {
+                            <span id="initialPhoto">@Model.Name?.FirstOrDefault()</span>
+                        }
+                        <canvas id="photoCanvas" width="480" height="480" aria-label="Photo crop preview"></canvas>
+                    </div>
+                    <p class="small text-muted mt-2 mb-0 text-center">Drag inside the preview to reposition the image.</p>
+                </div>
+
+                <div class="photo-editor-controls">
+                    <label for="photoInput" class="form-label fw-semibold">Choose an image</label>
+                    <input id="photoInput" class="form-control" type="file" accept="image/png,image/jpeg,image/webp">
+                    <div class="form-text">The final result is cropped to a square JPG before returning to your profile.</div>
+
+                    <label for="photoZoom" class="form-label fw-semibold mt-4">Crop zoom</label>
+                    <input id="photoZoom" class="form-range" type="range" min="1" max="3" step="0.05" value="1">
+
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <button type="button" class="btn btn-outline-secondary" id="rotateLeft">Rotate left</button>
+                        <button type="button" class="btn btn-outline-secondary" id="rotateRight">Rotate right</button>
+                    </div>
+                    <div id="photoStatus" class="form-text mt-3" role="status"></div>
+                    <button type="button" class="btn btn-success mt-4" id="applyPhotoEdit">Use this photo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

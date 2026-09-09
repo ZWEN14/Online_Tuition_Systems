@@ -1,0 +1,36 @@
+﻿@model AdminUsersVM
+
+@{
+    ViewBag.Title = "Admin | Users";
+}
+
+<div class="page-header d-flex justify-content-between align-items-end gap-3">
+    <div><span class="text-uppercase small fw-semibold text-primary">Administration</span><h1 class="mb-1">Manage Users</h1><p class="mb-0">Maintain tutor, student, and administrator accounts.</p></div>
+    <a class="btn btn-dark" asp-controller="Admin" asp-action="Insert">+ Add User</a>
+</div>
+
+<form method="get" asp-action="Index" class="card card-body mb-3" data-ajax="true" data-ajax-target="#adminTable">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-7">
+            <label for="query" class="form-label small fw-semibold">Search users</label>
+            <div class="position-relative">
+                <input id="query" name="query" value="@Model.Query" class="form-control pe-5" placeholder="Search by name, email, or role..." />
+                <button type="button" id="clearAdminSearch" class="search-clear" aria-label="Clear search" title="Clear search">×</button>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <label for="sort" class="form-label small fw-semibold">Sort by</label>
+            <select id="sort" name="sort" class="form-select">
+                <option value="name" selected="@(Model.Sort == "name")">Name</option>
+                <option value="email" selected="@(Model.Sort == "email")">Email</option>
+                <option value="role" selected="@(Model.Sort == "role")">Role</option>
+                <option value="status" selected="@(Model.Sort == "status")">Status</option>
+            </select>
+        </div>
+        <div class="col-md-2"><button class="btn btn-primary w-100" type="submit">Search</button></div>
+    </div>
+</form>
+
+<div id="adminTable" class="card table-card">
+    <partial name="_UserTable" model="Model" />
+</div>

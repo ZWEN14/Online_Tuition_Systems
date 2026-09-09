@@ -1,24 +1,27 @@
-using System.Diagnostics;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Online_Tuition_Systems.Models;
 
-namespace Online_Tuition_Systems.Controllers;
-
-public class HomeController : Controller
+namespace AnywhereEdureach.Controllers
 {
-    public IActionResult Index()
+    public class HomeController : Controller
     {
-        return View();
-    }
+        // Public landing page.
+        public IActionResult Welcome()
+        {
+            if (User.Identity?.IsAuthenticated == true) return RedirectToAction(nameof(Index));
+            return View();
+        }
 
-    public IActionResult Privacy()
-    {
-        return View();
-    }
+        // Logged-in dashboard.
+        [Authorize]
+        public IActionResult Index()
+        {
+            return View();
+        }
 
-    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    public IActionResult Error()
-    {
-        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        public IActionResult Error()
+        {
+            return View();
+        }
     }
 }

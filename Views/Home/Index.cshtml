@@ -1,8 +1,40 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@{
+    ViewBag.Title = "Home | Dashboard";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="dashboard-home">
+    <section class="dashboard-hero mb-4">
+        <div>
+            <span class="text-uppercase small fw-semibold text-primary">@(User.IsInRole("Student") ? "Learning workspace" : User.IsInRole("Tutor") ? "Teaching workspace" : "Administration workspace")</span>
+            <h1 class="display-6 fw-bold mb-2">@(User.IsInRole("Student") ? $"Welcome back, {User.Identity!.Name}" : User.IsInRole("Tutor") ? $"Ready to teach, {User.Identity!.Name}" : "Platform overview")</h1>
+            <p class="lead text-muted mb-0">@(User.IsInRole("Student") ? "Find your next lesson and keep your learning on track." : User.IsInRole("Tutor") ? "Manage your availability and respond to students." : "Manage users and keep the platform running smoothly.")</p>
+        </div>
+        <div class="dashboard-hero-mark" aria-hidden="true">✦</div>
+    </section>
+
+    <section>
+        <div class="d-flex justify-content-between align-items-end mb-3">
+            <div><span class="text-uppercase small fw-semibold text-muted">Quick access</span><h2 class="h4 mb-0">What would you like to do?</h2></div>
+        </div>
+        <div class="row g-3">
+            @if (User.IsInRole("Student"))
+            {
+                <div class="col-md-6"><a class="card dashboard-card text-decoration-none h-100" asp-controller="Subject" asp-action="Index"><div class="card-body p-4"><div class="text-primary fs-3 mb-3">↗</div><h5 class="card-title">Find a subject</h5><p class="card-text text-muted">Explore subjects and choose a tutor.</p></div></a></div>
+                <div class="col-md-6"><a class="card dashboard-card text-decoration-none h-100" asp-controller="Tutor" asp-action="Index"><div class="card-body p-4"><div class="text-primary fs-3 mb-3">◉</div><h5 class="card-title">Find a tutor</h5><p class="card-text text-muted">Compare tutor profiles and availability.</p></div></a></div>
+            }
+            @if (User.IsInRole("Tutor"))
+            {
+                <div class="col-md-6"><a class="card dashboard-card text-decoration-none h-100" asp-controller="Timeslot" asp-action="Index"><div class="card-body p-4"><div class="text-primary fs-3 mb-3">◷</div><h5 class="card-title">Manage availability</h5><p class="card-text text-muted">Keep your weekly schedule up to date.</p></div></a></div>
+            }
+            @if (User.IsInRole("Admin"))
+            {
+                <div class="col-md-6"><a class="card dashboard-card text-decoration-none h-100" asp-controller="Admin" asp-action="Index"><div class="card-body p-4"><div class="text-primary fs-3 mb-3">◎</div><h5 class="card-title">Manage users</h5><p class="card-text text-muted">Review, edit, and secure user accounts.</p></div></a></div>
+            }
+            @if (!User.IsInRole("Admin"))
+            {
+                <div class="col-md-6"><a class="card dashboard-card text-decoration-none h-100" asp-controller="Booking" asp-action="Index"><div class="card-body p-4"><div class="text-primary fs-3 mb-3">▣</div><h5 class="card-title">@(User.IsInRole("Tutor") ? "Student requests" : "My learning")</h5><p class="card-text text-muted">Review your latest session activity.</p></div></a></div>
+            }
+            <div class="col-md-6"><a class="card dashboard-card text-decoration-none h-100" asp-controller="Notification" asp-action="Index"><div class="card-body p-4"><div class="text-primary fs-3 mb-3">●</div><h5 class="card-title">Notifications</h5><p class="card-text text-muted">Review your latest updates.</p></div></a></div>
+        </div>
+    </section>
 </div>

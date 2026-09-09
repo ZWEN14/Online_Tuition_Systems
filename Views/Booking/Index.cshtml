@@ -1,0 +1,71 @@
+@model List<Booking>
+@{
+    ViewBag.Title = "Booking | Index";
+}
+<div data-booking-index="true">
+    <div class="page-header d-flex justify-content-between align-items-end gap-3">
+        <div><span class="text-uppercase small fw-semibold text-primary">Sessions</span><h1 class="mb-1">My Bookings</h1><p class="mb-0">Track upcoming requests, payments, and completed sessions.</p></div>
+        @if (User.IsInRole("Student"))
+        {
+            <a class="btn btn-dark" asp-controller="Subject" asp-action="Index">+ Request a Session</a>
+        }
+    </div>
+</div>
+
+@if (TempData["Info"] != null)
+{
+    <div class="alert alert-info">@TempData["Info"]</div>
+}
+
+<div class="card table-card">
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Student</th>
+                    <th>Tutor</th>
+                    <th>Subject</th>
+                    <th>Date &amp; Time</th>
+                    <th>Cost</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @foreach (var b in Model)
+                {
+                    <tr>
+                        <td>@b.Student!.Name</td>
+                        <td>@b.Tutor!.Name</td>
+                        <td>@(b.Subject?.Name ?? "N/A")</td>
+                        <td>@b.BookingDate.ToString("dd MMM yyyy") (@b.Timeslot!.StartTime.ToString(@"hh\:mm") - @b.Timeslot.EndTime.ToString(@"hh\:mm"))</td>
+                        <td>RM @b.Cost.ToString("0.00")</td>
+                        <td>
+                            <span class="badge bg-@b.Status.CssClass()">@b.Status</span>
+                            @if (b.Status == BookingStatus.Accepted && b.PaymentStatus != "paid")
+                            {
+                                <p class="mt-1 mb-0 small text-warning">@(User.IsInRole("Student") ? "Payment required" : "Awaiting student payment")</p>
+                                @if (b.PaymentDeadline.HasValue)
+                                {
+                                    <small class="text-muted">Pay before @b.PaymentDeadline.Value.ToString("dd MMM yyyy, hh:mm tt")</small>
+                                }
+                            }
+                            @if (b.Status == BookingStatus.Paid)
+                            {
+                                <p class="mt-1 mb-0 small text-success">Payment completed</p>
+                            }
+                        </td>
+                        <td><a asp-controller="Booking" asp-action="Show" asp-route-id="@b.Id">View</a></td>
+                    </tr>
+                }
+
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="7"><div class="empty-state">No bookings yet. Your requested sessions will appear here.</div></td></tr>
+                }
+
+            </tbody>
+        </table>
+    </div>
+</div>
