@@ -14,20 +14,22 @@ public sealed class GoogleRecaptchaService(HttpClient httpClient, IOptions<Recap
 {
     private readonly RecaptchaOptions options = options.Value;
 
-    public string SiteKey => options.SiteKey;
+    public bool IsConfigured =>
+        IsUsableSiteKey(options.SiteKey) &&
+        IsUsableProjectId(options.ProjectId) &&
+        IsUsableApiKey(options.ApiKey);
+
+    public string SiteKey => IsConfigured ? options.SiteKey : "";
 
     public async Task<bool> VerifyAsync(string? token, string action, string? remoteIp, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(token) ||
-            string.IsNullOrWhiteSpace(options.ProjectId) ||
-            string.IsNullOrWhiteSpace(options.ApiKey) ||
-            string.IsNullOrWhiteSpace(options.SiteKey))
+        if (string.IsNullOrWhiteSpace(token) || !IsConfigured)
         {
             logger.LogWarning("reCAPTCHA Enterprise verification was skipped because token or configuration is missing. TokenPresent={TokenPresent}, ProjectConfigured={ProjectConfigured}, ApiKeyConfigured={ApiKeyConfigured}, SiteKeyConfigured={SiteKeyConfigured}",
                 !string.IsNullOrWhiteSpace(token),
-                !string.IsNullOrWhiteSpace(options.ProjectId),
-                !string.IsNullOrWhiteSpace(options.ApiKey),
-                !string.IsNullOrWhiteSpace(options.SiteKey));
+                IsUsableProjectId(options.ProjectId),
+                IsUsableApiKey(options.ApiKey),
+                IsUsableSiteKey(options.SiteKey));
             return environment.IsDevelopment();
         }
 
@@ -74,6 +76,22 @@ public sealed class GoogleRecaptchaService(HttpClient httpClient, IOptions<Recap
 
         return valid && actionMatches;
     }
+
+    private static bool IsUsableSiteKey(string value) =>
+        IsRealValue(value) && value.StartsWith("6L", StringComparison.Ordinal) && value.Length >= 30;
+
+    private static bool IsUsableApiKey(string value) =>
+        IsRealValue(value) && value.StartsWith("AIza", StringComparison.Ordinal) && value.Length >= 30;
+
+    private static bool IsUsableProjectId(string value) =>
+        IsRealValue(value) && value.Length >= 6;
+
+    private static bool IsRealValue(string value) =>
+        !string.IsNullOrWhiteSpace(value) &&
+        !value.Contains("your-", StringComparison.OrdinalIgnoreCase) &&
+        !value.Contains("placeholder", StringComparison.OrdinalIgnoreCase) &&
+        !value.Contains("example", StringComparison.OrdinalIgnoreCase) &&
+        !value.Contains("真实", StringComparison.Ordinal);
 
     private sealed class RecaptchaResponse
     {

@@ -2,6 +2,7 @@
 
 @{
     ViewBag.Title = "Account | Login";
+    var recaptchaSiteKey = ViewBag.RecaptchaSiteKey as string;
 }
 
 <div class="row justify-content-center">
@@ -30,10 +31,13 @@
                         <label asp-for="RememberMe" class="form-check-label"></label>
                     </div>
 
-                    <div class="mb-3">
-                        <div class="g-recaptcha" data-sitekey="@ViewBag.RecaptchaSiteKey" data-action="LOGIN"></div>
-                        <span class="text-danger">@Html.ValidationMessage("Captcha")</span>
-                    </div>
+                    @if (!string.IsNullOrWhiteSpace(recaptchaSiteKey))
+                    {
+                        <div class="mb-3">
+                            <div class="g-recaptcha" data-sitekey="@recaptchaSiteKey" data-action="LOGIN"></div>
+                            <span class="text-danger">@Html.ValidationMessage("Captcha")</span>
+                        </div>
+                    }
 
                     <button class="btn btn-primary w-100">Login</button>
                 </form>
@@ -44,7 +48,10 @@
                 </p>
 
                 @section Scripts {
-                    <script src="https://www.google.com/recaptcha/enterprise.js" async defer></script>
+                    @if (!string.IsNullOrWhiteSpace(recaptchaSiteKey))
+                    {
+                        <script src="https://www.google.com/recaptcha/enterprise.js" async defer></script>
+                    }
                 }
             </div>
         </div>
