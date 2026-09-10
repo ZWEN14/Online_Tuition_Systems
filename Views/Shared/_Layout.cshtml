@@ -47,7 +47,16 @@
                             </a>
                         </li>
                         <li class="nav-item">@await Component.InvokeAsync("NotificationBell")</li>
-                        <li class="nav-item"><a class="btn btn-outline-light btn-sm" asp-controller="Account" asp-action="Logout">Logout</a></li>
+                        <li class="nav-item">
+                            <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
+                                <button type="submit" class="app-logout-button" title="Sign out of Anywhere Edureach">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d="M10 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4M14 8l4 4-4 4M18 12H9" />
+                                    </svg>
+                                    <span>Logout</span>
+                                </button>
+                            </form>
+                        </li>
                     </ul>
                 }
                 else

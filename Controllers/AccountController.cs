@@ -109,14 +109,16 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
         });
     }
 
-    // GET: Account/Logout
+    // POST: Account/Logout
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public IActionResult Logout(string? returnURL)
     {
         TempData["Info"] = "Logout successfully.";
 
         hp.SignOut();
 
-        return RedirectToAction("Index", "Home");
+        return RedirectToAction("Welcome", "Home");
     }
 
     // GET: Account/AccessDenied

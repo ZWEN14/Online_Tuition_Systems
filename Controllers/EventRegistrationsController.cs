@@ -400,44 +400,52 @@ public class EventRegistrationsController : Controller
             return Forbid();
         }
 
-        await using var transaction = await _context.Database
-            .BeginTransactionAsync(IsolationLevel.Serializable);
+        var executionStrategy = _context.Database.CreateExecutionStrategy();
 
-        var registration = await _context.EventRegistrations
-            .Include(item => item.Event)
-            .Include(item => item.User)
-            .SingleOrDefaultAsync(item => item.Id == id);
-
-        if (registration is null)
+        return await executionStrategy.ExecuteAsync<IActionResult>(async () =>
         {
-            return NotFound();
-        }
+            // A retry must start with a clean tracker and a new transaction.
+            _context.ChangeTracker.Clear();
 
-        if (registration.Event.OrganizerUserId != organizer.Email)
-        {
-            return Forbid();
-        }
+            await using var transaction = await _context.Database
+                .BeginTransactionAsync(IsolationLevel.Serializable);
 
-        var errorMessage = await GetApprovalError(registration);
+            var registration = await _context.EventRegistrations
+                .Include(item => item.Event)
+                .Include(item => item.User)
+                .SingleOrDefaultAsync(item => item.Id == id);
 
-        if (errorMessage is not null)
-        {
-            TempData["ErrorMessage"] = errorMessage;
+            if (registration is null)
+            {
+                return NotFound();
+            }
+
+            if (registration.Event.OrganizerUserId != organizer.Email)
+            {
+                return Forbid();
+            }
+
+            var errorMessage = await GetApprovalError(registration);
+
+            if (errorMessage is not null)
+            {
+                TempData["ErrorMessage"] = errorMessage;
+                return RedirectToAction(nameof(Manage), new { eventId = registration.EventId });
+            }
+
+            registration.Status = EventRegistrationStatus.Approved;
+            registration.ReviewedByUserId = organizer.Id;
+            registration.ReviewedAt = DateTimeOffset.UtcNow;
+            registration.ReviewNote = null;
+            registration.UpdatedAt = DateTimeOffset.UtcNow;
+
+            await _notificationService.RegistrationReviewedAsync(registration);
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            TempData["SuccessMessage"] = "The event registration was approved.";
             return RedirectToAction(nameof(Manage), new { eventId = registration.EventId });
-        }
-
-        registration.Status = EventRegistrationStatus.Approved;
-        registration.ReviewedByUserId = organizer.Id;
-        registration.ReviewedAt = DateTimeOffset.UtcNow;
-        registration.ReviewNote = null;
-        registration.UpdatedAt = DateTimeOffset.UtcNow;
-
-        await _notificationService.RegistrationReviewedAsync(registration);
-        await _context.SaveChangesAsync();
-        await transaction.CommitAsync();
-
-        TempData["SuccessMessage"] = "The event registration was approved.";
-        return RedirectToAction(nameof(Manage), new { eventId = registration.EventId });
+        });
     }
 
     [HttpPost]
