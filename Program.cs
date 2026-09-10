@@ -3,6 +3,7 @@ global using AnywhereEdureach.Models;
 global using Online_Tuition_Systems.Data;
 
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using AnywhereEdureach.Services;
 using Online_Tuition_Systems.Services;
@@ -11,10 +12,21 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("The DefaultConnection connection string was not found.");
+// Keep the SQL Server Express database file inside the project for the
+// assignment's file-based database requirement. |DataDirectory| makes the
+// connection string portable across different team members' computers.
+var databaseDirectory = Path.Combine(builder.Environment.ContentRootPath, "App_Data");
+Directory.CreateDirectory(databaseDirectory);
+var databaseFile = Path.Combine(databaseDirectory, "OnlineTuitionDb.mdf");
 
-// Every module uses the same EF Core context and the same OnlineTuitionDb database.
+var baseConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("The DefaultConnection connection string was not found.");
+var connectionString = new SqlConnectionStringBuilder(baseConnectionString)
+{
+    AttachDBFilename = databaseFile
+}.ConnectionString;
+
+// Every module uses the same EF Core context and file-based database.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
