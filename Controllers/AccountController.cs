@@ -183,6 +183,7 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
             {
                 Name = vm.Name,
                 Email = vm.Email,
+                PhoneNumber = vm.PhoneNumber.Trim(),
                 Hash = hp.HashPassword(vm.Password),
                 Role = UserRole.Student,
                 EmailVerified = false,
@@ -365,6 +366,7 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
         {
             Email = u.Email,
             Name = u.Name,
+            PhoneNumber = u.PhoneNumber,
             PhotoPath = u.PhotoPath,
         };
 
@@ -375,7 +377,7 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
     [Authorize]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult UpdateProfile([Bind("Name,Photo")] ProfileUpdateVM vm)
+    public IActionResult UpdateProfile([Bind("Name,PhoneNumber,Photo")] ProfileUpdateVM vm)
     {
         var u = db.Users.Find(CurrentUserId);
         if (u == null) return RedirectToAction("Index", "Home");
@@ -383,6 +385,9 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
         if (ModelState.IsValid)
         {
             var name = vm.Name.Trim();
+            var phoneNumber = string.IsNullOrWhiteSpace(vm.PhoneNumber)
+                ? null
+                : vm.PhoneNumber.Trim();
             string? photoPath = null;
             if (vm.Photo != null)
             {
@@ -398,11 +403,14 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
             var affectedRows = photoPath == null
                 ? db.Users
                     .Where(user => user.Id == CurrentUserId)
-                    .ExecuteUpdate(setters => setters.SetProperty(user => user.Name, name))
+                    .ExecuteUpdate(setters => setters
+                        .SetProperty(user => user.Name, name)
+                        .SetProperty(user => user.PhoneNumber, phoneNumber))
                 : db.Users
                     .Where(user => user.Id == CurrentUserId)
                     .ExecuteUpdate(setters => setters
                         .SetProperty(user => user.Name, name)
+                        .SetProperty(user => user.PhoneNumber, phoneNumber)
                         .SetProperty(user => user.PhotoPath, photoPath));
 
             if (affectedRows != 1)
@@ -418,6 +426,7 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
         }
 
         vm.Email = u.Email;
+        vm.PhoneNumber = u.PhoneNumber;
         vm.PhotoPath = u.PhotoPath;
         return View(vm);
     }

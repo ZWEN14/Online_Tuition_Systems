@@ -27,6 +27,16 @@
                     </div>
 
                     <div class="mb-3">
+                        <label asp-for="PhoneNumber" class="form-label"></label>
+                        <input asp-for="PhoneNumber"
+                               class="form-control"
+                               type="tel"
+                               autocomplete="tel"
+                               placeholder="e.g. 012-345 6789">
+                        <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
                         <label asp-for="EducationLevel" class="form-label"></label>
                         <select asp-for="EducationLevel" asp-items="ViewBag.EducationLevel" class="form-select">
                             <option value="">-- Select education level --</option>
