@@ -699,3 +699,9 @@ Course/Billing scope and the other team module areas are now recorded. Shared Us
 - After the current Course lifecycle verification checkpoint, inspect and integrate the teammate's stable authentication/User implementation before expanding Enrollment and Billing. Waiting until every MVC module is finished would increase entity, foreign-key, migration, and authorization conflicts.
 - Integration should replace the temporary Account implementation while preserving Course/Billing ownership and role checks; do not copy or merge blindly before reviewing both models and migrations.
 - Forgotten local demo credentials may be handled by dropping and recreating the development LocalDB database from the existing `InitialCreate` migration. The migration files themselves do not need to be recreated.
+
+### 2026-09-10 — Team Git integration target confirmed
+
+- The shared `ZWEN14/Online_Tuition_Systems` repository is configured locally as `origin`, and the user has push access.
+- `origin/Final_OTS` is the team's final integration branch; Course/Billing pull requests should target `Final_OTS` rather than `main` unless the team changes this convention.
+- The personal `Ethan-sew/Online_Tuition_Systems` repository is configured as `fork` and is optional now that the shared repository accepts the user's feature branch.
