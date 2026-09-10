@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -130,9 +131,15 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
     // ------------------------------------------------------------------------
 
     // GET: Account/CheckEmail
-    public bool CheckEmail(string email)
+    public async Task<bool> CheckEmail(string? email)
     {
-        return !db.Users.Any(u => u.Email == email);
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return true;
+        }
+
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+        return !await db.Users.AnyAsync(u => u.Email == normalizedEmail);
     }
 
     // GET: Account/Register
@@ -147,11 +154,17 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
 
     // POST: Account/Register
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Register(RegisterVM vm, [FromForm(Name = "g-recaptcha-response")] string? captchaToken)
     {
         captchaToken ??= Request.Form["g-recaptcha-response"].FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(vm.Email))
+        {
+            vm.Email = vm.Email.Trim().ToLowerInvariant();
+        }
+
         if (ModelState.IsValid("Email") &&
-            db.Users.Any(u => u.Email == vm.Email))
+            await db.Users.AnyAsync(u => u.Email == vm.Email))
         {
             ModelState.AddModelError("Email", "Duplicated Email.");
         }
@@ -175,14 +188,26 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
             u.EmailVerificationHash = hp.HashPassword(code);
             u.EmailVerificationExpiresAt = DateTime.UtcNow.AddMinutes(10);
             db.Users.Add(u);
-            db.SaveChanges();
-
-            db.Students.Add(new()
+            db.Students.Add(new Student
             {
-                UserId = u.Id,
+                User = u,
                 EducationLevel = vm.EducationLevel,
             });
-            db.SaveChanges();
+
+            try
+            {
+                // EF Core wraps both INSERT statements in one transaction.
+                // A duplicate email or profile failure cannot leave a partial account.
+                await db.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex) when (IsUniqueConstraintViolation(ex))
+            {
+                db.ChangeTracker.Clear();
+                ModelState.AddModelError(nameof(vm.Email), "An account with this email already exists.");
+                ViewBag.EducationLevel = new SelectList(Helper.EducationLevels);
+                ViewBag.RecaptchaSiteKey = recaptcha.SiteKey;
+                return View(vm);
+            }
 
             await SendVerificationCodeAsync(u.Email, code, "Verify your Anywhere Edureach account");
             TempData["Info"] = "Registration complete. A verification code was sent to your email.";
@@ -193,6 +218,9 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
         ViewBag.RecaptchaSiteKey = recaptcha.SiteKey;
         return View(vm);
     }
+
+    private static bool IsUniqueConstraintViolation(DbUpdateException exception) =>
+        exception.InnerException is SqlException { Number: 2601 or 2627 };
 
     [HttpGet]
     public IActionResult VerifyEmail(string email) => View(new VerifyEmailVM { Email = email });
