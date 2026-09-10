@@ -158,21 +158,17 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
 
         if (ModelState.IsValid)
         {
-            var requiresEmailVerification = !env.IsDevelopment();
             var u = new User
             {
                 Name = vm.Name,
                 Email = vm.Email,
                 Hash = hp.HashPassword(vm.Password),
                 Role = UserRole.Student,
-                EmailVerified = !requiresEmailVerification,
+                EmailVerified = false,
             };
             var code = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
-            if (requiresEmailVerification)
-            {
-                u.EmailVerificationHash = hp.HashPassword(code);
-                u.EmailVerificationExpiresAt = DateTime.UtcNow.AddMinutes(10);
-            }
+            u.EmailVerificationHash = hp.HashPassword(code);
+            u.EmailVerificationExpiresAt = DateTime.UtcNow.AddMinutes(10);
             db.Users.Add(u);
             db.SaveChanges();
 
@@ -183,15 +179,9 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
             });
             db.SaveChanges();
 
-            if (requiresEmailVerification)
-            {
-                await SendVerificationCodeAsync(u.Email, code, "Verify your Anywhere Edureach account");
-                TempData["Info"] = "Registration complete. A verification code was sent to your email.";
-                return RedirectToAction(nameof(VerifyEmail), new { email = u.Email });
-            }
-
-            TempData["Info"] = "Development account registered. You can now sign in.";
-            return RedirectToAction(nameof(Login));
+            await SendVerificationCodeAsync(u.Email, code, "Verify your Anywhere Edureach account");
+            TempData["Info"] = "Registration complete. A verification code was sent to your email.";
+            return RedirectToAction(nameof(VerifyEmail), new { email = u.Email });
         }
 
         ViewBag.EducationLevel = new SelectList(Helper.EducationLevels);
