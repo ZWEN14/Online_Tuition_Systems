@@ -26,7 +26,12 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
     public async Task<IActionResult> Login(LoginVM vm, string? returnURL, [FromForm(Name = "g-recaptcha-response")] string? captchaToken)
     {
         captchaToken ??= Request.Form["g-recaptcha-response"].FirstOrDefault();
-        ModelState.Remove(nameof(vm.Password));
+        if (!ModelState.IsValid)
+        {
+            ViewBag.RecaptchaSiteKey = recaptcha.SiteKey;
+            return View(vm);
+        }
+
         var u = db.Users.FirstOrDefault(u => u.Email == vm.Email);
 
         if (!await recaptcha.VerifyAsync(captchaToken, "LOGIN", HttpContext.Connection.RemoteIpAddress?.ToString(), HttpContext.RequestAborted))
