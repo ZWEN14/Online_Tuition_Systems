@@ -1,0 +1,31 @@
+@model Online_Tuition_Systems.ViewModels.Courses.CourseDetailsViewModel
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="text-muted mb-2">@Model.CategoryName · @Model.Code</div>
+        <h1>@Model.Title</h1>
+        <p class="lead">Tutor: @Model.TutorName</p>
+        <div class="mt-4" style="white-space: pre-line">@Model.Description</div>
+    </div>
+    <aside class="col-lg-5">
+        <div class="card shadow-sm">
+            @if (!string.IsNullOrWhiteSpace(Model.ThumbnailPath))
+            {
+                <img src="@Model.ThumbnailPath"
+                     class="card-img-top"
+                     alt="Thumbnail for @Model.Title" />
+            }
+            <div class="card-body">
+                <div class="h4 mb-3">@(Model.Price == 0 ? "Free" : $"RM {Model.Price:N2}")</div>
+                <button class="btn btn-primary w-100" type="button" disabled>
+                    Enrollment coming next
+                </button>
+            </div>
+        </div>
+    </aside>
+</div>
+
+<a asp-action="Index" class="btn btn-link px-0 mt-4">Back to courses</a>

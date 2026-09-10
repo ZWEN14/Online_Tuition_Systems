@@ -1,0 +1,64 @@
+@model IReadOnlyList<Online_Tuition_Systems.ViewModels.Courses.CourseCategoryListItemViewModel>
+@{
+    ViewData["Title"] = "Course Categories";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">Course Categories</h1>
+        <p class="text-muted mb-0">Maintain the categories available to Tutors.</p>
+    </div>
+    <a asp-action="Create" class="btn btn-primary">Add category</a>
+</div>
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+@if (Model.Count == 0)
+{
+    <div class="alert alert-info">Create the first category before Tutors add courses.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Courses</th>
+                    <th>Status</th>
+                    <th class="text-end">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var category in Model)
+                {
+                    <tr>
+                        <td>@category.Name</td>
+                        <td>@(category.Description ?? "—")</td>
+                        <td>@category.CourseCount</td>
+                        <td>
+                            <span class="badge @(category.IsActive ? "text-bg-success" : "text-bg-secondary")">
+                                @(category.IsActive ? "Active" : "Inactive")
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <form asp-action="Toggle" asp-route-id="@category.CourseCategoryId" method="post">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                    @(category.IsActive ? "Deactivate" : "Activate")
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

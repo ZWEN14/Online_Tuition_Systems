@@ -24,3 +24,10 @@ appsettings.*.Local.json
 
 # Temporary Laravel reference project (not part of the ASP.NET deliverable)
 Anywhere-Edureach/
+
+# Local SQL Server Express database files
+App_Data/*
+!App_Data/.gitkeep
+
+# Runtime user uploads
+wwwroot/uploads/

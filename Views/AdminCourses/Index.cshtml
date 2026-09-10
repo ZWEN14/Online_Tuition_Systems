@@ -1,0 +1,59 @@
+@model IReadOnlyList<Online_Tuition_Systems.ViewModels.Courses.AdminCourseReviewViewModel>
+@{
+    ViewData["Title"] = "Course Reviews";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">Pending Course Reviews</h1>
+        <p class="text-muted mb-0">Approve suitable courses or return them with a clear reason.</p>
+    </div>
+    <a asp-action="Manage" class="btn btn-outline-secondary">Manage all courses</a>
+</div>
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+@if (Model.Count == 0)
+{
+    <div class="alert alert-info">There are no courses awaiting review.</div>
+}
+else
+{
+    @foreach (var course in Model)
+    {
+        <article class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between gap-3">
+                    <div>
+                        <h2 class="h5 mb-1">@course.Title</h2>
+                        <div class="text-muted small">
+                            @course.Code · @course.CategoryName · Tutor: @course.TutorName
+                        </div>
+                    </div>
+                    <strong>@(course.Price == 0 ? "Free" : $"RM {course.Price:N2}")</strong>
+                </div>
+
+                <p class="mt-3 mb-2">@(course.ShortDescription ?? course.Description)</p>
+                <div class="small text-muted mb-3">
+                    Submitted @course.SubmittedAtUtc.ToLocalTime().ToString("dd MMM yyyy, h:mm tt")
+                </div>
+
+                <div class="d-flex gap-2">
+                    <form asp-action="Approve" asp-route-id="@course.CourseId" method="post">
+                        <button type="submit" class="btn btn-success">Approve and publish</button>
+                    </form>
+                    <a asp-action="Reject" asp-route-id="@course.CourseId" class="btn btn-outline-danger">
+                        Reject
+                    </a>
+                </div>
+            </div>
+        </article>
+    }
+}
