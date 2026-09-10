@@ -28,7 +28,12 @@ var connectionString = new SqlConnectionStringBuilder(baseConnectionString)
 
 // Every module uses the same EF Core context and file-based database.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseSqlServer(
+        connectionString,
+        sqlServerOptions => sqlServerOptions.EnableRetryOnFailure(
+            maxRetryCount: 3,
+            maxRetryDelay: TimeSpan.FromSeconds(5),
+            errorNumbersToAdd: null)));
 
 builder.Services.AddScoped<Helper>();
 builder.Services.AddScoped<AnywhereEdureach.NotificationService>();
