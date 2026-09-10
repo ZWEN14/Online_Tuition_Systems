@@ -24,6 +24,7 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
 
     // POST: Account/Login
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Login(LoginVM vm, string? returnURL, [FromForm(Name = "g-recaptcha-response")] string? captchaToken)
     {
         captchaToken ??= Request.Form["g-recaptcha-response"].FirstOrDefault();
@@ -209,8 +210,10 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
                 return View(vm);
             }
 
-            await SendVerificationCodeAsync(u.Email, code, "Verify your Anywhere Edureach account");
-            TempData["Info"] = "Registration complete. A verification code was sent to your email.";
+            var emailSent = await SendVerificationCodeAsync(u.Email, code, "Verify your Anywhere Edureach account");
+            TempData[emailSent ? "Info" : "Error"] = emailSent
+                ? "Registration complete. A verification code was sent to your email."
+                : "Registration complete, but the verification email could not be sent. Check the SMTP settings and use Resend code.";
             return RedirectToAction(nameof(VerifyEmail), new { email = u.Email });
         }
 
@@ -226,6 +229,7 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
     public IActionResult VerifyEmail(string email) => View(new VerifyEmailVM { Email = email });
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public IActionResult VerifyEmail(VerifyEmailVM vm)
     {
         var u = db.Users.FirstOrDefault(x => x.Email == vm.Email);
@@ -242,6 +246,39 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
         db.SaveChanges();
         TempData["Info"] = "Email verified. You can now sign in.";
         return RedirectToAction(nameof(Login));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResendVerification(string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            TempData["Error"] = "The email address is missing. Please register again.";
+            return RedirectToAction(nameof(Register));
+        }
+
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+        var user = await db.Users.FirstOrDefaultAsync(x => x.Email == normalizedEmail);
+
+        if (user is not null && !user.EmailVerified)
+        {
+            var code = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
+            user.EmailVerificationHash = hp.HashPassword(code);
+            user.EmailVerificationExpiresAt = DateTime.UtcNow.AddMinutes(10);
+            await db.SaveChangesAsync();
+
+            var emailSent = await SendVerificationCodeAsync(user.Email, code, "Verify your Anywhere Edureach account");
+            TempData[emailSent ? "Info" : "Error"] = emailSent
+                ? "A new verification code was sent to your email."
+                : "The verification email could not be sent. Check the SMTP settings and try again.";
+        }
+        else
+        {
+            TempData["Info"] = "If this account still requires verification, a new code will be sent.";
+        }
+
+        return RedirectToAction(nameof(VerifyEmail), new { email = normalizedEmail });
     }
 
     // GET: Account/UpdatePassword
@@ -267,7 +304,13 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
         u.EmailVerificationHash = hp.HashPassword(code);
         u.EmailVerificationExpiresAt = DateTime.UtcNow.AddMinutes(10);
         db.SaveChanges();
-        await SendVerificationCodeAsync(u.Email, code, "Verify your password change");
+        var emailSent = await SendVerificationCodeAsync(u.Email, code, "Verify your password change");
+        if (!emailSent)
+        {
+            TempData["Error"] = "The verification email could not be sent. Check the SMTP settings and try again.";
+            return View("UpdatePassword", new UpdatePasswordVM());
+        }
+
         TempData["PasswordVerified"] = true;
         TempData["Info"] = "A verification code was sent to your email.";
         return View("UpdatePassword", new UpdatePasswordVM { CurrentVerified = true, VerificationCodeSent = true });
@@ -381,16 +424,17 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
     [HttpPost]
     public IActionResult RotatePhoto(int degrees = 90) => RedirectToAction(nameof(UpdateProfile));
 
-    private async Task SendVerificationCodeAsync(string email, string code, string subject)
+    private async Task<bool> SendVerificationCodeAsync(string email, string code, string subject)
     {
         try
         {
             await emailSender.SendAsync(email, subject, $"Your Anywhere Edureach verification code is {code}. It expires in 10 minutes.", HttpContext.RequestAborted);
+            return true;
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Unable to send verification email to {Email}.", email);
-            TempData["Info"] = "The verification email could not be sent. Please contact support or try again later.";
+            return false;
         }
     }
 

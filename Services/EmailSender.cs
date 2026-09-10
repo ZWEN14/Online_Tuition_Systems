@@ -25,10 +25,13 @@ public sealed class SmtpEmailSender(IOptions<SmtpOptions> options, ILogger<SmtpE
 
     public async Task SendAsync(string recipient, string subject, string body, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(options.Host) || string.IsNullOrWhiteSpace(options.From))
+        if (string.IsNullOrWhiteSpace(options.Host) ||
+            string.IsNullOrWhiteSpace(options.UserName) ||
+            string.IsNullOrWhiteSpace(options.Password) ||
+            string.IsNullOrWhiteSpace(options.From))
         {
-            logger.LogWarning("SMTP is not configured. Email to {Recipient} was not sent.", recipient);
-            return;
+            logger.LogError("SMTP is incomplete. Email to {Recipient} was not sent.", recipient);
+            throw new InvalidOperationException("SMTP configuration is incomplete.");
         }
 
         using var client = new SmtpClient(options.Host, options.Port)
