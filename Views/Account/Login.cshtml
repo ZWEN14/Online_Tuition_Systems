@@ -34,7 +34,7 @@
                     @if (!string.IsNullOrWhiteSpace(recaptchaSiteKey))
                     {
                         <div class="mb-3">
-                            <div class="g-recaptcha" data-sitekey="@recaptchaSiteKey" data-action="LOGIN"></div>
+                            <div class="g-recaptcha" data-sitekey="@recaptchaSiteKey"></div>
                             <span class="text-danger">@Html.ValidationMessage("Captcha")</span>
                         </div>
                     }

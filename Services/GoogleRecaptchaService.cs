@@ -21,7 +21,7 @@ public sealed class GoogleRecaptchaService(HttpClient httpClient, IOptions<Recap
 
     public string SiteKey => IsConfigured ? options.SiteKey : "";
 
-    public async Task<bool> VerifyAsync(string? token, string action, string? remoteIp, CancellationToken cancellationToken = default)
+    public async Task<bool> VerifyAsync(string? token, string? remoteIp, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(token) || !IsConfigured)
         {
@@ -37,7 +37,6 @@ public sealed class GoogleRecaptchaService(HttpClient httpClient, IOptions<Recap
         {
             ["token"] = token,
             ["siteKey"] = options.SiteKey,
-            ["expectedAction"] = action,
         };
 
         if (!string.IsNullOrWhiteSpace(remoteIp))
@@ -64,17 +63,14 @@ public sealed class GoogleRecaptchaService(HttpClient httpClient, IOptions<Recap
 
         var result = await response.Content.ReadFromJsonAsync<RecaptchaResponse>(cancellationToken);
         var valid = result?.TokenProperties?.Valid == true;
-        var actionMatches = string.Equals(result?.TokenProperties?.Action, action, StringComparison.Ordinal);
-        if (!valid || !actionMatches)
+        if (!valid)
         {
-            logger.LogWarning("reCAPTCHA Enterprise token rejected. Valid={Valid}, ExpectedAction={ExpectedAction}, ActualAction={ActualAction}, InvalidReason={InvalidReason}",
+            logger.LogWarning("reCAPTCHA Enterprise checkbox token rejected. Valid={Valid}, InvalidReason={InvalidReason}",
                 valid,
-                action,
-                result?.TokenProperties?.Action,
                 result?.TokenProperties?.InvalidReason);
         }
 
-        return valid && actionMatches;
+        return valid;
     }
 
     private static bool IsUsableSiteKey(string value) =>

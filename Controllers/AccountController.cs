@@ -34,7 +34,7 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
 
         var u = db.Users.FirstOrDefault(u => u.Email == vm.Email);
 
-        if (!await recaptcha.VerifyAsync(captchaToken, "LOGIN", HttpContext.Connection.RemoteIpAddress?.ToString(), HttpContext.RequestAborted))
+        if (!await recaptcha.VerifyAsync(captchaToken, HttpContext.Connection.RemoteIpAddress?.ToString(), HttpContext.RequestAborted))
         {
             ModelState.AddModelError("Captcha", "Please complete the CAPTCHA check.");
         }
@@ -156,7 +156,7 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
             ModelState.AddModelError("Email", "Duplicated Email.");
         }
 
-        if (!await recaptcha.VerifyAsync(captchaToken, "REGISTER", HttpContext.Connection.RemoteIpAddress?.ToString(), HttpContext.RequestAborted))
+        if (!await recaptcha.VerifyAsync(captchaToken, HttpContext.Connection.RemoteIpAddress?.ToString(), HttpContext.RequestAborted))
         {
             ModelState.AddModelError("Captcha", "Please complete the CAPTCHA check.");
         }
