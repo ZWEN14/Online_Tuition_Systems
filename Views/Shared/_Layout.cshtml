@@ -43,7 +43,7 @@
                                 {
                                     <span class="user-avatar">@currentUser?.Name?.FirstOrDefault()</span>
                                 }
-                                <strong class="text-white">@User.Identity!.Name</strong>
+                                <strong class="app-user-name">@User.Identity!.Name</strong>
                             </a>
                         </li>
                         <li class="nav-item">@await Component.InvokeAsync("NotificationBell")</li>
