@@ -26,6 +26,11 @@ public class Helper(IHttpContextAccessor ha)
 
     public bool VerifyPassword(string hash, string password)
     {
+        if (string.IsNullOrEmpty(hash) || string.IsNullOrEmpty(password))
+        {
+            return false;
+        }
+
         return ph.VerifyHashedPassword(0, hash, password)
                == PasswordVerificationResult.Success;
     }
