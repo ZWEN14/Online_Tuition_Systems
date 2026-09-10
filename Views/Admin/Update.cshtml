@@ -1,0 +1,53 @@
+﻿@model UserUpdateVM
+
+@{
+    ViewBag.Title = "Admin | Update User";
+}
+
+<form method="post" asp-controller="Admin" asp-action="Update" asp-route-id="@Model.Id" class="card admin-editor-card">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <div class="card-body p-4 p-md-5">
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <div class="admin-account-summary mb-4">
+            <div><span class="small text-uppercase text-muted">Account</span><strong>@Model.Email</strong></div>
+            <span class="badge text-bg-light">@Model.Role</span>
+        </div>
+
+        <div class="editor-section mb-4">
+            <h2 class="h6">Basic information</h2>
+            <p class="small text-muted">Changes are saved to this account immediately.</p>
+            <label asp-for="Name" class="form-label"></label>
+            <input asp-for="Name" class="form-control" autofocus>
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+
+        @if (Model.Role == UserRole.Tutor)
+        {
+            <div class="editor-section mb-4">
+                <h2 class="h6">Tutor information</h2>
+                <label asp-for="Rating" class="form-label"></label>
+                <input asp-for="Rating" class="form-control" type="number" step="0.01" min="0" max="5">
+                <span asp-validation-for="Rating" class="text-danger"></span>
+            </div>
+        }
+
+        @if (Model.Role == UserRole.Student)
+        {
+            <div class="editor-section mb-4">
+                <h2 class="h6">Student information</h2>
+                <label asp-for="EducationLevel" class="form-label"></label>
+                <select asp-for="EducationLevel" asp-items="ViewBag.EducationLevel" class="form-select">
+                    <option value="">-- Select education level --</option>
+                </select>
+                <span asp-validation-for="EducationLevel" class="text-danger"></span>
+            </div>
+        }
+
+        <div class="d-flex justify-content-end gap-2 border-top pt-4">
+            <a class="btn btn-outline-secondary" asp-action="Index">Cancel</a>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+    </div>
+</form>

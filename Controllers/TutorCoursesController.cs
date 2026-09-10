@@ -1,13 +1,13 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Online_Tuition_Systems.Models;
+using Online_Tuition_Systems.Authorization;
 using Online_Tuition_Systems.Services.Courses;
 using Online_Tuition_Systems.ViewModels.Courses;
 
 namespace Online_Tuition_Systems.Controllers;
 
-[Authorize(Roles = nameof(UserRole.Tutor))]
+[Authorize(Roles = AppRoles.Tutor)]
 public class TutorCoursesController(ICourseService courseService) : Controller
 {
     [HttpGet]

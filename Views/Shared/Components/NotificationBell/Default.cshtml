@@ -1,0 +1,59 @@
+@model NotificationBellViewModel
+
+<div class="dropdown">
+    <button class="notification-bell-button" type="button" data-bs-toggle="dropdown"
+            data-bs-auto-close="outside" aria-expanded="false" aria-label="Notifications">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4"
+                  stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        @if (Model.UnreadCount > 0)
+        {
+            <span class="notification-bell-badge">@(Model.UnreadCount > 99 ? "99+" : Model.UnreadCount)</span>
+        }
+    </button>
+
+    <div class="dropdown-menu dropdown-menu-end notification-dropdown p-0">
+        <div class="notification-dropdown-header">
+            <div>
+                <strong>Notifications</strong>
+                <small>@Model.UnreadCount unread</small>
+            </div>
+            <a asp-controller="Notifications" asp-action="Index">View all</a>
+        </div>
+
+        @if (Model.RecentItems.Count == 0)
+        {
+            <div class="notification-dropdown-empty">
+                <span aria-hidden="true">✓</span>
+                <p class="mb-0">You're all caught up.</p>
+            </div>
+        }
+        else
+        {
+            <div class="notification-dropdown-list">
+                @foreach (var notification in Model.RecentItems)
+                {
+                    <form asp-controller="Notifications" asp-action="Open"
+                          asp-route-id="@notification.Id" method="post">
+                        <button type="submit"
+                                class="notification-dropdown-item @(notification.IsUnread ? "unread" : null)">
+                            <span class="notification-dropdown-dot" aria-hidden="true"></span>
+                            <span>
+                                <strong>@notification.Title</strong>
+                                <small>@notification.Message</small>
+                                <time datetime="@notification.CreatedAt.ToString("O")">
+                                    @notification.CreatedAt.ToLocalTime().ToString("dd MMM, h:mm tt")
+                                </time>
+                            </span>
+                        </button>
+                    </form>
+                }
+            </div>
+        }
+
+        <a class="notification-dropdown-footer" asp-controller="Notifications" asp-action="Index">
+            Open notification centre <span aria-hidden="true">→</span>
+        </a>
+    </div>
+</div>

@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
+using AnywhereEdureach.Models;
 
 namespace Online_Tuition_Systems.Models;
 

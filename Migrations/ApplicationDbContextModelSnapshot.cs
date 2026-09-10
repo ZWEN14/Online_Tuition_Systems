@@ -22,6 +22,373 @@ namespace Online_Tuition_Systems.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("AnywhereEdureach.Models.Booking", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("BookingDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("CancelledAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("Cost")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("PaidAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("PaymentDeadline")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PaymentStatus")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("StudentConfirmedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("StudentId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SubjectId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TimeslotId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TransactionId")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<DateTime?>("TutorConfirmedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("TutorId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StudentId");
+
+                    b.HasIndex("SubjectId");
+
+                    b.HasIndex("TutorId");
+
+                    b.HasIndex("TimeslotId", "BookingDate");
+
+                    b.ToTable("Bookings");
+                });
+
+            modelBuilder.Entity("AnywhereEdureach.Models.Notification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("BookingId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookingId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("BookingNotifications");
+                });
+
+            modelBuilder.Entity("AnywhereEdureach.Models.Student", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("EducationLevel")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("Students");
+                });
+
+            modelBuilder.Entity("AnywhereEdureach.Models.Subject", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("BaseCost")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Subjects");
+                });
+
+            modelBuilder.Entity("AnywhereEdureach.Models.Timeslot", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DayOfWeek")
+                        .HasColumnType("int");
+
+                    b.Property<TimeSpan>("EndTime")
+                        .HasColumnType("time");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<TimeSpan>("StartTime")
+                        .HasColumnType("time");
+
+                    b.Property<int>("TutorId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TutorId");
+
+                    b.ToTable("Timeslots");
+                });
+
+            modelBuilder.Entity("AnywhereEdureach.Models.Tutor", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Rating")
+                        .HasPrecision(3, 2)
+                        .HasColumnType("decimal(3,2)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("Tutors");
+                });
+
+            modelBuilder.Entity("AnywhereEdureach.Models.TutorSubject", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("SubjectId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TutorId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SubjectId");
+
+                    b.HasIndex("TutorId");
+
+                    b.ToTable("TutorSubjects");
+                });
+
+            modelBuilder.Entity("AnywhereEdureach.Models.User", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("EmailVerificationExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("EmailVerificationHash")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("EmailVerified")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("FailedLoginAttempts")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Hash")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("IsBlocked")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LockoutEnd")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("PhotoPath")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.ToTable("Users", (string)null);
+                });
+
+            modelBuilder.Entity("Online_Tuition_Systems.Models.Announcement", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Audience")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasMaxLength(10000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("CourseId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("CreatedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int?>("EventId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset?>("ExpiresAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Priority")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTimeOffset?>("PublishedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EventId")
+                        .IsUnique()
+                        .HasFilter("[EventId] IS NOT NULL");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("Audience", "Status");
+
+                    b.HasIndex("CourseId", "Status");
+
+                    b.HasIndex("Status", "PublishedAt", "ExpiresAt");
+
+                    b.ToTable("Announcements");
+                });
+
             modelBuilder.Entity("Online_Tuition_Systems.Models.Course", b =>
                 {
                     b.Property<int>("CourseId")
@@ -185,6 +552,259 @@ namespace Online_Tuition_Systems.Migrations
                         .IsUnique();
 
                     b.ToTable("Enrollments");
+                });
+
+            modelBuilder.Entity("Online_Tuition_Systems.Models.Event", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset?>("ApplicationDeadline")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("CancellationReason")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTimeOffset?>("CancelledAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("CancelledByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int?>("CourseId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("CreatedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(10000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset>("EndsAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Location")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<int>("MaxParticipants")
+                        .HasColumnType("int");
+
+                    b.Property<string>("MeetingPlatform")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("MeetingUrl")
+                        .HasMaxLength(2048)
+                        .HasColumnType("nvarchar(2048)");
+
+                    b.Property<string>("Mode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("OrganizerUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("RegistrationAudience")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTimeOffset>("StartsAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrganizerUserId");
+
+                    b.HasIndex("RegistrationAudience");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("CourseId", "Status", "StartsAt");
+
+                    b.ToTable("Events");
+                });
+
+            modelBuilder.Entity("Online_Tuition_Systems.Models.EventProposal", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset?>("ApplicationDeadline")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int?>("CourseId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int?>("CreatedEventId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(10000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("EndsAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("LastRevisedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Location")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<int?>("MaxParticipants")
+                        .HasColumnType("int");
+
+                    b.Property<string>("MeetingPlatform")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("MeetingUrl")
+                        .HasMaxLength(2048)
+                        .HasColumnType("nvarchar(2048)");
+
+                    b.Property<string>("Mode")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("ProposedByUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("RegistrationAudience")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("ReviewNote")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTimeOffset?>("ReviewedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("ReviewedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("RevisionCount")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset?>("StartsAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedEventId")
+                        .IsUnique()
+                        .HasFilter("[CreatedEventId] IS NOT NULL");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("ProposedByUserId", "Status");
+
+                    b.ToTable("EventProposals");
+                });
+
+            modelBuilder.Entity("Online_Tuition_Systems.Models.EventRegistration", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("EventId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Message")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("ReviewNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTimeOffset?>("ReviewedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int?>("ReviewedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("EventId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("EventRegistrations");
                 });
 
             modelBuilder.Entity("Online_Tuition_Systems.Models.Invoice", b =>
@@ -372,55 +992,165 @@ namespace Online_Tuition_Systems.Migrations
                     b.ToTable("Payments");
                 });
 
-            modelBuilder.Entity("Online_Tuition_Systems.Models.User", b =>
+            modelBuilder.Entity("Online_Tuition_Systems.Models.UserNotification", b =>
                 {
-                    b.Property<int>("UserId")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("datetime2");
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
 
-                    b.Property<string>("Email")
+                    b.Property<string>("Details")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("Message")
                         .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
-                    b.Property<string>("InstitutionId")
+                    b.Property<DateTimeOffset?>("ReadAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("TargetUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Title")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
 
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Name")
+                    b.Property<string>("Type")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
 
-                    b.Property<string>("PasswordHash")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<int>("Role")
+                    b.Property<int>("UserId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("UpdatedAtUtc")
-                        .HasColumnType("datetime2");
+                    b.HasKey("Id");
 
-                    b.HasKey("UserId");
+                    b.HasIndex("UserId", "ReadAt", "CreatedAt");
 
-                    b.HasIndex("Email")
-                        .IsUnique();
+                    b.ToTable("Notifications");
+                });
 
-                    b.HasIndex("InstitutionId")
-                        .IsUnique();
+            modelBuilder.Entity("AnywhereEdureach.Models.Booking", b =>
+                {
+                    b.HasOne("AnywhereEdureach.Models.User", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
-                    b.ToTable("Users");
+                    b.HasOne("AnywhereEdureach.Models.Subject", "Subject")
+                        .WithMany()
+                        .HasForeignKey("SubjectId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("AnywhereEdureach.Models.Timeslot", "Timeslot")
+                        .WithMany()
+                        .HasForeignKey("TimeslotId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("AnywhereEdureach.Models.User", "Tutor")
+                        .WithMany()
+                        .HasForeignKey("TutorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Student");
+
+                    b.Navigation("Subject");
+
+                    b.Navigation("Timeslot");
+
+                    b.Navigation("Tutor");
+                });
+
+            modelBuilder.Entity("AnywhereEdureach.Models.Notification", b =>
+                {
+                    b.HasOne("AnywhereEdureach.Models.Booking", "Booking")
+                        .WithMany()
+                        .HasForeignKey("BookingId");
+
+                    b.HasOne("AnywhereEdureach.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Booking");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("AnywhereEdureach.Models.Student", b =>
+                {
+                    b.HasOne("AnywhereEdureach.Models.User", "User")
+                        .WithOne("Student")
+                        .HasForeignKey("AnywhereEdureach.Models.Student", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("AnywhereEdureach.Models.Timeslot", b =>
+                {
+                    b.HasOne("AnywhereEdureach.Models.User", "Tutor")
+                        .WithMany()
+                        .HasForeignKey("TutorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Tutor");
+                });
+
+            modelBuilder.Entity("AnywhereEdureach.Models.Tutor", b =>
+                {
+                    b.HasOne("AnywhereEdureach.Models.User", "User")
+                        .WithOne("Tutor")
+                        .HasForeignKey("AnywhereEdureach.Models.Tutor", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("AnywhereEdureach.Models.TutorSubject", b =>
+                {
+                    b.HasOne("AnywhereEdureach.Models.Subject", "Subject")
+                        .WithMany("TutorSubjects")
+                        .HasForeignKey("SubjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AnywhereEdureach.Models.User", "Tutor")
+                        .WithMany("TutorSubjects")
+                        .HasForeignKey("TutorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Subject");
+
+                    b.Navigation("Tutor");
+                });
+
+            modelBuilder.Entity("Online_Tuition_Systems.Models.Announcement", b =>
+                {
+                    b.HasOne("Online_Tuition_Systems.Models.Event", "Event")
+                        .WithOne("Announcement")
+                        .HasForeignKey("Online_Tuition_Systems.Models.Announcement", "EventId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Event");
                 });
 
             modelBuilder.Entity("Online_Tuition_Systems.Models.Course", b =>
@@ -431,13 +1161,13 @@ namespace Online_Tuition_Systems.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Online_Tuition_Systems.Models.User", "ReviewedBy")
-                        .WithMany("ReviewedCourses")
+                    b.HasOne("AnywhereEdureach.Models.User", "ReviewedBy")
+                        .WithMany()
                         .HasForeignKey("ReviewedByUserId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("Online_Tuition_Systems.Models.User", "Tutor")
-                        .WithMany("TutoredCourses")
+                    b.HasOne("AnywhereEdureach.Models.User", "Tutor")
+                        .WithMany()
                         .HasForeignKey("TutorId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -457,8 +1187,8 @@ namespace Online_Tuition_Systems.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Online_Tuition_Systems.Models.User", "Student")
-                        .WithMany("Enrollments")
+                    b.HasOne("AnywhereEdureach.Models.User", "Student")
+                        .WithMany()
                         .HasForeignKey("StudentId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -466,6 +1196,35 @@ namespace Online_Tuition_Systems.Migrations
                     b.Navigation("Course");
 
                     b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("Online_Tuition_Systems.Models.EventProposal", b =>
+                {
+                    b.HasOne("Online_Tuition_Systems.Models.Event", "CreatedEvent")
+                        .WithOne("SourceProposal")
+                        .HasForeignKey("Online_Tuition_Systems.Models.EventProposal", "CreatedEventId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("CreatedEvent");
+                });
+
+            modelBuilder.Entity("Online_Tuition_Systems.Models.EventRegistration", b =>
+                {
+                    b.HasOne("Online_Tuition_Systems.Models.Event", "Event")
+                        .WithMany("Registrations")
+                        .HasForeignKey("EventId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AnywhereEdureach.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Event");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Online_Tuition_Systems.Models.Invoice", b =>
@@ -487,8 +1246,8 @@ namespace Online_Tuition_Systems.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Online_Tuition_Systems.Models.User", "User")
-                        .WithMany("Payments")
+                    b.HasOne("AnywhereEdureach.Models.User", "User")
+                        .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -496,6 +1255,33 @@ namespace Online_Tuition_Systems.Migrations
                     b.Navigation("Enrollment");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Online_Tuition_Systems.Models.UserNotification", b =>
+                {
+                    b.HasOne("AnywhereEdureach.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("AnywhereEdureach.Models.Subject", b =>
+                {
+                    b.Navigation("TutorSubjects");
+                });
+
+            modelBuilder.Entity("AnywhereEdureach.Models.User", b =>
+                {
+                    b.Navigation("Student")
+                        .IsRequired();
+
+                    b.Navigation("Tutor")
+                        .IsRequired();
+
+                    b.Navigation("TutorSubjects");
                 });
 
             modelBuilder.Entity("Online_Tuition_Systems.Models.Course", b =>
@@ -513,20 +1299,18 @@ namespace Online_Tuition_Systems.Migrations
                     b.Navigation("Payments");
                 });
 
+            modelBuilder.Entity("Online_Tuition_Systems.Models.Event", b =>
+                {
+                    b.Navigation("Announcement");
+
+                    b.Navigation("Registrations");
+
+                    b.Navigation("SourceProposal");
+                });
+
             modelBuilder.Entity("Online_Tuition_Systems.Models.Payment", b =>
                 {
                     b.Navigation("Invoice");
-                });
-
-            modelBuilder.Entity("Online_Tuition_Systems.Models.User", b =>
-                {
-                    b.Navigation("Enrollments");
-
-                    b.Navigation("Payments");
-
-                    b.Navigation("ReviewedCourses");
-
-                    b.Navigation("TutoredCourses");
                 });
 #pragma warning restore 612, 618
         }

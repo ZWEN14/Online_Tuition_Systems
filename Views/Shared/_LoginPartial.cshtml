@@ -1,0 +1,39 @@
+<ul class="navbar-nav align-items-lg-center app-account-nav">
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <li class="nav-item">
+            <span class="nav-link app-user-pill">
+                <span class="app-user-avatar" aria-hidden="true">@User.Identity?.Name?.Substring(0, 1).ToUpperInvariant()</span>
+                <span class="app-user-email">@User.Identity?.Name</span>
+                @if (User.IsInRole(AppRoles.Admin))
+                {
+                    <span class="badge app-role-badge role-admin">Admin</span>
+                }
+                else if (User.IsInRole(AppRoles.Student))
+                {
+                    <span class="badge app-role-badge role-student">Student</span>
+                }
+                else if (User.IsInRole(AppRoles.Tutor))
+                {
+                    <span class="badge app-role-badge role-tutor">Tutor</span>
+                }
+            </span>
+        </li>
+        <li class="nav-item">
+            <form asp-controller="Account"
+                  asp-action="Logout"
+                  method="post">
+                <button type="submit" class="nav-link btn btn-link app-logout-link">Logout</button>
+            </form>
+        </li>
+    }
+    else
+    {
+        <li class="nav-item">
+            <a class="nav-link app-nav-link" asp-controller="Account" asp-action="Register">Register</a>
+        </li>
+        <li class="nav-item">
+            <a class="btn btn-primary btn-sm px-3 ms-lg-2" asp-controller="Account" asp-action="Login">Login</a>
+        </li>
+    }
+</ul>

@@ -1,0 +1,116 @@
+@model EventProposalFormViewModel
+
+<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+<input asp-for="Id" type="hidden" />
+
+<div class="alert alert-info border-0 mb-4">
+    You are proposing an event that you will organise as the Tutor. Enter the complete
+    event plan; Admin will approve, reject, or request changes without rewriting it.
+</div>
+
+<div class="row g-3">
+    <div class="col-md-8">
+        <label asp-for="Title" class="form-label"></label>
+        <input asp-for="Title" class="form-control" />
+        <span asp-validation-for="Title" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-4">
+        <label asp-for="CourseId" class="form-label"></label>
+        <input asp-for="CourseId" class="form-control" />
+        <div class="form-text">Optional until the Course module is connected.</div>
+        <span asp-validation-for="CourseId" class="text-danger"></span>
+    </div>
+
+    <div class="col-12">
+        <label asp-for="Description" class="form-label"></label>
+        <textarea asp-for="Description" class="form-control" rows="5"></textarea>
+        <span asp-validation-for="Description" class="text-danger"></span>
+    </div>
+
+    <div class="col-12">
+        <label asp-for="Reason" class="form-label"></label>
+        <textarea asp-for="Reason" class="form-control" rows="3"></textarea>
+        <div class="form-text">Explain the learning benefit and why this event should be approved.</div>
+        <span asp-validation-for="Reason" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-4">
+        <label asp-for="StartsAt" class="form-label"></label>
+        <input asp-for="StartsAt" asp-format="{0:yyyy-MM-ddTHH:mm}" type="datetime-local" class="form-control" />
+        <span asp-validation-for="StartsAt" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-4">
+        <label asp-for="EndsAt" class="form-label"></label>
+        <input asp-for="EndsAt" asp-format="{0:yyyy-MM-ddTHH:mm}" type="datetime-local" class="form-control" />
+        <span asp-validation-for="EndsAt" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-4">
+        <label asp-for="ApplicationDeadline" class="form-label"></label>
+        <input asp-for="ApplicationDeadline" asp-format="{0:yyyy-MM-ddTHH:mm}" type="datetime-local" class="form-control" />
+        <span asp-validation-for="ApplicationDeadline" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-4">
+        <label asp-for="RegistrationAudience" class="form-label"></label>
+        <select asp-for="RegistrationAudience" asp-items="Html.GetEnumSelectList<RegistrationAudience>()" class="form-select"></select>
+        <span asp-validation-for="RegistrationAudience" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-4">
+        <label asp-for="Mode" class="form-label"></label>
+        <select asp-for="Mode" asp-items="Html.GetEnumSelectList<EventMode>()" class="form-select" data-proposal-mode>
+            <option value="">Select a mode</option>
+        </select>
+        <span asp-validation-for="Mode" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-4">
+        <label asp-for="MaxParticipants" class="form-label"></label>
+        <input asp-for="MaxParticipants" class="form-control" />
+        <span asp-validation-for="MaxParticipants" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6" data-proposal-physical>
+        <label asp-for="Location" class="form-label"></label>
+        <input asp-for="Location" class="form-control" placeholder="Building, room, or venue" />
+        <span asp-validation-for="Location" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-3" data-proposal-online>
+        <label asp-for="MeetingPlatform" class="form-label"></label>
+        <select asp-for="MeetingPlatform" asp-items="Html.GetEnumSelectList<MeetingPlatform>()" class="form-select">
+            <option value="">Select a platform</option>
+        </select>
+        <span asp-validation-for="MeetingPlatform" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-3" data-proposal-online>
+        <label asp-for="MeetingUrl" class="form-label"></label>
+        <input asp-for="MeetingUrl" class="form-control" placeholder="https://..." />
+        <div class="form-text">Optional now; you can add it to the Draft Event after approval.</div>
+        <span asp-validation-for="MeetingUrl" class="text-danger"></span>
+    </div>
+</div>
+
+<script>
+    (() => {
+        const modeSelect = document.querySelector("[data-proposal-mode]");
+        if (!modeSelect) return;
+
+        const updateFields = () => {
+            const isPhysical = modeSelect.value === "0";
+            const isOnline = modeSelect.value === "1";
+
+            document.querySelectorAll("[data-proposal-physical]")
+                .forEach(field => field.hidden = isOnline || modeSelect.value === "");
+            document.querySelectorAll("[data-proposal-online]")
+                .forEach(field => field.hidden = isPhysical || modeSelect.value === "");
+        };
+
+        modeSelect.addEventListener("change", updateFields);
+        updateFields();
+    })();
+</script>

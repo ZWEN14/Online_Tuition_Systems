@@ -700,6 +700,56 @@ Course/Billing scope and the other team module areas are now recorded. Shared Us
 - Integration should replace the temporary Account implementation while preserving Course/Billing ownership and role checks; do not copy or merge blindly before reviewing both models and migrations.
 - Forgotten local demo credentials may be handled by dropping and recreating the development LocalDB database from the existing `InitialCreate` migration. The migration files themselves do not need to be recreated.
 
+### 2026-09-10 — Final_OTS integration conflict resolution started
+
+- `origin/Final_OTS` contains the teammate-owned stable authentication/User implementation and other integrated team modules.
+- Preserve the teammate Account controller, Account views, password/email/CAPTCHA behavior, and User-management business logic without modification.
+- Adapt Course/Billing to the shared contract: `User.Id`, roles `Student`/`Tutor`/`Admin`, standard ID/role claims, and `IsBlocked` for account availability.
+- Shared integration files (`Program.cs`, `ApplicationDbContext`, project file, layout, configuration, and `.gitignore`) may be combined only as necessary to register and expose Course/Billing without removing teammate behavior.
+- Do not change Event/Announcement, Mentor–Mentee, Booking, Notification, Survey/Complaint, or other teammate business logic during this resolution.
+- The independent migration histories require consolidation: preserve the integrated branch migration chain and later add Course/Billing through a new migration rather than applying the conflicting Course `InitialCreate` alongside it.
+
+### 2026-09-10 — Course/Auth source integration prepared, awaiting Git resolution
+
+- Adapted Course/Billing to the stable teammate User contract without changing the teammate's login, registration, profile, password, email-verification, CAPTCHA, or User-management logic.
+- Removed the temporary Course-owned Account model/hasher/setup implementation and duplicate local `UserRole`/`User` entity.
+- Combined shared startup, dependency registration, `ApplicationDbContext`, navigation, project-package, watch-exclusion, configuration, and ignore rules while retaining teammate module behavior.
+- Removed the Course branch's conflicting `InitialCreate` migration because it independently created `Users`; the integrated migration chain and its snapshot must be selected before generating a new additive Course/Billing migration.
+- Retained the integrated branch's current named LocalDB connection (`OnlineTuitionDb`) for compatibility during integration. The assignment's final file-based SQL Server Express delivery remains a later explicit preparation step.
+- No Event/Announcement, Mentor–Mentee, Booking, Notification, Survey/Complaint, or other teammate business-logic file was edited.
+- Git still reports unmerged paths until the user selects the teammate versions of the Account files/snapshot and stages the resolved shared files. Do not complete the merge before watcher and migration review.
+
+### 2026-09-10 — Integrated Course/Billing migration reviewed
+
+- Git no longer reports unmerged paths after selecting the stable teammate Account files and integrated migration snapshot.
+- Generated `AddCourseAndBilling` on top of the integrated migration chain.
+- Reviewed the generated migration: it only creates CourseCategory, Course, Enrollment, Payment, and Invoice tables with their required indexes and foreign keys to the shared `Users.Id` key.
+- The migration does not alter or drop teammate-owned tables.
+- Database application and integrated Tutor/Admin/Student browser verification remain pending.
+
+### 2026-09-10 — Duplicate LocalDB databases diagnosed
+
+- The integrated application is configured for `OnlineTuitionDb`, which contains the full team schema but currently has no User rows on this machine.
+- The older `OnlineTuitionSystems` database contains prior Course-development User records but only the earlier partial schema.
+- The teammate-provided credentials fail because the running application queries the empty integrated `OnlineTuitionDb` database, not the older database containing records.
+- Keep `OnlineTuitionDb` as the single integration database; do not switch the application back to the partial `OnlineTuitionSystems` database.
+- Populate demo accounts in `OnlineTuitionDb` through the teammate-provided, reviewed demo-data process. Do not copy old User rows directly because the integrated User schema and password-hash contract differ.
+
+### 2026-09-10 — Shared layout Course links restored
+
+- Detected that a VS Code undo removed only the Course navigation additions from the working copy after they had been staged during merge resolution.
+- Restored public Courses navigation, Tutor My Courses navigation, and Admin Course Categories/Course Reviews navigation.
+- Preserved the teammate layout structure and all teammate module navigation; no other module code was changed.
+
+### 2026-09-10 — Three-role login compatibility confirmed
+
+- Confirmed the stable teammate login uses one shared User table with distinct `Student`, `Tutor`, and `Admin` enum values.
+- Confirmed login emits `ClaimTypes.NameIdentifier` from `User.Id` and `ClaimTypes.Role` from the stored role; these match Course/Billing ownership and authorization checks.
+- Confirmed Administrator User Management can create Admin, Tutor, and Student accounts; Tutor creation also creates the teammate module's Tutor profile row and Student creation creates its Student profile row.
+- Public registration creates Students only and uses email verification; Administrator-created demo accounts are the simpler integration-testing path.
+- Multiple demo users may share the same email domain and demo password, but each complete email address must remain unique because the database enforces a unique email index.
+- Course/Billing now distinguishes Tutor management, Admin review, and Student/public browsing through the teammate authentication module; browser verification remains pending.
+
 ### 2026-09-10 — Team Git integration target confirmed
 
 - The shared `ZWEN14/Online_Tuition_Systems` repository is configured locally as `origin`, and the user has push access.

@@ -1,0 +1,241 @@
+@model EventDetailsViewModel
+
+@{
+    ViewData["Title"] = "Event details";
+    var tuitionEvent = Model.Event;
+}
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+        <div class="d-flex align-items-center gap-2">
+            <h1 class="h2 mb-0">@tuitionEvent.Title</h1>
+            <span class="badge status-badge status-@tuitionEvent.Status.ToString().ToLowerInvariant()">@tuitionEvent.Status</span>
+        </div>
+        <p class="text-muted mb-0">@tuitionEvent.Mode event</p>
+    </div>
+
+    <div class="d-flex flex-wrap justify-content-end gap-2">
+        @if (Model.IsOrganizer)
+        {
+            @if (tuitionEvent.Status is EventStatus.Draft or EventStatus.Published)
+            {
+                <a asp-action="Edit" asp-route-id="@tuitionEvent.Id" class="btn btn-primary">Edit</a>
+            }
+
+            @if (tuitionEvent.Status == EventStatus.Draft)
+            {
+                <form asp-action="Publish" asp-route-id="@tuitionEvent.Id" method="post">
+                    <button type="submit" class="btn btn-success">Publish</button>
+                </form>
+            }
+
+            @if (tuitionEvent.Status == EventStatus.Published)
+            {
+                <button type="button"
+                        class="btn btn-outline-danger"
+                        data-bs-toggle="modal"
+                        data-bs-target="#cancelEventModal">
+                    Cancel event
+                </button>
+            }
+
+            <a asp-controller="EventRegistrations"
+               asp-action="Manage"
+               asp-route-eventId="@tuitionEvent.Id"
+               class="btn btn-outline-primary">Manage registrations</a>
+        }
+        else if (User.IsInRole(AppRoles.Admin))
+        {
+            @if (tuitionEvent.Status == EventStatus.Published)
+            {
+                <button type="button"
+                        class="btn btn-outline-danger"
+                        data-bs-toggle="modal"
+                        data-bs-target="#cancelEventModal">
+                    Emergency cancel
+                </button>
+            }
+
+            @if (tuitionEvent.Status is EventStatus.Published or EventStatus.Cancelled)
+            {
+                <form asp-action="Archive" asp-route-id="@tuitionEvent.Id" method="post">
+                    <button type="submit" class="btn btn-outline-dark">Archive</button>
+                </form>
+            }
+        }
+        else if (Model.CanRegister)
+        {
+            <a asp-controller="EventRegistrations"
+               asp-action="Register"
+               asp-route-eventId="@tuitionEvent.Id"
+               class="btn btn-success">
+                @(Model.CurrentRegistration is null ? "Register" : "Register again")
+            </a>
+        }
+
+        <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
+    </div>
+</div>
+
+@if (!User.IsInRole(AppRoles.Admin) && !Model.IsOrganizer)
+{
+    @if (Model.CurrentRegistration is not null)
+    {
+        <div class="alert alert-info">
+            Your registration status:
+            <strong>@Model.CurrentRegistration.Status</strong>
+            @if (!string.IsNullOrWhiteSpace(Model.CurrentRegistration.ReviewNote))
+            {
+                <span>— @Model.CurrentRegistration.ReviewNote</span>
+            }
+        </div>
+    }
+
+    @if (!Model.CanRegister && Model.CurrentRegistration is null)
+    {
+        <div class="alert alert-secondary">@Model.RegistrationUnavailableReason</div>
+    }
+}
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-3">Description</dt>
+            <dd class="col-sm-9" style="white-space: pre-wrap">@tuitionEvent.Description</dd>
+
+            <dt class="col-sm-3">Starts</dt>
+            <dd class="col-sm-9">@tuitionEvent.StartsAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")</dd>
+
+            <dt class="col-sm-3">Ends</dt>
+            <dd class="col-sm-9">@tuitionEvent.EndsAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")</dd>
+
+            <dt class="col-sm-3">Registration deadline</dt>
+            <dd class="col-sm-9">@(tuitionEvent.ApplicationDeadline?.ToLocalTime().ToString("dd MMM yyyy HH:mm") ?? "Not specified")</dd>
+
+            <dt class="col-sm-3">Registration audience</dt>
+            <dd class="col-sm-9">@tuitionEvent.RegistrationAudience</dd>
+
+            <dt class="col-sm-3">Event organizer</dt>
+            <dd class="col-sm-9">@(tuitionEvent.OrganizerUserId ?? "Not assigned")</dd>
+
+            <dt class="col-sm-3">Location</dt>
+            <dd class="col-sm-9">@(tuitionEvent.Location ?? "Not applicable")</dd>
+
+            <dt class="col-sm-3">Meeting platform</dt>
+            <dd class="col-sm-9">@(tuitionEvent.MeetingPlatform?.ToString() ?? "Not applicable")</dd>
+
+            @if (Model.CanViewMeetingUrl)
+            {
+                <dt class="col-sm-3">Meeting URL</dt>
+                <dd class="col-sm-9">
+                    @if (string.IsNullOrWhiteSpace(tuitionEvent.MeetingUrl))
+                    {
+                        <span>Not applicable</span>
+                    }
+                    else
+                    {
+                        <a href="@tuitionEvent.MeetingUrl"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           class="btn btn-sm btn-outline-success">Open meeting</a>
+                    }
+                </dd>
+            }
+            else if (tuitionEvent.HasOnlineDelivery())
+            {
+                <dt class="col-sm-3">Meeting URL</dt>
+                <dd class="col-sm-9 text-muted">Available after your registration is approved.</dd>
+            }
+
+            <dt class="col-sm-3">Participants</dt>
+            <dd class="col-sm-9">@Model.ApprovedRegistrationCount / @tuitionEvent.MaxParticipants approved</dd>
+
+            @if (tuitionEvent.Status == EventStatus.Cancelled)
+            {
+                <dt class="col-sm-3">Cancellation reason</dt>
+                <dd class="col-sm-9" style="white-space: pre-wrap">@(tuitionEvent.CancellationReason ?? "Not specified")</dd>
+
+                <dt class="col-sm-3">Cancelled at</dt>
+                <dd class="col-sm-9">@(tuitionEvent.CancelledAt?.ToLocalTime().ToString("dd MMM yyyy HH:mm") ?? "Not specified")</dd>
+
+                @if (User.IsInRole(AppRoles.Admin) || Model.IsOrganizer)
+                {
+                    <dt class="col-sm-3">Cancelled by</dt>
+                    <dd class="col-sm-9">@(tuitionEvent.CancelledByUserId ?? "Not specified")</dd>
+                }
+            }
+
+            @if (User.IsInRole(AppRoles.Admin) || Model.IsOrganizer)
+            {
+                <dt class="col-sm-3">Total registrations</dt>
+                <dd class="col-sm-9">@Model.TotalRegistrationCount</dd>
+            }
+
+            @if ((User.IsInRole(AppRoles.Admin) || Model.IsOrganizer) && tuitionEvent.SourceProposal is not null)
+            {
+                <dt class="col-sm-3">Source proposal</dt>
+                <dd class="col-sm-9">
+                    <a asp-controller="EventProposals"
+                       asp-action="Details"
+                       asp-route-id="@tuitionEvent.SourceProposal.Id"
+                       class="btn btn-sm btn-outline-primary">View Proposal #@tuitionEvent.SourceProposal.Id</a>
+                </dd>
+            }
+
+            @if (tuitionEvent.Announcement is not null)
+            {
+                <dt class="col-sm-3">Announcement</dt>
+                <dd class="col-sm-9">
+                    <a asp-controller="Announcements"
+                       asp-action="Details"
+                       asp-route-id="@tuitionEvent.Announcement.Id"
+                       class="btn btn-sm btn-outline-primary">View announcement</a>
+                </dd>
+            }
+        </dl>
+    </div>
+</div>
+
+@if ((User.IsInRole(AppRoles.Admin) || Model.IsOrganizer) && tuitionEvent.Status == EventStatus.Published)
+{
+    <div class="modal fade" id="cancelEventModal" tabindex="-1" aria-labelledby="cancelEventModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form asp-action="Cancel" asp-route-id="@tuitionEvent.Id" method="post">
+                    <div class="modal-header">
+                        <h2 class="modal-title fs-5" id="cancelEventModalLabel">Cancel @tuitionEvent.Title?</h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input asp-for="Cancellation.Id" type="hidden" />
+                        <p class="text-muted">
+                            Cancellation is allowed only before the event starts. The Organizer and all
+                            Pending or Approved registrants will be notified. Admin should use this only
+                            for an emergency.
+                        </p>
+                        <label asp-for="Cancellation.Reason" class="form-label"></label>
+                        <textarea asp-for="Cancellation.Reason" class="form-control" rows="4" placeholder="Explain why this event must be cancelled."></textarea>
+                        <span asp-validation-for="Cancellation.Reason" class="text-danger"></span>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Keep event</button>
+                        <button type="submit" class="btn btn-danger">Confirm cancellation</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

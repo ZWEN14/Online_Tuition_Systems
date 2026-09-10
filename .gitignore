@@ -1,33 +1,72 @@
 # .NET build output
-**/bin/
-**/obj/
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+artifacts/
 
-# Visual Studio user and workspace files
+# Visual Studio and VS Code user-specific files
 .vs/
+.vscode/
 *.user
 *.suo
+*.userosscache
+*.sln.docstates
 
 # Test and coverage output
 TestResults/
 coverage/
 coverage.*
+*.coverage
+*.coveragexml
 
-# Local runtime output
-debug.log
-*.log
+# Local databases
+*.mdf
+*.ldf
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+App_Data/*
+!App_Data/.gitkeep
 
-# Local secrets and environment overrides
+# Local-only configuration and secrets
 .env
 .env.*
 appsettings.Local.json
 appsettings.*.Local.json
+secrets.json
+*.pfx
+*.p12
+*.snk
 
-# Temporary Laravel reference project (not part of the ASP.NET deliverable)
+# NuGet and tooling caches
+packages/
+*.nupkg
+*.nuget.props
+*.nuget.targets
+
+# Operating-system files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Logs, temporary files, and local safety backups
+*.log
+*.tmp
+*.temp
+~$*
+.merge-backup/
+
+# Temporary Laravel reference project
 Anywhere-Edureach/
-
-# Local SQL Server Express database files
-App_Data/*
-!App_Data/.gitkeep
 
 # Runtime user uploads
 wwwroot/uploads/
+
+# Duplicate client libraries restored through LibMan
+wwwroot/js/jquery/
+wwwroot/js/jquery-ajax-unobtrusive/
+wwwroot/js/jquery-validate/
+wwwroot/js/jquery-validation-unobtrusive/

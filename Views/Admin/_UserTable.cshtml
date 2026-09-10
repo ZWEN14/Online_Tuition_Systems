@@ -1,0 +1,57 @@
+@model AdminUsersVM
+
+<div class="table-responsive">
+    <table class="table align-middle mb-0">
+        <thead class="table-light">
+            <tr>
+                <th><a class="text-decoration-none" data-ajax="true" data-ajax-target="#adminTable" asp-action="Index" asp-route-query="@Model.Query" asp-route-sort="name">Name</a></th>
+                <th><a class="text-decoration-none" data-ajax="true" data-ajax-target="#adminTable" asp-action="Index" asp-route-query="@Model.Query" asp-route-sort="email">Email</a></th>
+                <th><a class="text-decoration-none" data-ajax="true" data-ajax-target="#adminTable" asp-action="Index" asp-route-query="@Model.Query" asp-route-sort="role">Role</a></th>
+                <th>Extra Info</th>
+                <th><a class="text-decoration-none" data-ajax="true" data-ajax-target="#adminTable" asp-action="Index" asp-route-query="@Model.Query" asp-route-sort="status">Status</a></th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Users)
+            {
+                <tr>
+                    <td class="fw-semibold">@item.User.Name</td>
+                    <td>@item.User.Email</td>
+                    <td><span class="badge text-bg-light">@item.User.Role</span></td>
+                    <td>@item.ExtraInfo</td>
+                    <td><span class="badge @(item.User.IsBlocked ? "text-bg-danger" : "text-bg-success")">@(item.User.IsBlocked ? "Blocked" : "Active")</span></td>
+                    <td class="text-nowrap">
+                        <a class="btn btn-sm btn-outline-primary" asp-action="Update" asp-route-id="@item.User.Id">Edit</a>
+                        <form method="post" asp-action="ToggleBlock" asp-route-id="@item.User.Id" class="d-inline" data-ajax="true">
+                            @Html.AntiForgeryToken()
+                            <button class="btn btn-sm btn-outline-warning">@(item.User.IsBlocked ? "Unblock" : "Block")</button>
+                        </form>
+                        <form method="post" asp-action="Delete" asp-route-id="@item.User.Id" class="d-inline" data-ajax="true" onsubmit="return confirm('Delete this user? This cannot be undone.');">
+                            @Html.AntiForgeryToken()
+                            <button class="btn btn-sm btn-outline-danger">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            @if (!Model.Users.Any())
+            {
+                <tr><td colspan="6"><div class="empty-state">No matching users found.</div></td></tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (Model.TotalPages > 1)
+{
+    <nav class="p-3 border-top" aria-label="User pages">
+        <ul class="pagination pagination-sm mb-0 justify-content-end">
+            @for (var p = 1; p <= Model.TotalPages; p++)
+            {
+                <li class="page-item @(p == Model.Page ? "active" : "")">
+                    <a class="page-link" data-ajax="true" data-ajax-target="#adminTable" asp-action="Index" asp-route-query="@Model.Query" asp-route-sort="@Model.Sort" asp-route-page="@p" asp-route-pageSize="@Model.PageSize">@p</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}

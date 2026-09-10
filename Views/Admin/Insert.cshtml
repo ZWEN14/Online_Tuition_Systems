@@ -1,0 +1,65 @@
+﻿@model UserInsertVM
+
+@{
+    ViewBag.Title = "Admin | Insert User";
+}
+
+<div class="page-header"><span class="text-uppercase small fw-semibold text-primary">Administration</span><h1 class="mb-1">Add User</h1><p class="mb-0">Create a tutor, student, or administrator account.</p></div>
+
+<form method="post" class="card form-card" data-ajax="true">
+    <div class="card-body p-4 p-md-5">
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <div class="mb-3">
+            <label asp-for="Name" class="form-label"></label>
+            <input asp-for="Name" class="form-control" autofocus>
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Email" class="form-label"></label>
+            <input asp-for="Email" class="form-control">
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Role" class="form-label"></label>
+            <select asp-for="Role" asp-items="Html.GetEnumSelectList<UserRole>()" class="form-select" onchange="toggleStudentFields()"></select>
+        </div>
+
+        <div id="studentFields">
+            <div class="mb-3">
+                <label asp-for="EducationLevel" class="form-label"></label>
+                <select asp-for="EducationLevel" asp-items="ViewBag.EducationLevel" class="form-select">
+                    <option value="">-- Select education level --</option>
+                </select>
+                <span asp-validation-for="EducationLevel" class="text-danger"></span>
+            </div>
+
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Password" class="form-label"></label>
+            <input asp-for="Password" class="form-control">
+            <span asp-validation-for="Password" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Confirm" class="form-label"></label>
+            <input asp-for="Confirm" class="form-control">
+            <span asp-validation-for="Confirm" class="text-danger"></span>
+        </div>
+
+        <button class="btn btn-primary">Create User</button>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        function toggleStudentFields() {
+            var role = document.getElementById('Role').value;
+            document.getElementById('studentFields').style.display = (role === '@((int)UserRole.Student)') ? 'block' : 'none';
+        }
+        document.addEventListener('DOMContentLoaded', toggleStudentFields);
+    </script>
+}

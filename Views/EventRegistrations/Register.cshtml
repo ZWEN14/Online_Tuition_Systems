@@ -1,0 +1,39 @@
+@model RegisterEventViewModel
+
+@{
+    ViewData["Title"] = "Register for event";
+    var tuitionEvent = Model.Event!;
+}
+
+<div class="module-form-shell">
+<h1 class="h2">Register for event</h1>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <h2 class="h5">@tuitionEvent.Title</h2>
+        <p class="mb-1"><strong>Starts:</strong> @tuitionEvent.StartsAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")</p>
+        <p class="mb-1"><strong>Deadline:</strong> @(tuitionEvent.ApplicationDeadline?.ToLocalTime().ToString("dd MMM yyyy HH:mm") ?? "Not specified")</p>
+        <p class="mb-0"><strong>Audience:</strong> @tuitionEvent.RegistrationAudience</p>
+    </div>
+</div>
+
+<form asp-action="Register" method="post" class="card shadow-sm">
+    <div class="card-body">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <input asp-for="EventId" type="hidden" />
+
+        <div class="mb-3">
+            <label asp-for="Message" class="form-label"></label>
+            <textarea asp-for="Message" class="form-control" rows="4"></textarea>
+            <span asp-validation-for="Message" class="text-danger"></span>
+        </div>
+
+        <button type="submit" class="btn btn-success">Submit registration</button>
+        <a asp-controller="Events" asp-action="Details" asp-route-id="@Model.EventId" class="btn btn-outline-secondary">Cancel</a>
+    </div>
+</form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

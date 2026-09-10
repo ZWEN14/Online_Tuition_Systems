@@ -1,0 +1,214 @@
+@model EventProposalDetailsViewModel
+
+@{
+    ViewData["Title"] = "Proposal details";
+    var proposal = Model.Proposal;
+    var canEdit = User.IsInRole(AppRoles.Tutor)
+        && proposal.Status is EventProposalStatus.Pending or EventProposalStatus.ChangesRequested;
+    var statusText = proposal.Status == EventProposalStatus.ChangesRequested
+        ? "Changes requested"
+        : proposal.Status.ToString();
+}
+
+<div class="module-page-shell">
+    @if (TempData["SuccessMessage"] is string successMessage)
+    {
+        <div class="alert alert-success">@successMessage</div>
+    }
+    @if (TempData["ErrorMessage"] is string errorMessage)
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+
+    <div class="module-detail-header">
+        <div>
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                <span class="module-kicker mb-0">TUTOR EVENT PROPOSAL</span>
+                <span class="badge status-badge status-@proposal.Status.ToString().ToLowerInvariant()">@statusText</span>
+            </div>
+            <h1 class="h2 mb-1">@proposal.Title</h1>
+            <p class="text-muted mb-0">Organizer: @proposal.ProposedByUserId</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            @if (canEdit)
+            {
+                <a asp-action="Edit" asp-route-id="@proposal.Id" class="btn btn-primary">
+                    @(proposal.Status == EventProposalStatus.ChangesRequested ? "Make requested changes" : "Edit proposal")
+                </a>
+            }
+            <a asp-action="Index" class="btn btn-outline-secondary">Back to proposals</a>
+        </div>
+    </div>
+
+    @if (proposal.Status == EventProposalStatus.ChangesRequested)
+    {
+        <div class="alert alert-warning">
+            <strong>Admin requested changes:</strong>
+            <span style="white-space: pre-wrap">@proposal.ReviewNote</span>
+        </div>
+    }
+
+    <section class="card mb-4">
+        <div class="card-body p-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <div>
+                    <span class="review-section-title d-block mb-1">SUBMITTED PLAN</span>
+                    <h2 class="h5 mb-0">Event and organizer details</h2>
+                </div>
+                <span class="small text-muted">Revision @proposal.RevisionCount</span>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-lg-7">
+                    <h3 class="h6">Event description</h3>
+                    <p class="text-secondary mb-4" style="white-space: pre-wrap">@proposal.Description</p>
+                    <h3 class="h6">Reason for this event</h3>
+                    <p class="text-secondary mb-0" style="white-space: pre-wrap">@proposal.Reason</p>
+                </div>
+                <div class="col-lg-5">
+                    <dl class="proposal-facts mb-0">
+                        <div>
+                            <dt>Schedule</dt>
+                            <dd>
+                                @(proposal.StartsAt?.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt") ?? "Incomplete")
+                                @if (proposal.EndsAt.HasValue)
+                                {
+                                    <span class="d-block text-muted">to @proposal.EndsAt.Value.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")</span>
+                                }
+                            </dd>
+                        </div>
+                        <div>
+                            <dt>Registration deadline</dt>
+                            <dd>@(proposal.ApplicationDeadline?.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt") ?? "Incomplete")</dd>
+                        </div>
+                        <div>
+                            <dt>Audience</dt>
+                            <dd>@proposal.RegistrationAudience</dd>
+                        </div>
+                        <div>
+                            <dt>Mode</dt>
+                            <dd>@(proposal.Mode?.ToString() ?? "Incomplete")</dd>
+                        </div>
+                        <div>
+                            <dt>Maximum participants</dt>
+                            <dd>@(proposal.MaxParticipants?.ToString() ?? "Incomplete")</dd>
+                        </div>
+                        @if (proposal.Mode is EventMode.Physical or EventMode.Hybrid)
+                        {
+                            <div>
+                                <dt>Location</dt>
+                                <dd>@(proposal.Location ?? "Incomplete")</dd>
+                            </div>
+                        }
+                        @if (proposal.Mode is EventMode.Online or EventMode.Hybrid)
+                        {
+                            <div>
+                                <dt>Meeting platform</dt>
+                                <dd>@(proposal.MeetingPlatform?.ToString() ?? "Incomplete")</dd>
+                            </div>
+                            <div>
+                                <dt>Meeting URL</dt>
+                                <dd>@(string.IsNullOrWhiteSpace(proposal.MeetingUrl) ? "To be added after approval" : proposal.MeetingUrl)</dd>
+                            </div>
+                        }
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @if (proposal.Status is EventProposalStatus.Approved or EventProposalStatus.Rejected)
+    {
+        <section class="card mb-4">
+            <div class="card-body p-4">
+                <span class="review-section-title d-block">REVIEW RESULT</span>
+                <dl class="row mb-0">
+                    <dt class="col-sm-3">Reviewed by</dt>
+                    <dd class="col-sm-9">@(proposal.ReviewedByUserId ?? "Not specified")</dd>
+                    <dt class="col-sm-3">Reviewed at</dt>
+                    <dd class="col-sm-9">@(proposal.ReviewedAt?.ToLocalTime().ToString("dd MMM yyyy HH:mm") ?? "Not specified")</dd>
+                    <dt class="col-sm-3">Review note</dt>
+                    <dd class="col-sm-9">@(proposal.ReviewNote ?? "Not specified")</dd>
+                    @if (proposal.CreatedEventId.HasValue)
+                    {
+                        <dt class="col-sm-3">Created Draft Event</dt>
+                        <dd class="col-sm-9">
+                            <a asp-controller="Events"
+                               asp-action="Details"
+                               asp-route-id="@proposal.CreatedEventId"
+                               class="btn btn-sm btn-outline-primary">Open Event #@proposal.CreatedEventId</a>
+                        </dd>
+                    }
+                </dl>
+            </div>
+        </section>
+    }
+
+    @if (User.IsInRole(AppRoles.Admin) && proposal.Status == EventProposalStatus.Pending)
+    {
+        <section class="mb-4">
+            <div class="mb-3">
+                <span class="review-section-title d-block mb-1">ADMIN DECISION</span>
+                <h2 class="h4 mb-1">Review the Tutor's plan</h2>
+                <p class="text-muted mb-0">Approve it as submitted, request specific changes, or reject it.</p>
+            </div>
+
+            <div class="row g-4 align-items-stretch">
+                <div class="col-lg-4">
+                    <form asp-action="Approve" asp-route-id="@proposal.Id" method="post" class="card proposal-approval-card h-100">
+                        <div class="card-body p-4">
+                            <span class="badge status-badge status-approved mb-3">Approve</span>
+                            <h3 class="h5">Create Draft Event</h3>
+                            <p class="text-muted">The submitted plan is copied without Admin changes. The Tutor becomes its Organizer.</p>
+                            <input asp-for="Approval.Id" type="hidden" />
+                            <label asp-for="Approval.ReviewNote" class="form-label"></label>
+                            <textarea asp-for="Approval.ReviewNote" class="form-control" rows="3"></textarea>
+                            <span asp-validation-for="Approval.ReviewNote" class="text-danger"></span>
+                        </div>
+                        <div class="card-footer bg-white p-3">
+                            <button type="submit" class="btn btn-success w-100">Approve proposal</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="col-lg-4">
+                    <form asp-action="RequestChanges" asp-route-id="@proposal.Id" method="post" class="card proposal-changes-card h-100">
+                        <div class="card-body p-4">
+                            <span class="badge status-badge status-changesrequested mb-3">Request changes</span>
+                            <h3 class="h5">Return to Tutor</h3>
+                            <p class="text-muted">The Tutor can revise the plan and resubmit it for review.</p>
+                            <input asp-for="Changes.Id" type="hidden" />
+                            <label asp-for="Changes.ReviewNote" class="form-label"></label>
+                            <textarea asp-for="Changes.ReviewNote" class="form-control" rows="3" placeholder="Explain exactly what must be changed."></textarea>
+                            <span asp-validation-for="Changes.ReviewNote" class="text-danger"></span>
+                        </div>
+                        <div class="card-footer bg-white p-3">
+                            <button type="submit" class="btn btn-outline-primary w-100">Request changes</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="col-lg-4">
+                    <form asp-action="Reject" asp-route-id="@proposal.Id" method="post" class="card proposal-rejection-card h-100">
+                        <div class="card-body p-4">
+                            <span class="badge status-badge status-rejected mb-3">Reject</span>
+                            <h3 class="h5">Decline proposal</h3>
+                            <p class="text-muted">Use this when the event should not proceed.</p>
+                            <input asp-for="Rejection.Id" type="hidden" />
+                            <label asp-for="Rejection.ReviewNote" class="form-label"></label>
+                            <textarea asp-for="Rejection.ReviewNote" class="form-control" rows="3" placeholder="Explain why the proposal was rejected."></textarea>
+                            <span asp-validation-for="Rejection.ReviewNote" class="text-danger"></span>
+                        </div>
+                        <div class="card-footer bg-white p-3">
+                            <button type="submit" class="btn btn-outline-danger w-100">Reject proposal</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+    }
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

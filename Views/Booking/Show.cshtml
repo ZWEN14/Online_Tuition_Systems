@@ -1,0 +1,64 @@
+@model Booking
+@{
+    ViewBag.Title = $"Booking | #{Model.Id}";
+    var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+    var sessionEnd = Model.BookingDate.Date + Model.Timeslot!.EndTime;
+}
+<div id="bookingDetails" data-booking-status="@Model.Status" data-booking-page="true">
+    <div class="page-header d-flex justify-content-between align-items-end gap-3">
+        <div><span class="text-uppercase small fw-semibold text-primary">Booking details</span><h1 class="mb-1">Booking #@Model.Id</h1><p class="mb-0">Review the session details and available actions.</p></div><span class="badge bg-@Model.Status.CssClass() fs-6">@Model.Status</span>
+    </div>
+    @if (TempData["Info"] != null)
+    {
+        <div class="alert alert-info">@TempData["Info"]</div>
+    }
+
+    <div class="card mb-4">
+        <div class="card-body p-4 p-md-5">
+            <h5 class="mb-4">Session Details</h5>
+            <div class="row">
+                <div class="col-md-6"><p><strong>Student:</strong> @Model.Student!.Name</p><p><strong>Tutor:</strong> @Model.Tutor!.Name</p><p><strong>Subject:</strong> @(Model.Subject?.Name ?? "N/A")</p></div>
+                <div class="col-md-6">
+                    <p><strong>Date:</strong> @Model.BookingDate.ToString("dd MMM yyyy (dddd)")</p><p><strong>Time:</strong> @Model.Timeslot.StartTime.ToString(@"hh\:mm") - @Model.Timeslot.EndTime.ToString(@"hh\:mm")</p>
+                    <p><strong>Hourly Rate:</strong> RM @(Model.Subject?.BaseCost.ToString("0.00") ?? "0.00")/hour</p>
+                </div>
+            </div>
+            <hr />
+            <div class="d-flex justify-content-between align-items-center"><span><strong>Final Booking Cost</strong><br /><small class="text-muted">Amount to be paid for this session</small></span><strong class="fs-3 text-primary">RM @Model.Cost.ToString("0.00")</strong></div>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2 flex-wrap">
+        @if (Model.Status == BookingStatus.Pending && userId == Model.TutorId)
+        {
+            <form method="post" asp-action="UpdateStatus" asp-route-id="@Model.Id" data-ajax-booking="true">@Html.AntiForgeryToken()<input type="hidden" name="status" value="Accepted" /><button class="btn btn-success">Accept</button></form>
+            <form method="post" asp-action="UpdateStatus" asp-route-id="@Model.Id" data-ajax-booking="true">@Html.AntiForgeryToken()<input type="hidden" name="status" value="Rejected" /><button class="btn btn-danger">Reject</button></form>
+        }
+        @if ((Model.Status == BookingStatus.Pending || Model.Status == BookingStatus.Accepted) && (userId == Model.StudentId || userId == Model.TutorId) && Model.PaymentStatus != "paid")
+        {
+            <form method="post" asp-action="UpdateStatus" asp-route-id="@Model.Id" data-ajax-booking="true">@Html.AntiForgeryToken()<input type="hidden" name="status" value="Cancelled" /><button class="btn btn-outline-danger">Cancel Booking</button></form>
+        }
+        @if (userId == Model.StudentId && Model.Status == BookingStatus.Accepted && Model.PaymentStatus != "paid")
+        {
+            <a class="btn btn-primary" asp-action="Payment" asp-route-id="@Model.Id">Make Payment</a>
+        }
+        @if (Model.Status == BookingStatus.Paid && sessionEnd <= DateTime.Now)
+        {
+            @if (userId == Model.StudentId && !Model.StudentConfirmedAt.HasValue || userId == Model.TutorId && !Model.TutorConfirmedAt.HasValue)
+            {
+                <form method="post" asp-action="ConfirmCompletion" asp-route-id="@Model.Id" data-ajax-booking="true">@Html.AntiForgeryToken()<button class="btn btn-info">Confirm Session Happened</button></form>
+            }
+        }
+    </div>
+</div>
+
+@if ((Model.Status == BookingStatus.Paid || Model.Status == BookingStatus.Completed) && sessionEnd <= DateTime.Now)
+{
+    <div class="card bg-light border-0 mt-4">
+        <div class="card-body text-muted">
+            <p>Student confirmation: @(Model.StudentConfirmedAt?.ToString("dd MMM yyyy, hh:mm tt") ?? "Waiting")</p>
+            <p>Tutor confirmation: @(Model.TutorConfirmedAt?.ToString("dd MMM yyyy, hh:mm tt") ?? "Waiting")</p>
+            <p class="small">The booking becomes Completed once both sides confirm.</p>
+        </div>
+    </div>
+}

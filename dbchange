@@ -1,0 +1,38 @@
+没用到 DB.mdf，是因为现在项目采用另一种更适合团队合作的数据库连接方式。
+队友原本的方法是：
+AttachDbFilename=项目路径\DB.mdf
+这种方式直接连接项目文件夹里的 DB.mdf。
+
+我们整合后改成：
+Server=(localdb)\MSSQLLocalDB;
+Database=OnlineTuitionDb;
+
+所以真正运行的是 SQL Server LocalDB 里面的 OnlineTuitionDb，不是项目文件夹里的 DB.mdf。两种方式不能混着使用，否则会出现两个数据库，网页资料和 Visual Studio 看到的资料可能不一致。
+Presentation 时完全可以使用 Visual Studio，不需要 DB.mdf。
+Presentation 前准备
+
+在 Visual Studio Package Manager Console 执行：
+Update-Database -Context ApplicationDbContext
+
+然后在 Visual Studio Terminal 执行：
+sqlcmd -S "(localdb)\MSSQLLocalDB" -d "OnlineTuitionDb" -E -i "Database\AddDemoUsers.sql"
+
+接着：
+1. 打开 SQL Server Object Explorer
+2. 展开：
+(localdb)\MSSQLLocalDB
+→ Databases
+→ OnlineTuitionDb
+→ Tables
+3. 右键 dbo.Users → View Data
+4. 按 F5 启动网站进行 Presentation
+为什么推荐现在的方法
+- 队友只需运行 Migration 就能建立相同结构。
+- 不需要上传大型二进制 .mdf/.ldf。
+- 不会发生 Git merge conflict。
+- 老师可以在 Visual Studio 里直接查看所有 Table 和资料。
+- Database Schema 有 Migration 记录，可以展示开发过程。
+所以：
+DB.mdf / DB_log.ldf = 队友旧连接方式留下来的文件
+OnlineTuitionDb      = 当前项目实际使用的数据库
+Presentation 不受影响，而且 OnlineTuitionDb + Migrations 会比直接提交 .mdf 更规范。注意你仍打开的 DevelopmentAccountSeeder.cs 是已删除文件的旧编辑器 Tab，关闭时选择不保存。

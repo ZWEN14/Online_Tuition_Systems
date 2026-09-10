@@ -1,0 +1,29 @@
+@model EventProposalFormViewModel
+
+@{
+    ViewData["Title"] = "Edit event proposal";
+}
+
+<div class="module-form-shell">
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1 class="h2 mb-1">Edit event proposal</h1>
+        <p class="text-muted mb-0">Update your plan and resubmit it for Admin review.</p>
+    </div>
+    <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Back</a>
+</div>
+
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post" class="card shadow-sm">
+    <div class="card-body">
+        <partial name="_Form" model="Model" />
+    </div>
+    <div class="card-footer bg-white d-flex justify-content-end gap-2">
+        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary">Save changes</button>
+    </div>
+</form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

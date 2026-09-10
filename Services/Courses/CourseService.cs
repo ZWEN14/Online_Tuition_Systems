@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using AnywhereEdureach.Models;
 using Microsoft.EntityFrameworkCore;
 using Online_Tuition_Systems.Data;
 using Online_Tuition_Systems.Models;
@@ -138,9 +139,9 @@ public sealed partial class CourseService(
         CancellationToken cancellationToken)
     {
         var tutorExists = await dbContext.Users.AnyAsync(
-            user => user.UserId == tutorId
+            user => user.Id == tutorId
                 && user.Role == UserRole.Tutor
-                && user.IsActive,
+                && !user.IsBlocked,
             cancellationToken);
 
         if (!tutorExists)

@@ -1,13 +1,13 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Online_Tuition_Systems.Models;
+using Online_Tuition_Systems.Authorization;
 using Online_Tuition_Systems.Services.Courses;
 using Online_Tuition_Systems.ViewModels.Courses;
 
 namespace Online_Tuition_Systems.Controllers;
 
-[Authorize(Roles = nameof(UserRole.Administrator))]
+[Authorize(Roles = AppRoles.Admin)]
 public sealed class AdminCoursesController(
     ICourseAdministrationService administrationService) : Controller
 {

@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using AnywhereEdureach.Models;
 using Microsoft.EntityFrameworkCore;
 using Online_Tuition_Systems.Data;
 using Online_Tuition_Systems.Models;
@@ -301,9 +302,9 @@ public sealed class CourseAdministrationService(ApplicationDbContext dbContext)
         CancellationToken cancellationToken)
     {
         return dbContext.Users.AnyAsync(
-            user => user.UserId == administratorId
-                && user.Role == UserRole.Administrator
-                && user.IsActive,
+            user => user.Id == administratorId
+                && user.Role == UserRole.Admin
+                && !user.IsBlocked,
             cancellationToken);
     }
 

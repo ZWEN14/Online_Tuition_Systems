@@ -1,0 +1,91 @@
+@model IReadOnlyList<EventRegistration>
+
+@{
+    ViewData["Title"] = "Manage registrations";
+    var selectedEventId = ViewData["EventId"] as int?;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1 class="h2 mb-1">Manage event registrations</h1>
+        <p class="text-muted mb-0">Review applications for events that you organise.</p>
+    </div>
+    @if (selectedEventId.HasValue)
+    {
+        <a asp-controller="Events" asp-action="Details" asp-route-id="@selectedEventId.Value" class="btn btn-outline-secondary">Back to event</a>
+    }
+</div>
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+@if (Model.Count == 0)
+{
+    <div class="alert alert-info">No event registrations were found.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>Event</th>
+                    <th>Applicant</th>
+                    <th>Message</th>
+                    <th>Status</th>
+                    <th>Submitted</th>
+                    <th style="min-width: 260px">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var registration in Model)
+                {
+                    <tr>
+                        <td>
+                            <a asp-controller="Events"
+                               asp-action="Details"
+                               asp-route-id="@registration.EventId"
+                               class="btn btn-sm btn-outline-primary">
+                                @registration.Event.Title
+                            </a>
+                        </td>
+                        <td>@registration.User.Email<br /><small class="text-muted">@registration.User.Role</small></td>
+                        <td>@(registration.Message ?? "—")</td>
+                        <td><span class="badge status-badge status-@registration.Status.ToString().ToLowerInvariant()">@registration.Status</span></td>
+                        <td>@registration.CreatedAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")</td>
+                        <td>
+                            @if (registration.Status == EventRegistrationStatus.Pending)
+                            {
+                                <form asp-action="Approve" asp-route-id="@registration.Id" method="post" class="mb-2">
+                                    <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                                </form>
+
+                                <form asp-action="Reject" method="post" class="d-flex gap-2">
+                                    <input type="hidden" name="Id" value="@registration.Id" />
+                                    <input type="text"
+                                           name="ReviewNote"
+                                           class="form-control form-control-sm"
+                                           maxlength="1000"
+                                           required
+                                           aria-label="Rejection reason"
+                                           placeholder="Rejection reason" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Reject</button>
+                                </form>
+                            }
+                            else
+                            {
+                                <span class="text-muted">@(registration.ReviewNote ?? "Reviewed")</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

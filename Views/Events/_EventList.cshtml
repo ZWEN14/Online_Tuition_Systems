@@ -1,0 +1,55 @@
+@model EventIndexViewModel
+
+<p class="small text-muted">@Model.TotalCount event(s) found.</p>
+
+@if (Model.Items.Count == 0)
+{
+    <div class="alert alert-info">No events match the current filters.</div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var tuitionEvent in Model.Items)
+        {
+            <div class="col-md-6 col-xl-4">
+                <div class="card event-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between gap-2">
+                            <h2 class="h5">@tuitionEvent.Title</h2>
+                            <span class="badge status-badge status-@tuitionEvent.Status.ToString().ToLowerInvariant() align-self-start">@tuitionEvent.Status</span>
+                        </div>
+                        <p class="event-date mb-3">@tuitionEvent.StartsAt.ToLocalTime().ToString("dd MMM yyyy · hh:mm tt")</p>
+                        <div class="d-flex flex-wrap gap-2">
+                            <span class="event-meta-pill">@tuitionEvent.Mode</span>
+                            <span class="event-meta-pill">@tuitionEvent.RegistrationAudience</span>
+                        </div>
+                    </div>
+                    <div class="card-footer event-card-footer text-end">
+                        <a asp-action="Details" asp-route-id="@tuitionEvent.Id" class="btn btn-sm btn-outline-primary">View details</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <nav aria-label="Event pages" class="d-flex justify-content-between align-items-center mt-3">
+        <span class="small text-muted">Page @Model.Page of @Model.TotalPages</span>
+        <ul class="pagination pagination-sm mb-0">
+            @for (var pageNumber = 1; pageNumber <= Model.TotalPages; pageNumber++)
+            {
+                <li class="page-item @(pageNumber == Model.Page ? "active" : null)"
+                    aria-current="@(pageNumber == Model.Page ? "page" : null)">
+                    <a class="page-link"
+                       asp-action="Index"
+                       asp-route-search="@Model.Search"
+                       asp-route-mode="@Model.Mode"
+                       asp-route-audience="@Model.Audience"
+                       asp-route-status="@Model.Status"
+                       asp-route-sort="@Model.Sort"
+                       asp-route-page="@pageNumber"
+                       data-ajax-page="@pageNumber">@pageNumber</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}

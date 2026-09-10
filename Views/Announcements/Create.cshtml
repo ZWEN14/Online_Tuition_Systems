@@ -1,0 +1,67 @@
+@model Online_Tuition_Systems.ViewModels.Announcements.CreateAnnouncementViewModel
+
+@{
+    ViewData["Title"] = "Create announcement";
+}
+
+<div class="module-form-shell">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h2 mb-1">Create announcement</h1>
+                <p class="text-muted mb-0">The new announcement will be saved as a draft.</p>
+            </div>
+            <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
+        </div>
+
+        <form asp-action="Create" method="post" class="card shadow-sm">
+            <div class="card-body p-4">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="mb-3">
+                    <label asp-for="Title" class="form-label"></label>
+                    <input asp-for="Title" class="form-control" />
+                    <span asp-validation-for="Title" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Content" class="form-label"></label>
+                    <textarea asp-for="Content" class="form-control" rows="8"></textarea>
+                    <span asp-validation-for="Content" class="text-danger"></span>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Audience" class="form-label"></label>
+                        <select asp-for="Audience"
+                                asp-items="Html.GetEnumSelectList<AnnouncementAudience>()"
+                                class="form-select"></select>
+                        <span asp-validation-for="Audience" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Priority" class="form-label"></label>
+                        <select asp-for="Priority"
+                                asp-items="Html.GetEnumSelectList<AnnouncementPriority>()"
+                                class="form-select"></select>
+                        <span asp-validation-for="Priority" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="ExpiresAt" class="form-label"></label>
+                    <input asp-for="ExpiresAt" class="form-control" />
+                    <div class="form-text">Leave this empty if the announcement should not expire.</div>
+                    <span asp-validation-for="ExpiresAt" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="card-footer bg-white p-4 text-end">
+                <a asp-action="Index" class="btn btn-outline-secondary me-2">Cancel</a>
+                <button type="submit" class="btn btn-primary">Save draft</button>
+            </div>
+        </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

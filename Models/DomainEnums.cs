@@ -1,12 +1,5 @@
 namespace Online_Tuition_Systems.Models;
 
-public enum UserRole
-{
-    Student = 1,
-    Tutor = 2,
-    Administrator = 3
-}
-
 public enum CourseStatus
 {
     Draft = 1,

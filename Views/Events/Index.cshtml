@@ -1,0 +1,99 @@
+@model EventIndexViewModel
+
+@{
+    ViewData["Title"] = "Events";
+}
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+<section class="module-header module-header-teal mb-4">
+    <div>
+        <span class="module-kicker">LEARNING EXPERIENCES</span>
+        <h1 class="h2 mb-1">Events</h1>
+        <p class="mb-0">
+            @(User.IsInRole(AppRoles.Admin)
+                ? "Admin can search events in every status."
+                : User.IsInRole(AppRoles.Tutor)
+                    ? "Browse published events and manage events that you organise."
+                    : "Only published events are searchable.")
+        </p>
+    </div>
+</section>
+
+<form asp-action="Index"
+      method="get"
+      class="card filter-card mb-4"
+      data-ajax-list-form
+      data-ajax-url="@Url.Action("List")"
+      data-index-url="@Url.Action("Index")"
+      data-default-sort="upcoming">
+    <div class="card-body">
+        <input asp-for="Page" type="hidden" data-page-input />
+
+        <div class="row g-3">
+            <div class="col-lg-4">
+                <label asp-for="Search" class="form-label">Keyword</label>
+                <input asp-for="Search"
+                       class="form-control"
+                       maxlength="100"
+                       autocomplete="off"
+                       placeholder="Search title or description"
+                       data-search-input />
+            </div>
+
+            <div class="col-sm-6 col-lg-2">
+                <label asp-for="Mode" class="form-label"></label>
+                <select asp-for="Mode" asp-items="Html.GetEnumSelectList<EventMode>()" class="form-select">
+                    <option value="">All modes</option>
+                </select>
+            </div>
+
+            <div class="col-sm-6 col-lg-2">
+                <label asp-for="Audience" class="form-label"></label>
+                <select asp-for="Audience" asp-items="Html.GetEnumSelectList<RegistrationAudience>()" class="form-select">
+                    <option value="">All audiences</option>
+                </select>
+            </div>
+
+            @if (User.IsInRole(AppRoles.Admin))
+            {
+                <div class="col-sm-6 col-lg-2">
+                    <label asp-for="Status" class="form-label"></label>
+                    <select asp-for="Status" asp-items="Html.GetEnumSelectList<EventStatus>()" class="form-select">
+                        <option value="">All statuses</option>
+                    </select>
+                </div>
+            }
+
+            <div class="col-sm-6 col-lg-2">
+                <label asp-for="Sort" class="form-label">Sort by</label>
+                <select asp-for="Sort" class="form-select">
+                    <option value="upcoming">Event date</option>
+                    <option value="newest">Recently created</option>
+                    <option value="title">Title A-Z</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-3">
+            <button type="submit" class="btn btn-primary">Search</button>
+            <button type="button" class="btn btn-outline-secondary" data-ajax-reset>Clear</button>
+            <span class="ms-auto align-self-center small text-muted" data-ajax-status aria-live="polite"></span>
+        </div>
+    </div>
+</form>
+
+<div data-ajax-list-results aria-live="polite">
+    <partial name="_EventList" model="Model" />
+</div>
+
+@section Scripts {
+    <script src="~/js/ajax-filter-list.js" asp-append-version="true"></script>
+}

@@ -1,90 +1,148 @@
-﻿<!DOCTYPE html>
+@inject ApplicationDbContext db
+@{
+    var currentUserIdValue = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    var unreadNotificationCount = int.TryParse(currentUserIdValue, out var currentUserId)
+        ? db.BookingNotifications.Count(n => n.UserId == currentUserId && !n.IsRead)
+        : 0;
+    var currentUser = int.TryParse(currentUserIdValue, out var headerUserId)
+        ? db.Users.FirstOrDefault(u => u.Id == headerUserId)
+        : null;
+}
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Online_Tuition_Systems</title>
-    <script type="importmap"></script>
+    <title>@(ViewBag.Title ?? "Anywhere Edureach")</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/mentor-mentee.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/Online_Tuition_Systems.styles.css" asp-append-version="true" />
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Online Tuition System</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
+    <nav class="navbar navbar-expand-lg navbar-dark app-navbar">
+        <div class="container py-2">
+            <a class="navbar-brand d-flex align-items-center gap-2" asp-controller="Home" asp-action="@(User.Identity?.IsAuthenticated == true ? "Index" : "Welcome")">
+                <span class="brand-mark">A</span>
+                <span>Anywhere <span class="brand-muted">Edureach</span></span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navMain">
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                            <a class="user-summary d-flex align-items-center gap-2 me-lg-2 text-decoration-none" asp-controller="Account" asp-action="UpdateProfile" title="Open profile">
+                                @if (!string.IsNullOrWhiteSpace(currentUser?.PhotoPath))
+                                {
+                                    <img class="user-avatar user-avatar-image" src="@currentUser.PhotoPath" alt="@currentUser.Name profile photo" />
+                                }
+                                else
+                                {
+                                    <span class="user-avatar">@currentUser?.Name?.FirstOrDefault()</span>
+                                }
+                                <strong class="text-white">@User.Identity!.Name</strong>
+                            </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-controller="Courses" asp-action="Index">Courses</a>
-                        </li>
-                        @if (User.IsInRole("Tutor"))
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="TutorCourses" asp-action="Index">My Courses</a>
-                            </li>
-                        }
-                        @if (User.IsInRole("Administrator"))
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="AdminCourseCategories" asp-action="Index">Categories</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="AdminCourses" asp-action="Index">Course Reviews</a>
-                            </li>
-                        }
+                        <li class="nav-item">@await Component.InvokeAsync("NotificationBell")</li>
+                        <li class="nav-item"><a class="btn btn-outline-light btn-sm" asp-controller="Account" asp-action="Logout">Logout</a></li>
                     </ul>
-                    <ul class="navbar-nav align-items-sm-center">
-                        @if (User.Identity?.IsAuthenticated == true)
-                        {
-                            <li class="nav-item">
-                                <span class="nav-link text-dark">Hello, @User.Identity.Name</span>
-                            </li>
-                            <li class="nav-item">
-                                <form asp-controller="Account" asp-action="Logout" method="post">
-                                    <button type="submit" class="btn btn-link nav-link text-dark">Log out</button>
-                                </form>
-                            </li>
-                        }
-                        else
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Account" asp-action="Register">Register</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Account" asp-action="Login">Log in</a>
-                            </li>
-                        }
+                }
+                else
+                {
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item"><a class="nav-link" asp-controller="Courses" asp-action="Index">Courses</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="Login">Login</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="Register">Register</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="ResetPassword">Reset Password</a></li>
                     </ul>
-                </div>
+                }
             </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
+        </div>
+    </nav>
+
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <div class="app-shell">
+            <aside class="app-sidebar">
+                <div class="sidebar-heading">Quick access</div>
+                <a class="sidebar-link" asp-controller="Courses" asp-action="Index"><span>C</span> Courses</a>
+                <a class="sidebar-link" asp-controller="Announcements" asp-action="Index"><span>A</span> Announcements</a>
+                <a class="sidebar-link" asp-controller="Events" asp-action="Index"><span>E</span> Events</a>
+                @if (User.IsInRole("Student") || User.IsInRole("Tutor"))
+                {
+                    <a class="sidebar-link" asp-controller="EventRegistrations" asp-action="MyRegistrations"><span>R</span> Event registrations</a>
+                }
+                @if (User.IsInRole("Tutor") || User.IsInRole("Admin"))
+                {
+                    <a class="sidebar-link" asp-controller="EventProposals" asp-action="Index"><span>P</span> Event proposals</a>
+                }
+                @if (User.IsInRole("Student"))
+                {
+                    <a class="sidebar-link" asp-controller="Subject" asp-action="Index"><span>＋</span> Find a subject</a>
+                    <a class="sidebar-link" asp-controller="Tutor" asp-action="Index"><span>⌕</span> Find a tutor</a>
+                    <a class="sidebar-link" asp-controller="Booking" asp-action="Index"><span>▣</span> My learning</a>
+                }
+                @if (User.IsInRole("Tutor"))
+                {
+                    <a class="sidebar-link" asp-controller="TutorCourses" asp-action="Index"><span>▤</span> My courses</a>
+                    <a class="sidebar-link" asp-controller="Timeslot" asp-action="Index"><span>◷</span> Availability</a>
+                    <a class="sidebar-link" asp-controller="Booking" asp-action="Index"><span>▣</span> Student requests</a>
+                }
+                @if (User.IsInRole("Admin"))
+                {
+                    <a class="sidebar-link" asp-controller="AdminCourseCategories" asp-action="Index"><span>▦</span> Course categories</a>
+                    <a class="sidebar-link" asp-controller="AdminCourses" asp-action="Index"><span>✓</span> Course reviews</a>
+                    <a class="sidebar-link" asp-controller="Admin" asp-action="Index"><span>◎</span> User management</a>
+                }
+                <a class="sidebar-link" asp-controller="Notification" asp-action="Index">
+                    <span>●</span> <span class="sidebar-link-label">Notifications</span>@if (unreadNotificationCount > 0)
+                    {
+                        <span class="notification-count" aria-label="@unreadNotificationCount unread notifications">@unreadNotificationCount</span>
+                    }
+                </a>
+                <a class="sidebar-link" asp-controller="Account" asp-action="UpdateProfile"><span>◯</span> Profile settings</a>
+            </aside>
+            <main class="container app-main pb-5">
+                @if (!(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" && ViewContext.RouteData.Values["action"]?.ToString() == "Index"))
+                {
+                    <button type="button" class="page-back mb-3" data-back-fallback="@Url.Action("Index", "Home")">
+                        <span aria-hidden="true">←</span> Back
+                    </button>
+                }
+                @if (TempData["Info"] != null)
+                {
+                    <div class="alert alert-info alert-dismissible fade show" role="alert">
+                        @Html.Raw(TempData["Info"])
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+                @RenderBody()
+            </main>
+        </div>
+    }
+    else
+    {
+        <main class="container app-main pb-5">
+            @if (TempData["Info"] != null)
+            {
+                <div class="alert alert-info alert-dismissible fade show" role="alert">
+                    @Html.Raw(TempData["Info"])
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
             @RenderBody()
         </main>
-    </div>
+    }
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - Online Tuition System - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-        </div>
-    </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/jquery-ajax-unobtrusive/jquery.unobtrusive-ajax.min.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
-    @await RenderSectionAsync("Scripts", required: false)
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @RenderSection("Scripts", required: false)
 </body>
 </html>

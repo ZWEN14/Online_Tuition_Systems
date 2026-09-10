@@ -1,0 +1,92 @@
+@model TutorShowVM
+
+@{
+    ViewBag.Title = $"Tutor | {Model.Tutor.Name}";
+    var days = new[] { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
+    var firstHour = TimeSpan.FromHours(8);
+    var lastHour = TimeSpan.FromHours(23);
+    var blockMinutes = 30;
+    var rowCount = (int)((lastHour - firstHour).TotalMinutes / blockMinutes);
+    var hourCount = (int)((lastHour - firstHour).TotalHours);
+}
+
+<div class="page-header"><span class="text-uppercase small fw-semibold text-primary">Tutor profile</span><h1 class="mb-1">@Model.Tutor.Name</h1><p class="mb-0 text-warning">★ @(Model.Tutor.Tutor?.Rating.ToString("0.00") ?? "N/A") <span class="text-muted">Tutor Rating</span></p></div>
+
+@if (Model.SelectedSubject != null)
+{
+    <div class="card mb-4"><div class="card-body p-4"><small class="text-muted text-uppercase">Booking Subject</small><h4>@Model.SelectedSubject.Name</h4><p class="text-muted mb-0">You selected this subject before choosing this tutor.</p></div></div>
+    @if (Model.Tutor.TutorSubjects.Count > 1)
+    {
+        <div class="mb-4">
+            <h5>Other subjects taught</h5><div class="d-flex flex-wrap gap-2">
+            @foreach (var ts in Model.Tutor.TutorSubjects.Where(x => x.SubjectId != Model.SelectedSubject.Id))
+            {
+                <a class="btn btn-outline-secondary btn-sm" asp-route-id="@Model.Tutor.Id" asp-route-subjectId="@ts.SubjectId">@ts.Subject!.Name</a>
+            }
+        </div>
+    </div>
+}
+} else
+{
+    <div class="card mb-4">
+        <div class="card-body p-4">
+            <h4>Subjects taught</h4><p class="text-muted">Choose a subject to see the appropriate booking options and available sessions.</p><div class="row g-3">
+            @foreach (var ts in Model.Tutor.TutorSubjects)
+            {
+                <div class="col-md-4"><a class="card h-100 text-decoration-none" asp-route-id="@Model.Tutor.Id" asp-route-subjectId="@ts.SubjectId"><div class="card-body"><strong>@ts.Subject!.Name</strong><div class="small text-muted">Select this subject →</div></div></a></div>
+            }
+        </div>
+    </div>
+</div>
+}
+<div class="card mb-4">
+    <div class="card-body p-4">
+        <h4 class="mb-1">Weekly availability</h4>
+        <p class="text-muted small">@(Model.SelectedSubject == null ? "Read-only timetable preview. Select a subject above to choose a session." : "Select an available block to choose this session.")</p>
+        <div class="timetable-wrapper">
+            <table class="timetable" aria-label="Tutor weekly availability">
+                <thead>
+                    <tr>
+                        <th class="day-column">Day</th>@for (var hour = 0; hour < hourCount; hour++) { var time = firstHour.Add(TimeSpan.FromHours(hour));
+                        <th colspan="2" class="time-column">@time.ToString(@"h\:mm")</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @for (var day = 0; day < days.Length; day++)
+                {
+                    <tr>
+                        <th scope="row" class="day-label">@days[day]</th>
+                        @for (var column = 0; column < rowCount; column++)
+                        {
+                            var time = firstHour.Add(TimeSpan.FromMinutes(column * blockMinutes));
+                            var slot = Model.AvailableSlots.FirstOrDefault(x => x.DayOfWeek == day && x.StartTime == time);
+                            var covering = Model.AvailableSlots.Any(x => x.DayOfWeek == day && x.StartTime < time && x.EndTime > time);
+                            if (slot != null)
+                            {
+                                var span = Math.Max(1, (int)((slot.EndTime - slot.StartTime).TotalMinutes / blockMinutes));
+                                <td colspan="@span" class="availability-cell">
+                                    @if (Model.SelectedSubject != null && User.IsInRole("Student"))
+                                    {
+                                        <a class="availability-block active text-decoration-none" aria-label="Available @days[day] @slot.StartTime.ToString(@"hh\:mm") to @slot.EndTime.ToString(@"hh\:mm")" asp-controller="Booking" asp-action="Create" asp-route-tutorId="@Model.Tutor.Id" asp-route-subjectId="@Model.SelectedSubject.Id" asp-route-timeslotId="@slot.Id">
+                                            <strong>@slot.StartTime.ToString(@"hh\:mm") - @slot.EndTime.ToString(@"hh\:mm")</strong>
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <div class="availability-block active timetable-readonly" aria-label="Available @days[day] @slot.StartTime.ToString(@"hh\:mm") to @slot.EndTime.ToString(@"hh\:mm")"><strong>@slot.StartTime.ToString(@"hh\:mm") - @slot.EndTime.ToString(@"hh\:mm")</strong></div>
+                                    }
+                                </td>
+                            }
+                            else if (!covering)
+                            {
+                                <td class="empty-cell"></td>
+                            }
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+</div>
