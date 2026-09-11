@@ -149,6 +149,8 @@
     const photoZoomControl = document.querySelector('#photoZoom');
     const photoEditorPage = document.querySelector('#photoEditorPage');
     const applyPhotoEdit = document.querySelector('#applyPhotoEdit');
+    const openPhotoEditor = document.querySelector('#openPhotoEditor');
+
     let photoSource;
     let photoRotation = 0;
     let photoZoom = 1;
@@ -158,37 +160,49 @@
 
     function setPhotoStatus(message, isError = false) {
         if (!photoStatus) return;
+
         photoStatus.textContent = message;
         photoStatus.classList.toggle('text-danger', isError);
     }
 
     function showProcessedPreview() {
         if (!photoSource || !photoCanvas) return;
+
         const size = photoCanvas.width || 320;
         const context = photoCanvas.getContext('2d');
+
         const radians = photoRotation * Math.PI / 180;
-        const scale = Math.max(size / photoSource.width, size / photoSource.height) * photoZoom;
+
+        const scale = Math.max(
+            size / photoSource.width,
+            size / photoSource.height
+        ) * photoZoom;
+
         const width = photoSource.width * scale;
         const height = photoSource.height * scale;
 
         photoCanvas.width = size;
         photoCanvas.height = size;
+
         context.clearRect(0, 0, size, size);
+
         context.save();
+
         context.translate(size / 2, size / 2);
         context.rotate(radians);
-        context.drawImage(photoSource, -width / 2 + photoOffsetX, -height / 2 + photoOffsetY, width, height);
+
+        context.drawImage(
+            photoSource,
+            -width / 2 + photoOffsetX,
+            -height / 2 + photoOffsetY,
+            width,
+            height
+        );
+
         context.restore();
+
         photoPreview?.querySelector('img, span')?.classList.add('d-none');
         photoCanvas.classList.remove('d-none');
-        photoCanvas.toBlob(blob => {
-            if (!blob || !photoInput) return;
-            const file = new File([blob], 'profile-photo.jpg', { type: 'image/jpeg' });
-            const transfer = new DataTransfer();
-            transfer.items.add(file);
-            photoInput.files = transfer.files;
-            setPhotoStatus('Processed photo ready to upload.');
-        }, 'image/jpeg', 0.9);
     }
 
     function loadPhoto(file) {
@@ -196,108 +210,344 @@
             setPhotoStatus('Please choose an image file.', true);
             return;
         }
+
         const reader = new FileReader();
+
         reader.onload = event => {
             const image = new Image();
+
             image.onload = () => {
                 photoSource = image;
+
                 photoRotation = 0;
                 photoZoom = 1;
                 photoOffsetX = 0;
                 photoOffsetY = 0;
-                if (photoZoomControl) photoZoomControl.value = '1';
+
+                if (photoZoomControl) {
+                    photoZoomControl.value = '1';
+                }
+
                 showProcessedPreview();
             };
+
             image.src = event.target.result;
         };
+
         reader.readAsDataURL(file);
     }
 
-    photoInput?.addEventListener('change', () => loadPhoto(photoInput.files?.[0]));
+    photoInput?.addEventListener('change', () => {
+        const file = photoInput.files?.[0];
+
+        if (!file) return;
+
+        loadPhoto(file);
+
+        const reader = new FileReader();
+
+        reader.onload = () => {
+            sessionStorage.setItem(
+                'profileEditorSource',
+                reader.result
+            );
+        };
+
+        reader.readAsDataURL(file);
+    });
+
+    openPhotoEditor?.addEventListener('click', () => {
+
+        const file = photoInput?.files?.[0];
+
+        if (file) {
+
+            const reader = new FileReader();
+
+            reader.onload = () => {
+
+                sessionStorage.setItem(
+                    'profileEditorSource',
+                    reader.result
+                );
+
+                window.location.href = openPhotoEditor.dataset.url ||
+                    '/Account/PhotoEditor';
+            };
+
+            reader.readAsDataURL(file);
+
+        } else {
+
+            window.location.href =
+                openPhotoEditor.dataset.url ||
+                '/Account/PhotoEditor';
+        }
+    });
+
     photoZoomControl?.addEventListener('input', () => {
+
         photoZoom = Number(photoZoomControl.value);
+
         showProcessedPreview();
     });
+
+
     document.querySelector('#rotateLeft')?.addEventListener('click', () => {
-        if (!photoSource) return setPhotoStatus('Choose an image first.', true);
+
+        if (!photoSource) {
+            return setPhotoStatus(
+                'Choose an image first.',
+                true
+            );
+        }
+
         photoRotation = (photoRotation + 270) % 360;
+
         showProcessedPreview();
     });
+
+
     document.querySelector('#rotateRight')?.addEventListener('click', () => {
-        if (!photoSource) return setPhotoStatus('Choose an image first.', true);
+
+        if (!photoSource) {
+            return setPhotoStatus(
+                'Choose an image first.',
+                true
+            );
+        }
+
         photoRotation = (photoRotation + 90) % 360;
+
         showProcessedPreview();
     });
+
+
     document.querySelector('#cropPhoto')?.addEventListener('click', () => {
-        if (!photoSource) return setPhotoStatus('Choose an image first.', true);
+
+        if (!photoSource) {
+            return setPhotoStatus(
+                'Choose an image first.',
+                true
+            );
+        }
+
         showProcessedPreview();
+
         setPhotoStatus('Square crop applied.');
     });
+
     photoCanvas?.addEventListener('pointerdown', event => {
+
         if (!photoEditorPage || !photoSource) return;
+
         photoCanvas.setPointerCapture(event.pointerId);
-        dragStart = { x: event.clientX, y: event.clientY, offsetX: photoOffsetX, offsetY: photoOffsetY };
+
+        dragStart = {
+            x: event.clientX,
+            y: event.clientY,
+            offsetX: photoOffsetX,
+            offsetY: photoOffsetY
+        };
+
         photoCanvas.classList.add('is-dragging');
     });
+
+
     photoCanvas?.addEventListener('pointermove', event => {
+
         if (!dragStart) return;
-        photoOffsetX = dragStart.offsetX + event.clientX - dragStart.x;
-        photoOffsetY = dragStart.offsetY + event.clientY - dragStart.y;
+
+        photoOffsetX =
+            dragStart.offsetX +
+            event.clientX -
+            dragStart.x;
+
+        photoOffsetY =
+            dragStart.offsetY +
+            event.clientY -
+            dragStart.y;
+
         showProcessedPreview();
     });
+
+
     photoCanvas?.addEventListener('pointerup', () => {
+
         dragStart = null;
+
+        photoCanvas.classList.remove('is-dragging');
+    });
+
+
+    photoCanvas?.addEventListener('pointercancel', () => {
+
+        dragStart = null;
+
         photoCanvas.classList.remove('is-dragging');
     });
 
     function loadPhotoFromDataUrl(dataUrl) {
+
+        if (!dataUrl) return;
+
         const image = new Image();
+
         image.onload = () => {
+
             photoSource = image;
+
             photoRotation = 0;
             photoZoom = 1;
             photoOffsetX = 0;
             photoOffsetY = 0;
+
+            if (photoZoomControl) {
+                photoZoomControl.value = '1';
+            }
+
             showProcessedPreview();
         };
+
+        image.onerror = () => {
+
+            setPhotoStatus(
+                'Unable to load the selected photo.',
+                true
+            );
+        };
+
         image.src = dataUrl;
     }
 
     if (photoEditorPage) {
-        const initialPhoto = document.querySelector('#initialPhoto');
-        if (initialPhoto?.tagName === 'IMG') {
-            loadPhotoFromDataUrl(initialPhoto.src);
+
+        const editorSource =
+            sessionStorage.getItem('profileEditorSource');
+
+        if (editorSource) {
+
+            loadPhotoFromDataUrl(editorSource);
+
+            setPhotoStatus(
+                'Selected photo loaded into the editor.'
+            );
+
         } else {
-            setPhotoStatus('Choose an image to begin.');
+
+            const initialPhoto =
+                document.querySelector('#initialPhoto');
+
+            if (initialPhoto?.tagName === 'IMG') {
+
+                loadPhotoFromDataUrl(initialPhoto.src);
+
+            } else {
+
+                setPhotoStatus(
+                    'Choose an image to begin.'
+                );
+            }
         }
-    } else {
-        const savedPhoto = sessionStorage.getItem('profileEditorResult');
+    }
+
+    if (!photoEditorPage) {
+
+        const savedPhoto =
+            sessionStorage.getItem('profileEditorResult');
+
         if (savedPhoto) {
-            sessionStorage.removeItem('profileEditorResult');
+
+            sessionStorage.removeItem(
+                'profileEditorResult'
+            );
+
             loadPhotoFromDataUrl(savedPhoto);
-            fetch(savedPhoto).then(response => response.blob()).then(blob => {
-                const file = new File([blob], 'profile-photo.jpg', { type: 'image/jpeg' });
-                const transfer = new DataTransfer();
-                transfer.items.add(file);
-                if (photoInput) photoInput.files = transfer.files;
-                setPhotoStatus('Edited photo ready to upload.');
-            });
+
+            fetch(savedPhoto)
+                .then(response => response.blob())
+                .then(blob => {
+
+                    const file = new File(
+                        [blob],
+                        'profile-photo.jpg',
+                        {
+                            type: 'image/jpeg'
+                        }
+                    );
+
+                    const transfer = new DataTransfer();
+
+                    transfer.items.add(file);
+
+                    if (photoInput) {
+                        photoInput.files =
+                            transfer.files;
+                    }
+
+                    setPhotoStatus(
+                        'Edited photo ready to upload.'
+                    );
+                })
+                .catch(error => {
+
+                    console.error(
+                        'Unable to restore edited photo:',
+                        error
+                    );
+
+                    setPhotoStatus(
+                        'Unable to restore the edited photo.',
+                        true
+                    );
+                });
         }
     }
 
     applyPhotoEdit?.addEventListener('click', () => {
         if (!photoSource || !photoCanvas || !photoEditorPage) {
-            setPhotoStatus('Choose or capture an image first.', true);
+            setPhotoStatus(
+                'Choose or capture an image first.',
+                true
+            );
+
             return;
         }
+
         photoCanvas.toBlob(blob => {
-            if (!blob) return setPhotoStatus('The edited photo could not be created.', true);
+
+            if (!blob) {
+                setPhotoStatus(
+                    'The edited photo could not be created.',
+                    true
+                );
+
+                return;
+            }
+
             const reader = new FileReader();
+
             reader.onload = () => {
-                sessionStorage.setItem('profileEditorResult', reader.result);
-                window.location.href = photoEditorPage.dataset.returnUrl;
+
+                /*
+                 * Only now is the edited/cropped image created
+                 * as the final profile photo.
+                 */
+                sessionStorage.setItem(
+                    'profileEditorResult',
+                    reader.result
+                );
+
+                sessionStorage.removeItem(
+                    'profileEditorSource'
+                );
+
+                window.location.href =
+                    photoEditorPage.dataset.returnUrl;
             };
+
             reader.readAsDataURL(blob);
+
         }, 'image/jpeg', 0.9);
     });
 
