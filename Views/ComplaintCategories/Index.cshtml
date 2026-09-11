@@ -1,0 +1,2 @@
+@model IEnumerable<Online_Tuition_Systems.Models.ComplaintCategory>
+@{ViewData["Title"]="Complaint Categories";}<div class="d-flex justify-content-between"><h2>Complaint Categories</h2><a asp-action="Create" class="btn btn-primary">Add Category</a></div><table class="table table-striped mt-3"><thead><tr><th>Name</th><th>Status</th><th></th></tr></thead><tbody>@foreach(var c in Model){<tr><td>@c.Name</td><td>@(c.IsActive?"Active":"Inactive")</td><td><a asp-action="Edit" asp-route-id="@c.Id">Edit</a></td></tr>}</tbody></table>
