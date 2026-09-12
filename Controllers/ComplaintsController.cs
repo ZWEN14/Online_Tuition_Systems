@@ -46,6 +46,13 @@ public class ComplaintsController(ApplicationDbContext db, ICurrentUserService c
         if (!ModelState.IsValid) { if (model.Photos?.Count > 0) ModelState.AddModelError(string.Empty, "Please select your photos again after correcting the form."); await LoadCategories(model.CategoryId); return View(model); }
         var complaint = new Complaint { Attachments = photos, Title = model.Title.Trim(), Description = model.Description.Trim(), CategoryId = model.CategoryId, UserId = currentUser.UserId };
         complaint.StatusHistory.Add(new ComplaintStatusHistory { Status = ComplaintStatus.Pending, Note = "Complaint submitted.", UpdatedByUserId = currentUser.UserId });
+        var adminIds = await db.Users.Where(x => x.Role == UserRole.Admin && x.Id != currentUser.UserId).Select(x => x.Id).ToListAsync();
+        db.Notifications.AddRange(adminIds.Select(userId => new UserNotification
+        {
+            UserId = userId, Type = UserNotificationType.ComplaintSubmitted,
+            Title = "New complaint", Message = $"A new complaint, '{complaint.Title}', needs review.",
+            TargetUrl = "/Complaints/Index"
+        }));
         db.Add(complaint); await db.SaveChangesAsync(); TempData["Success"] = "Complaint submitted successfully.";
         return RedirectToAction(nameof(Details), new { id = complaint.Id });
     }
@@ -70,9 +77,16 @@ public class ComplaintsController(ApplicationDbContext db, ICurrentUserService c
         if (model.AssignedTutorId.HasValue && !await db.Users.AnyAsync(x => x.Id == model.AssignedTutorId && x.Role == UserRole.Tutor)) ModelState.AddModelError(nameof(model.AssignedTutorId), "Select a valid tutor.");
         if (!Enum.IsDefined(model.Status)) ModelState.AddModelError(nameof(model.Status), "Select a valid status.");
         if (!ModelState.IsValid) { await LoadCategories(model.CategoryId, true); await LoadTutors(model.AssignedTutorId); return View(model); }
-        var c = await db.Complaints.FindAsync(model.Id); if (c is null) return NotFound(); var oldStatus = c.Status;
+        var c = await db.Complaints.FindAsync(model.Id); if (c is null) return NotFound(); var oldStatus = c.Status; var oldTutorId = c.AssignedTutorId;
         c.CategoryId = model.CategoryId; c.AssignedTutorId = model.AssignedTutorId; c.Status = model.Status; c.ResolutionNotes = model.ResolutionNotes?.Trim(); c.UpdatedAt = DateTime.UtcNow;
         if (oldStatus != model.Status) AddStatusChange(c, model.Status, model.ResolutionNotes);
+        if (model.AssignedTutorId.HasValue && model.AssignedTutorId != oldTutorId)
+            db.Notifications.Add(new UserNotification
+            {
+                UserId = model.AssignedTutorId.Value, Type = UserNotificationType.ComplaintAssigned,
+                Title = "Complaint assigned to you", Message = $"You have been assigned '{c.Title}'.",
+                TargetUrl = $"/Complaints/Details/{c.Id}"
+            });
         await db.SaveChangesAsync(); TempData["Success"] = "Complaint updated."; return RedirectToAction(nameof(Details), new { id = c.Id });
     }
 
@@ -96,7 +110,8 @@ public class ComplaintsController(ApplicationDbContext db, ICurrentUserService c
     private void AddStatusChange(Complaint c, ComplaintStatus status, string? note)
     {
         db.ComplaintStatusHistories.Add(new ComplaintStatusHistory { ComplaintId = c.Id, Status = status, Note = note?.Trim(), UpdatedByUserId = currentUser.UserId });
-        db.Notifications.Add(new UserNotification { Type = UserNotificationType.ComplaintStatusChanged, Title = "Complaint updated", UserId = c.UserId, Message = $"Complaint #{c.Id} status changed to {FormatStatus(status)}.", TargetUrl = $"/Complaints/Details/{c.Id}" });
+        if (c.UserId != currentUser.UserId)
+            db.Notifications.Add(new UserNotification { Type = UserNotificationType.ComplaintStatusChanged, Title = "Complaint updated", UserId = c.UserId, Message = $"'{c.Title}' status changed to {FormatStatus(status)}.", TargetUrl = $"/Complaints/Details/{c.Id}" });
     }
     private bool CanView(Complaint c) => currentUser.IsInRole("Admin") || currentUser.IsInRole("Tutor") && (c.UserId == currentUser.UserId || c.AssignedTutorId == currentUser.UserId) || currentUser.IsInRole("Student") && c.UserId == currentUser.UserId;
     private async Task LoadCategories(int? selected = null, bool includeInactive = false) { var q = db.ComplaintCategories.AsQueryable(); if (!includeInactive) q = q.Where(x => x.IsActive); ViewBag.CategoryId = new SelectList(await q.OrderBy(x => x.Name).ToListAsync(), "Id", "Name", selected); }

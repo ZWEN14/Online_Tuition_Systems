@@ -1036,6 +1036,8 @@ h1, h2, h3, h4, h5, h6 {
 .notification-type-proposal { color: #6b3bb5; background: #f0e8ff; }
 .notification-type-registration { color: #0f735a; background: #dcf7ee; }
 .notification-type-booking { color: #78551a; background: #fff1d8; }
+.notification-type-complaint { color: #a03149; background: #ffe9ed; }
+.notification-type-survey { color: #195b8f; background: #e5f3ff; }
 
 .notification-card-body,
 .notification-card-body span,

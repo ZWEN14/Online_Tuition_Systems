@@ -74,6 +74,10 @@ public class NotificationFeedService(ApplicationDbContext context)
                 or UserNotificationType.ProposalChangesRequested
                 or UserNotificationType.ProposalApproved or UserNotificationType.ProposalRejected
                 => "Proposal",
+            UserNotificationType.ComplaintSubmitted or UserNotificationType.ComplaintAssigned
+                or UserNotificationType.ComplaintStatusChanged => "Complaint",
+            UserNotificationType.SurveyPublished or UserNotificationType.SurveyResponseSubmitted
+                => "Survey",
             _ => "Registration"
         };
 
@@ -88,6 +92,7 @@ public class NotificationFeedService(ApplicationDbContext context)
             IsUnread = item.IsUnread,
             IsUpdate = item.Type is UserNotificationType.AnnouncementUpdated
                 or UserNotificationType.EventUpdated
+                or UserNotificationType.ComplaintStatusChanged
         };
     }
 
