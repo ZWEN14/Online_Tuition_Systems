@@ -1,6 +1,6 @@
 .app-shell.sidebar-enhanced .app-sidebar {
     overflow: visible;
-    transition: width 180ms ease, min-width 180ms ease, padding 180ms ease;
+    transition: width 140ms ease-out, min-width 140ms ease-out, padding 140ms ease-out;
 }
 
 .shell-sidebar-controls {
@@ -61,7 +61,7 @@
 }
 
 .shell-sidebar-arrow svg {
-    transition: transform 180ms ease;
+    transition: transform 140ms ease-out;
 }
 
 .shell-nav-icon {
@@ -78,7 +78,15 @@
 
 .app-shell.sidebar-enhanced .sidebar-link {
     position: relative;
+    white-space: nowrap;
     transition: color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+}
+
+.app-shell.sidebar-enhanced .app-sidebar.shell-sidebar-transitioning .sidebar-heading,
+.app-shell.sidebar-enhanced .app-sidebar.shell-sidebar-transitioning .sidebar-link {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
 }
 
 .app-shell.sidebar-enhanced .sidebar-link.shell-sidebar-current {
@@ -93,30 +101,41 @@
     background: #dfeaff;
 }
 
-.app-shell.sidebar-enhanced .app-sidebar.shell-sidebar-collapsed {
+.app-shell.sidebar-enhanced .app-sidebar.shell-sidebar-collapsed,
+.shell-sidebar-precollapsed .app-shell.sidebar-enhanced .app-sidebar {
     width: 4.5rem;
     min-width: 4.5rem;
     padding-right: .55rem;
     padding-left: .55rem;
 }
 
-.shell-sidebar-collapsed .shell-sidebar-controls {
+.shell-sidebar-collapsed .shell-sidebar-controls,
+.shell-sidebar-precollapsed .shell-sidebar-controls {
     justify-content: center;
     margin-right: 0;
     margin-left: 0;
 }
 
 .shell-sidebar-collapsed .sidebar-heading,
-.shell-sidebar-collapsed .sidebar-link {
+.shell-sidebar-collapsed .sidebar-link,
+.shell-sidebar-precollapsed .sidebar-heading,
+.shell-sidebar-precollapsed .sidebar-link {
     display: none;
 }
 
-.shell-sidebar-collapsed .shell-sidebar-arrow svg {
+.shell-sidebar-collapsed .shell-sidebar-arrow svg,
+.shell-sidebar-precollapsed .shell-sidebar-arrow svg {
     transform: rotate(180deg);
 }
 
+.shell-sidebar-precollapsed .app-shell.sidebar-enhanced .app-sidebar,
+.shell-sidebar-precollapsed .shell-sidebar-arrow svg {
+    transition: none;
+}
+
 @media (max-width: 991.98px) {
-    .app-shell.sidebar-enhanced .app-sidebar.shell-sidebar-collapsed {
+    .app-shell.sidebar-enhanced .app-sidebar.shell-sidebar-collapsed,
+    .shell-sidebar-precollapsed .app-shell.sidebar-enhanced .app-sidebar {
         width: 100%;
         min-width: 0;
         min-height: 3.75rem;

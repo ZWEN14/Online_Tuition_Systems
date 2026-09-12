@@ -1141,6 +1141,22 @@ Course/Billing scope and the other team module areas are now recorded. Shared Us
 - Did not add site-wide AJAX navigation. Normal MVC navigation is retained to protect teammate forms, server/client validation, redirects, authorization responses, page scripts, accessibility, and browser history.
 - No controller, entity, migration, database, authentication behavior, or teammate view was changed. Browser verification across Student, Tutor, and Administrator modules remains outstanding.
 
+### 2026-09-12 — Global sidebar first-paint and transition repair planned
+
+- Remove the visible layout shift caused by injecting sidebar controls only after the shared page and original navigation have rendered.
+- Render the hamburger, edge chevron, and Course/Billing SVG icons directly in `_Layout.cshtml` so their space and appearance are stable from the first paint.
+- Read the saved collapsed state in the document head before CSS paints the application shell, preventing an expanded-menu flash during refresh or module navigation.
+- During an animated expansion, keep navigation content hidden until the sidebar reaches full width so labels never visibly compress or wrap.
+
+### 2026-09-12 — Global sidebar first-paint and transition repaired; awaiting verification
+
+- Moved the hamburger and centre-edge chevron from late JavaScript injection into the server-rendered shared layout, eliminating the navigation push-down when JavaScript starts.
+- Rendered the Course, My Courses, and Billing SVG icons directly in the layout so they no longer replace letter/text placeholders after first paint.
+- Added a small head script that restores the session-only collapsed state before styles paint, preventing the full expanded menu from flashing during refresh and module navigation.
+- Shortened the width transition to 140 ms and temporarily hides navigation content during the 150 ms transition window, preventing labels from compressing while the sidebar expands.
+- JavaScript now handles only state, accessibility labels, route highlighting, and interaction; it no longer creates controls or replaces icons after page load.
+- Normal MVC navigation and the focused Course catalogue AJAX/partial-view implementation remain unchanged. Browser verification remains outstanding.
+
 ### 2026-09-12 — Idempotent Course demonstration data script added
 
 - Added `Database/AddDemoCourses.sql` to insert ten realistic Course records only; it does not create or change Enrollments, Payments, Invoices, Users, or CourseCategories.
