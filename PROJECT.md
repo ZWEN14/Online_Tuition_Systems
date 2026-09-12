@@ -1080,6 +1080,67 @@ Course/Billing scope and the other team module areas are now recorded. Shared Us
 - `Database/SeedDemoSubjects.sql` remains unchanged: Subjects and TutorSubjects support Tutor availability/Booking, while CourseCategories and Courses belong to Course Management.
 - Verified three password hashes, eleven category definitions, thirty unique Course codes, thirty unique slugs, and model length limits. Database execution remains outstanding.
 
+### 2026-09-12 — Course-only collapsible sidebar experiment started
+
+- Prototype improved Quick Access icons and a collapsible sidebar only while a Course or Billing-owned page is open.
+- Keep the shared `_Layout.cshtml`, teammate module views, global navigation markup, and global sidebar behavior unchanged.
+- Use a Course-specific nested layout plus isolated CSS/JavaScript so leaving the Course/Billing area restores the normal shared sidebar automatically.
+- Provide both an accessible hamburger control and directional arrow control, with a compact icon rail on desktop and compact collapsed header on mobile.
+
+### 2026-09-12 — Course-only collapsible sidebar experiment implemented; awaiting verification
+
+- Added `_CourseModuleLayout.cshtml` as a nested layout that forwards each page's existing Scripts section to the unchanged shared layout.
+- Applied it through folder-level `_ViewStart.cshtml` files only to public Courses, Student Courses/Billing, Tutor Courses/Promotions/Earnings, and Administrator Course/Billing pages.
+- Added isolated `course-module-shell.css` and `course-module-shell.js`; neither global stylesheet/script nor `_Layout.cshtml` was modified.
+- On those pages, Quick Access now shows an open-book icon for Courses, a learning-collection icon for My Courses, and a receipt icon for Billing destinations.
+- Added hamburger and arrow controls with accessible labels, keyboard focus, reduced-motion support, desktop icon-rail collapse, mobile compact collapse, and session-only state persistence.
+- Pages outside Course/Billing continue using the original expanded shared sidebar and its original icons. Browser verification remains outstanding.
+
+### 2026-09-12 — Course demonstration seed database-context repair planned
+
+- Compared the last Course/Billing integration commit (`0703901`) with teammate commit (`315d2fa`) after `Database/AddDemoCourses.sql` failed with `Invalid object name 'dbo.Users'`.
+- The teammate commit removed the script's explicit `OnlineTuitionDb` selection, so an SQL editor connection with an empty database field executes it against its default database.
+- Restore only the explicit database selection while preserving the teammate commit's verified Tutor/Admin account lookup.
+
+### 2026-09-12 — Course demonstration seed database-context repaired; awaiting verification
+
+- Restored `USE [OnlineTuitionDb]; GO` at the start of `Database/AddDemoCourses.sql` so the script finds the integrated `dbo.Users`, Course Categories, and Courses tables even when the SQL editor connection leaves Database blank.
+- Preserved the teammate change that selects the first verified, unblocked Tutor and Administrator instead of requiring specific demo email addresses.
+- No database command was run by Codex; rerun verification remains a user action.
+
+### 2026-09-12 — Course-only sidebar UX refinement planned
+
+- Keep the experiment isolated to Course/Billing pages and leave the teammate-owned global layout unchanged.
+- Move the arrow control to the vertical centre of the sidebar's right edge; point it inward while open and outward while collapsed.
+- Keep only the hamburger and edge arrow visible in the collapsed rail, hiding all Quick Access navigation entries and their icons.
+- Highlight the navigation entry matching the current controller and replace the Courses letter with an embedded official Bootstrap Icons book SVG.
+
+### 2026-09-12 — Course-only sidebar UX refined; awaiting verification
+
+- Moved the chevron to the vertical centre of the sidebar's right edge. It points left to close an open sidebar and rotates right to open a collapsed sidebar.
+- Changed the collapsed desktop state to a narrow control rail containing only the hamburger and edge chevron; all Quick Access headings, links, labels, badges, and navigation icons are hidden.
+- Added current-route highlighting with `aria-current="page"` so the selected Course/Billing destination is visually distinct across its list, create, edit, details, and invoice routes.
+- Replaced the Courses letter with the official Bootstrap Icons `book` SVG embedded locally in the isolated JavaScript; it has no CDN/runtime network dependency and retains its MIT source attribution.
+- Kept `_Layout.cshtml`, global CSS, teammate module views, and their normal sidebar behavior unchanged.
+
+### 2026-09-12 — Global sidebar promotion planned
+
+- The user approved promoting the tested collapsible sidebar behavior from Course/Billing pages to every authenticated module.
+- Load one shared sidebar stylesheet and script from `_Layout.cshtml`, retain route-aware highlighting, and use one session-wide collapsed state.
+- Remove the temporary Course-only nested-layout routing because all views can inherit the normal shared layout directly again.
+- Keep normal MVC page navigation. Do not introduce site-wide AJAX/PJAX because teammate forms, validation, redirects, authorization responses, page scripts, and browser history depend on full document navigation.
+- Retain the existing focused Course catalogue AJAX implementation, which already returns `_CourseCatalogResults` and `_CourseCards` partial views and updates only catalogue results.
+
+### 2026-09-12 — Global sidebar promoted; awaiting verification
+
+- Added shared `app-sidebar.css` and `app-sidebar.js` assets and loaded them once from `_Layout.cshtml` for every authenticated module.
+- Globalized the hamburger, centre-edge directional chevron, collapsed control rail, session-state persistence, embedded Course icon, keyboard labels, and current-route highlighting.
+- Route highlighting chooses the most specific matching sidebar destination, preventing both `Surveys` and `My survey responses` from appearing selected on the same page.
+- Removed the temporary Course/Billing `_ViewStart.cshtml`, nested layout, and module-named sidebar assets; those pages now inherit the root `_ViewStart.cshtml` and the same global layout as all other modules.
+- Confirmed that Course catalogue filtering already follows the appropriate AJAX/partial-view pattern through `course-catalog.js`, `CoursesController.Index`, `_CourseCatalogResults`, and `_CourseCards`.
+- Did not add site-wide AJAX navigation. Normal MVC navigation is retained to protect teammate forms, server/client validation, redirects, authorization responses, page scripts, accessibility, and browser history.
+- No controller, entity, migration, database, authentication behavior, or teammate view was changed. Browser verification across Student, Tutor, and Administrator modules remains outstanding.
+
 ### 2026-09-12 — Idempotent Course demonstration data script added
 
 - Added `Database/AddDemoCourses.sql` to insert ten realistic Course records only; it does not create or change Enrollments, Payments, Invoices, Users, or CourseCategories.

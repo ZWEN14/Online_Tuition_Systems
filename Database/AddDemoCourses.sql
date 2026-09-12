@@ -2,7 +2,9 @@
 -- Safe to rerun: named categories are reused and DEMO courses are refreshed.
 -- Uses the existing verified Tutor and Admin from the combined User module.
 -- CourseStatus values: Draft = 1, PendingReview = 2, Published = 4.
--- Connect to the intended database before running this script; it does not switch databases.
+-- Selects the integrated application database explicitly for reliable SQL editor execution.
+USE [OnlineTuitionDb];
+GO
 
 SET NOCOUNT ON;
 SET XACT_ABORT ON;
