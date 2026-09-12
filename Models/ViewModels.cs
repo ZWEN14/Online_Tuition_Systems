@@ -39,6 +39,12 @@ public class RegisterVM
     [Remote("CheckEmail", "Account", ErrorMessage = "Duplicated {0}.")]
     public string Email { get; set; }
 
+    [Required]
+    [Phone]
+    [StringLength(25, MinimumLength = 7)]
+    [DisplayName("Phone Number")]
+    public string PhoneNumber { get; set; }
+
     [Required(ErrorMessage = "Please select your education level.")]
     [DisplayName("Education Level")]
     public string EducationLevel { get; set; }
@@ -119,6 +125,11 @@ public class ProfileUpdateVM
 {
     public string Email { get; set; } = "";
     public string? PhotoPath { get; set; }
+
+    [Phone]
+    [StringLength(25, MinimumLength = 7)]
+    [DisplayName("Phone Number")]
+    public string? PhoneNumber { get; set; }
 
     [Required]
     [StringLength(100)]

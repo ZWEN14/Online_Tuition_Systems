@@ -70,3 +70,6 @@ wwwroot/js/jquery/
 wwwroot/js/jquery-ajax-unobtrusive/
 wwwroot/js/jquery-validate/
 wwwroot/js/jquery-validation-unobtrusive/
+
+# Local verification tools and output
+.build-check/

@@ -1,4 +1,3 @@
-using System.Data;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -200,9 +199,6 @@ public class EventProposalsController : Controller
             return Forbid();
         }
 
-        await using var transaction = await _context.Database
-            .BeginTransactionAsync(IsolationLevel.Serializable);
-
         var pendingProposal = await _context.EventProposals
             .SingleOrDefaultAsync(item => item.Id == id);
 
@@ -254,20 +250,19 @@ public class EventProposalsController : Controller
         };
 
         _context.Events.Add(tuitionEvent);
-        await _context.SaveChangesAsync();
 
         pendingProposal.Status = EventProposalStatus.Approved;
         pendingProposal.ReviewedByUserId = adminUserId;
         pendingProposal.ReviewedAt = currentTime;
         pendingProposal.ReviewNote = CleanOptionalText(model.ReviewNote);
-        pendingProposal.CreatedEventId = tuitionEvent.Id;
+        pendingProposal.CreatedEvent = tuitionEvent;
         pendingProposal.UpdatedAt = currentTime;
 
-        await _context.SaveChangesAsync();
         await _notificationService.ProposalReviewedAsync(pendingProposal);
 
+        // One SaveChanges call creates the draft event, updates the proposal,
+        // and inserts the notification in EF Core's implicit transaction.
         await _context.SaveChangesAsync();
-        await transaction.CommitAsync();
 
         TempData["SuccessMessage"] = "Proposal approved and a draft event was created.";
         return RedirectToAction("Details", "Events", new { id = tuitionEvent.Id });

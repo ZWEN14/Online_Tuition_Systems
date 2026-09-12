@@ -27,6 +27,9 @@ public class User
     [MaxLength(100)]
     public string Email { get; set; }
 
+    [MaxLength(25)]
+    public string? PhoneNumber { get; set; }
+
     [MaxLength(100)]
     public string Hash { get; set; }
 

@@ -245,9 +245,10 @@ public class AdminController(ApplicationDbContext db, Helper hp) : Controller
 
             TempData["Info"] = "User Deleted";
         }
-        catch (DbUpdateException)
+        catch (DbUpdateException ex)
         {
-            TempData["Info"] = "Cannot delete this user.";
+            throw ex;
+            TempData["Info"] = "User Deleted";
         }
 
         return RedirectToAction("Index");

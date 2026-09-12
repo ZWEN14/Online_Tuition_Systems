@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -23,13 +24,19 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
 
     // POST: Account/Login
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Login(LoginVM vm, string? returnURL, [FromForm(Name = "g-recaptcha-response")] string? captchaToken)
     {
         captchaToken ??= Request.Form["g-recaptcha-response"].FirstOrDefault();
-        ModelState.Remove(nameof(vm.Password));
+        if (!ModelState.IsValid)
+        {
+            ViewBag.RecaptchaSiteKey = recaptcha.SiteKey;
+            return View(vm);
+        }
+
         var u = db.Users.FirstOrDefault(u => u.Email == vm.Email);
 
-        if (!await recaptcha.VerifyAsync(captchaToken, "LOGIN", HttpContext.Connection.RemoteIpAddress?.ToString(), HttpContext.RequestAborted))
+        if (!await recaptcha.VerifyAsync(captchaToken, HttpContext.Connection.RemoteIpAddress?.ToString(), HttpContext.RequestAborted))
         {
             ModelState.AddModelError("Captcha", "Please complete the CAPTCHA check.");
         }
@@ -102,14 +109,16 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
         });
     }
 
-    // GET: Account/Logout
+    // POST: Account/Logout
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public IActionResult Logout(string? returnURL)
     {
         TempData["Info"] = "Logout successfully.";
 
         hp.SignOut();
 
-        return RedirectToAction("Index", "Home");
+        return RedirectToAction("Welcome", "Home");
     }
 
     // GET: Account/AccessDenied
@@ -125,9 +134,15 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
     // ------------------------------------------------------------------------
 
     // GET: Account/CheckEmail
-    public bool CheckEmail(string email)
+    public async Task<bool> CheckEmail(string? email)
     {
-        return !db.Users.Any(u => u.Email == email);
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return true;
+        }
+
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+        return !await db.Users.AnyAsync(u => u.Email == normalizedEmail);
     }
 
     // GET: Account/Register
@@ -142,16 +157,22 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
 
     // POST: Account/Register
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Register(RegisterVM vm, [FromForm(Name = "g-recaptcha-response")] string? captchaToken)
     {
         captchaToken ??= Request.Form["g-recaptcha-response"].FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(vm.Email))
+        {
+            vm.Email = vm.Email.Trim().ToLowerInvariant();
+        }
+
         if (ModelState.IsValid("Email") &&
-            db.Users.Any(u => u.Email == vm.Email))
+            await db.Users.AnyAsync(u => u.Email == vm.Email))
         {
             ModelState.AddModelError("Email", "Duplicated Email.");
         }
 
-        if (!await recaptcha.VerifyAsync(captchaToken, "REGISTER", HttpContext.Connection.RemoteIpAddress?.ToString(), HttpContext.RequestAborted))
+        if (!await recaptcha.VerifyAsync(captchaToken, HttpContext.Connection.RemoteIpAddress?.ToString(), HttpContext.RequestAborted))
         {
             ModelState.AddModelError("Captcha", "Please complete the CAPTCHA check.");
         }
@@ -162,6 +183,7 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
             {
                 Name = vm.Name,
                 Email = vm.Email,
+                PhoneNumber = vm.PhoneNumber.Trim(),
                 Hash = hp.HashPassword(vm.Password),
                 Role = UserRole.Student,
                 EmailVerified = false,
@@ -170,17 +192,31 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
             u.EmailVerificationHash = hp.HashPassword(code);
             u.EmailVerificationExpiresAt = DateTime.UtcNow.AddMinutes(10);
             db.Users.Add(u);
-            db.SaveChanges();
-
-            db.Students.Add(new()
+            db.Students.Add(new Student
             {
-                UserId = u.Id,
+                User = u,
                 EducationLevel = vm.EducationLevel,
             });
-            db.SaveChanges();
 
-            await SendVerificationCodeAsync(u.Email, code, "Verify your Anywhere Edureach account");
-            TempData["Info"] = "Registration complete. A verification code was sent to your email.";
+            try
+            {
+                // EF Core wraps both INSERT statements in one transaction.
+                // A duplicate email or profile failure cannot leave a partial account.
+                await db.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex) when (IsUniqueConstraintViolation(ex))
+            {
+                db.ChangeTracker.Clear();
+                ModelState.AddModelError(nameof(vm.Email), "An account with this email already exists.");
+                ViewBag.EducationLevel = new SelectList(Helper.EducationLevels);
+                ViewBag.RecaptchaSiteKey = recaptcha.SiteKey;
+                return View(vm);
+            }
+
+            var emailSent = await SendVerificationCodeAsync(u.Email, code, "Verify your Anywhere Edureach account");
+            TempData[emailSent ? "Info" : "Error"] = emailSent
+                ? "Registration complete. A verification code was sent to your email."
+                : "Registration complete, but the verification email could not be sent. Check the SMTP settings and use Resend code.";
             return RedirectToAction(nameof(VerifyEmail), new { email = u.Email });
         }
 
@@ -189,10 +225,14 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
         return View(vm);
     }
 
+    private static bool IsUniqueConstraintViolation(DbUpdateException exception) =>
+        exception.InnerException is SqlException { Number: 2601 or 2627 };
+
     [HttpGet]
     public IActionResult VerifyEmail(string email) => View(new VerifyEmailVM { Email = email });
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public IActionResult VerifyEmail(VerifyEmailVM vm)
     {
         var u = db.Users.FirstOrDefault(x => x.Email == vm.Email);
@@ -209,6 +249,39 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
         db.SaveChanges();
         TempData["Info"] = "Email verified. You can now sign in.";
         return RedirectToAction(nameof(Login));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResendVerification(string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            TempData["Error"] = "The email address is missing. Please register again.";
+            return RedirectToAction(nameof(Register));
+        }
+
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+        var user = await db.Users.FirstOrDefaultAsync(x => x.Email == normalizedEmail);
+
+        if (user is not null && !user.EmailVerified)
+        {
+            var code = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
+            user.EmailVerificationHash = hp.HashPassword(code);
+            user.EmailVerificationExpiresAt = DateTime.UtcNow.AddMinutes(10);
+            await db.SaveChangesAsync();
+
+            var emailSent = await SendVerificationCodeAsync(user.Email, code, "Verify your Anywhere Edureach account");
+            TempData[emailSent ? "Info" : "Error"] = emailSent
+                ? "A new verification code was sent to your email."
+                : "The verification email could not be sent. Check the SMTP settings and try again.";
+        }
+        else
+        {
+            TempData["Info"] = "If this account still requires verification, a new code will be sent.";
+        }
+
+        return RedirectToAction(nameof(VerifyEmail), new { email = normalizedEmail });
     }
 
     // GET: Account/UpdatePassword
@@ -234,7 +307,13 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
         u.EmailVerificationHash = hp.HashPassword(code);
         u.EmailVerificationExpiresAt = DateTime.UtcNow.AddMinutes(10);
         db.SaveChanges();
-        await SendVerificationCodeAsync(u.Email, code, "Verify your password change");
+        var emailSent = await SendVerificationCodeAsync(u.Email, code, "Verify your password change");
+        if (!emailSent)
+        {
+            TempData["Error"] = "The verification email could not be sent. Check the SMTP settings and try again.";
+            return View("UpdatePassword", new UpdatePasswordVM());
+        }
+
         TempData["PasswordVerified"] = true;
         TempData["Info"] = "A verification code was sent to your email.";
         return View("UpdatePassword", new UpdatePasswordVM { CurrentVerified = true, VerificationCodeSent = true });
@@ -287,6 +366,7 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
         {
             Email = u.Email,
             Name = u.Name,
+            PhoneNumber = u.PhoneNumber,
             PhotoPath = u.PhotoPath,
         };
 
@@ -297,7 +377,7 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
     [Authorize]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult UpdateProfile([Bind("Name,Photo")] ProfileUpdateVM vm)
+    public IActionResult UpdateProfile([Bind("Name,PhoneNumber,Photo")] ProfileUpdateVM vm)
     {
         var u = db.Users.Find(CurrentUserId);
         if (u == null) return RedirectToAction("Index", "Home");
@@ -305,6 +385,9 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
         if (ModelState.IsValid)
         {
             var name = vm.Name.Trim();
+            var phoneNumber = string.IsNullOrWhiteSpace(vm.PhoneNumber)
+                ? null
+                : vm.PhoneNumber.Trim();
             string? photoPath = null;
             if (vm.Photo != null)
             {
@@ -320,11 +403,14 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
             var affectedRows = photoPath == null
                 ? db.Users
                     .Where(user => user.Id == CurrentUserId)
-                    .ExecuteUpdate(setters => setters.SetProperty(user => user.Name, name))
+                    .ExecuteUpdate(setters => setters
+                        .SetProperty(user => user.Name, name)
+                        .SetProperty(user => user.PhoneNumber, phoneNumber))
                 : db.Users
                     .Where(user => user.Id == CurrentUserId)
                     .ExecuteUpdate(setters => setters
                         .SetProperty(user => user.Name, name)
+                        .SetProperty(user => user.PhoneNumber, phoneNumber)
                         .SetProperty(user => user.PhotoPath, photoPath));
 
             if (affectedRows != 1)
@@ -340,6 +426,7 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
         }
 
         vm.Email = u.Email;
+        vm.PhoneNumber = u.PhoneNumber;
         vm.PhotoPath = u.PhotoPath;
         return View(vm);
     }
@@ -348,16 +435,17 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
     [HttpPost]
     public IActionResult RotatePhoto(int degrees = 90) => RedirectToAction(nameof(UpdateProfile));
 
-    private async Task SendVerificationCodeAsync(string email, string code, string subject)
+    private async Task<bool> SendVerificationCodeAsync(string email, string code, string subject)
     {
         try
         {
             await emailSender.SendAsync(email, subject, $"Your Anywhere Edureach verification code is {code}. It expires in 10 minutes.", HttpContext.RequestAborted);
+            return true;
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Unable to send verification email to {Email}.", email);
-            TempData["Info"] = "The verification email could not be sent. Please contact support or try again later.";
+            return false;
         }
     }
 

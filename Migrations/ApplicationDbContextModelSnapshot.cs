@@ -302,6 +302,10 @@ namespace Online_Tuition_Systems.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<string>("PhoneNumber")
+                        .HasMaxLength(25)
+                        .HasColumnType("nvarchar(25)");
+
                     b.Property<string>("PhotoPath")
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
@@ -552,6 +556,114 @@ namespace Online_Tuition_Systems.Migrations
                         .IsUnique();
 
                     b.ToTable("Enrollments");
+                });
+
+            modelBuilder.Entity("Online_Tuition_Systems.Models.Complaint", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("AssignedTutorId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(3000)
+                        .HasColumnType("nvarchar(3000)");
+
+                    b.Property<string>("ResolutionNotes")
+                        .HasMaxLength(3000)
+                        .HasColumnType("nvarchar(3000)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssignedTutorId");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Complaints");
+                });
+
+            modelBuilder.Entity("Online_Tuition_Systems.Models.ComplaintCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("ComplaintCategories");
+                });
+
+            modelBuilder.Entity("Online_Tuition_Systems.Models.ComplaintStatusHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("ChangedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ComplaintId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UpdatedByUserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ComplaintId");
+
+                    b.HasIndex("UpdatedByUserId");
+
+                    b.ToTable("ComplaintStatusHistories");
                 });
 
             modelBuilder.Entity("Online_Tuition_Systems.Models.Event", b =>
@@ -1039,6 +1151,271 @@ namespace Online_Tuition_Systems.Migrations
                     b.ToTable("Promotions");
                 });
 
+            modelBuilder.Entity("Online_Tuition_Systems.Models.Question", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsRequired")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("SectionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SurveyId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SectionId");
+
+                    b.HasIndex("SurveyId");
+
+                    b.ToTable("Questions");
+                });
+
+            modelBuilder.Entity("Online_Tuition_Systems.Models.QuestionOption", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
+
+                    b.Property<int>("QuestionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuestionId");
+
+                    b.ToTable("QuestionOptions");
+                });
+
+            modelBuilder.Entity("Online_Tuition_Systems.Models.SubmissionAttachment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("ComplaintId")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("Content")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<int?>("SurveyAnswerId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ComplaintId");
+
+                    b.HasIndex("SurveyAnswerId");
+
+                    b.ToTable("SubmissionAttachments", t =>
+                        {
+                            t.HasCheckConstraint("CK_SubmissionAttachment_Owner", "([SurveyAnswerId] IS NOT NULL AND [ComplaintId] IS NULL) OR ([SurveyAnswerId] IS NULL AND [ComplaintId] IS NOT NULL)");
+                        });
+                });
+
+            modelBuilder.Entity("Online_Tuition_Systems.Models.Survey", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("CourseId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("CreatorId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourseId");
+
+                    b.HasIndex("CreatorId");
+
+                    b.ToTable("Surveys");
+                });
+
+            modelBuilder.Entity("Online_Tuition_Systems.Models.SurveyAnswer", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("QuestionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SurveyResponseId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Value")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuestionId");
+
+                    b.HasIndex("SurveyResponseId", "QuestionId")
+                        .IsUnique();
+
+                    b.ToTable("SurveyAnswers");
+                });
+
+            modelBuilder.Entity("Online_Tuition_Systems.Models.SurveyBranchRule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Action")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("DestinationSectionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("QuestionOptionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DestinationSectionId");
+
+                    b.HasIndex("QuestionOptionId")
+                        .IsUnique();
+
+                    b.ToTable("SurveyBranchRules");
+                });
+
+            modelBuilder.Entity("Online_Tuition_Systems.Models.SurveyResponse", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("SubmittedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("SurveyId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("SurveyId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("SurveyResponses");
+                });
+
+            modelBuilder.Entity("Online_Tuition_Systems.Models.SurveySection", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AfterSectionAction")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("NextSectionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SurveyId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NextSectionId");
+
+                    b.HasIndex("SurveyId", "DisplayOrder")
+                        .IsUnique();
+
+                    b.ToTable("SurveySections");
+                });
+
             modelBuilder.Entity("Online_Tuition_Systems.Models.UserNotification", b =>
                 {
                     b.Property<int>("Id")
@@ -1245,6 +1622,51 @@ namespace Online_Tuition_Systems.Migrations
                     b.Navigation("Student");
                 });
 
+            modelBuilder.Entity("Online_Tuition_Systems.Models.Complaint", b =>
+                {
+                    b.HasOne("AnywhereEdureach.Models.User", "AssignedTutor")
+                        .WithMany()
+                        .HasForeignKey("AssignedTutorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Online_Tuition_Systems.Models.ComplaintCategory", "Category")
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AnywhereEdureach.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AssignedTutor");
+
+                    b.Navigation("Category");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Online_Tuition_Systems.Models.ComplaintStatusHistory", b =>
+                {
+                    b.HasOne("Online_Tuition_Systems.Models.Complaint", "Complaint")
+                        .WithMany("StatusHistory")
+                        .HasForeignKey("ComplaintId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AnywhereEdureach.Models.User", "UpdatedByUser")
+                        .WithMany()
+                        .HasForeignKey("UpdatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Complaint");
+
+                    b.Navigation("UpdatedByUser");
+                });
+
             modelBuilder.Entity("Online_Tuition_Systems.Models.EventProposal", b =>
                 {
                     b.HasOne("Online_Tuition_Systems.Models.Event", "CreatedEvent")
@@ -1315,6 +1737,144 @@ namespace Online_Tuition_Systems.Migrations
                     b.Navigation("Course");
                 });
 
+            modelBuilder.Entity("Online_Tuition_Systems.Models.Question", b =>
+                {
+                    b.HasOne("Online_Tuition_Systems.Models.SurveySection", "Section")
+                        .WithMany("Questions")
+                        .HasForeignKey("SectionId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Online_Tuition_Systems.Models.Survey", "Survey")
+                        .WithMany("Questions")
+                        .HasForeignKey("SurveyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Section");
+
+                    b.Navigation("Survey");
+                });
+
+            modelBuilder.Entity("Online_Tuition_Systems.Models.QuestionOption", b =>
+                {
+                    b.HasOne("Online_Tuition_Systems.Models.Question", "Question")
+                        .WithMany("Options")
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Question");
+                });
+
+            modelBuilder.Entity("Online_Tuition_Systems.Models.SubmissionAttachment", b =>
+                {
+                    b.HasOne("Online_Tuition_Systems.Models.Complaint", "Complaint")
+                        .WithMany("Attachments")
+                        .HasForeignKey("ComplaintId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("Online_Tuition_Systems.Models.SurveyAnswer", "SurveyAnswer")
+                        .WithMany("Attachments")
+                        .HasForeignKey("SurveyAnswerId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Complaint");
+
+                    b.Navigation("SurveyAnswer");
+                });
+
+            modelBuilder.Entity("Online_Tuition_Systems.Models.Survey", b =>
+                {
+                    b.HasOne("Online_Tuition_Systems.Models.Course", "Course")
+                        .WithMany()
+                        .HasForeignKey("CourseId");
+
+                    b.HasOne("AnywhereEdureach.Models.User", "Creator")
+                        .WithMany()
+                        .HasForeignKey("CreatorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Course");
+
+                    b.Navigation("Creator");
+                });
+
+            modelBuilder.Entity("Online_Tuition_Systems.Models.SurveyAnswer", b =>
+                {
+                    b.HasOne("Online_Tuition_Systems.Models.Question", "Question")
+                        .WithMany()
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Online_Tuition_Systems.Models.SurveyResponse", "SurveyResponse")
+                        .WithMany("Answers")
+                        .HasForeignKey("SurveyResponseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Question");
+
+                    b.Navigation("SurveyResponse");
+                });
+
+            modelBuilder.Entity("Online_Tuition_Systems.Models.SurveyBranchRule", b =>
+                {
+                    b.HasOne("Online_Tuition_Systems.Models.SurveySection", "DestinationSection")
+                        .WithMany()
+                        .HasForeignKey("DestinationSectionId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("Online_Tuition_Systems.Models.QuestionOption", "QuestionOption")
+                        .WithOne("BranchRule")
+                        .HasForeignKey("Online_Tuition_Systems.Models.SurveyBranchRule", "QuestionOptionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DestinationSection");
+
+                    b.Navigation("QuestionOption");
+                });
+
+            modelBuilder.Entity("Online_Tuition_Systems.Models.SurveyResponse", b =>
+                {
+                    b.HasOne("Online_Tuition_Systems.Models.Survey", "Survey")
+                        .WithMany("Responses")
+                        .HasForeignKey("SurveyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AnywhereEdureach.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Survey");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Online_Tuition_Systems.Models.SurveySection", b =>
+                {
+                    b.HasOne("Online_Tuition_Systems.Models.SurveySection", "NextSection")
+                        .WithMany()
+                        .HasForeignKey("NextSectionId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("Online_Tuition_Systems.Models.Survey", "Survey")
+                        .WithMany("Sections")
+                        .HasForeignKey("SurveyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("NextSection");
+
+                    b.Navigation("Survey");
+                });
+
             modelBuilder.Entity("Online_Tuition_Systems.Models.UserNotification", b =>
                 {
                     b.HasOne("AnywhereEdureach.Models.User", "User")
@@ -1359,6 +1919,13 @@ namespace Online_Tuition_Systems.Migrations
                     b.Navigation("Payments");
                 });
 
+            modelBuilder.Entity("Online_Tuition_Systems.Models.Complaint", b =>
+                {
+                    b.Navigation("Attachments");
+
+                    b.Navigation("StatusHistory");
+                });
+
             modelBuilder.Entity("Online_Tuition_Systems.Models.Event", b =>
                 {
                     b.Navigation("Announcement");
@@ -1371,6 +1938,40 @@ namespace Online_Tuition_Systems.Migrations
             modelBuilder.Entity("Online_Tuition_Systems.Models.Payment", b =>
                 {
                     b.Navigation("Invoice");
+                });
+
+            modelBuilder.Entity("Online_Tuition_Systems.Models.Question", b =>
+                {
+                    b.Navigation("Options");
+                });
+
+            modelBuilder.Entity("Online_Tuition_Systems.Models.QuestionOption", b =>
+                {
+                    b.Navigation("BranchRule");
+                });
+
+            modelBuilder.Entity("Online_Tuition_Systems.Models.Survey", b =>
+                {
+                    b.Navigation("Questions");
+
+                    b.Navigation("Responses");
+
+                    b.Navigation("Sections");
+                });
+
+            modelBuilder.Entity("Online_Tuition_Systems.Models.SurveyAnswer", b =>
+                {
+                    b.Navigation("Attachments");
+                });
+
+            modelBuilder.Entity("Online_Tuition_Systems.Models.SurveyResponse", b =>
+                {
+                    b.Navigation("Answers");
+                });
+
+            modelBuilder.Entity("Online_Tuition_Systems.Models.SurveySection", b =>
+                {
+                    b.Navigation("Questions");
                 });
 #pragma warning restore 612, 618
         }

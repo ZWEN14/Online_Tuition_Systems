@@ -1,0 +1,29 @@
+@model Online_Tuition_Systems.Models.Survey
+@using Online_Tuition_Systems.Models
+@{ ViewData["Title"] = "Survey Details"; }
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div><h2>@Model.Title</h2><p>@Model.Description</p><span class="text-muted">@(Model.IsActive ? "Active" : "Inactive") ? @Model.Responses.Count response(s)</span></div>
+    <div class="d-flex gap-2"><a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Edit Survey</a><a asp-action="Responses" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Responses</a></div>
+</div>
+@foreach (var surveySection in Model.Sections.OrderBy(x => x.DisplayOrder))
+{
+    <section class="card mb-4">
+        <div class="card-header"><strong>Section @surveySection.DisplayOrder: @surveySection.Title</strong></div>
+        <div class="card-body">
+            <p>@surveySection.Description</p>
+            @foreach (var question in surveySection.Questions.OrderBy(x => x.DisplayOrder))
+            {
+                <div class="border rounded p-3 mb-3">
+                    <strong>@question.Text</strong><div class="text-muted">@question.Type ? @(question.IsRequired ? "Required" : "Optional")</div>
+                    @foreach (var option in question.Options.OrderBy(x => x.DisplayOrder))
+                    {
+                        <div class="d-flex justify-content-between gap-3 mt-2"><span>@option.Text</span><span class="text-muted">@(option.BranchRule?.Action == SurveyBranchAction.Submit ? "Submit form" : option.BranchRule?.Action == SurveyBranchAction.GoToSection ? "Go to: " + Model.Sections.FirstOrDefault(x => x.Id == option.BranchRule.DestinationSectionId)?.Title : "Use section setting")</span></div>
+                    }
+                </div>
+            }
+        </div>
+        <div class="card-footer">After this section: @(surveySection.AfterSectionAction == SurveyBranchAction.Submit ? "Submit form" : surveySection.AfterSectionAction == SurveyBranchAction.GoToSection ? "Go to: " + Model.Sections.FirstOrDefault(x => x.Id == surveySection.NextSectionId)?.Title : "Next section")</div>
+    </section>
+}
+<a asp-action="Index" class="btn btn-secondary">Back to index</a>
+<form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-inline" onsubmit="return confirm('Delete this survey and all responses?')"><button class="btn btn-outline-danger">Delete Survey</button></form>

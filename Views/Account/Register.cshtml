@@ -2,6 +2,7 @@
 
 @{
     ViewBag.Title = "Account | Register";
+    var recaptchaSiteKey = ViewBag.RecaptchaSiteKey as string;
 }
 
 <div class="row justify-content-center">
@@ -10,7 +11,7 @@
             <div class="card-body p-4 p-md-5">
                 <div class="mb-4"><span class="text-uppercase small fw-semibold text-primary">Get started</span><h1 class="h2 mb-1">Create an account</h1><p class="text-muted mb-0">Join Anywhere Edureach and start learning.</p></div>
 
-                <form method="post" data-ajax="true">
+                <form method="post" data-ajax="true" id="register-form">
                     <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
                     <div class="mb-3">
@@ -23,6 +24,16 @@
                         <label asp-for="Email" class="form-label"></label>
                         <input asp-for="Email" class="form-control">
                         <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="PhoneNumber" class="form-label"></label>
+                        <input asp-for="PhoneNumber"
+                               class="form-control"
+                               type="tel"
+                               autocomplete="tel"
+                               placeholder="e.g. 012-345 6789">
+                        <span asp-validation-for="PhoneNumber" class="text-danger"></span>
                     </div>
 
                     <div class="mb-3">
@@ -46,12 +57,15 @@
                         <span asp-validation-for="Confirm" class="text-danger"></span>
                     </div>
 
-                    <div class="mb-3">
-                        <div class="g-recaptcha" data-sitekey="@ViewBag.RecaptchaSiteKey" data-action="REGISTER"></div>
-                        <span class="text-danger">@Html.ValidationMessage("Captcha")</span>
-                    </div>
+                    @if (!string.IsNullOrWhiteSpace(recaptchaSiteKey))
+                    {
+                        <div class="mb-3">
+                            <div class="g-recaptcha" data-sitekey="@recaptchaSiteKey"></div>
+                            <span class="text-danger">@Html.ValidationMessage("Captcha")</span>
+                        </div>
+                    }
 
-                    <button class="btn btn-primary w-100">Create account</button>
+                    <button class="btn btn-primary w-100" id="register-submit" type="submit">Create account</button>
                 </form>
 
                 <p class="mt-4 text-center small">
@@ -60,7 +74,19 @@
             </div>
 
             @section Scripts {
-                <script src="https://www.google.com/recaptcha/enterprise.js" async defer></script>
+                @if (!string.IsNullOrWhiteSpace(recaptchaSiteKey))
+                {
+                    <script src="https://www.google.com/recaptcha/enterprise.js" async defer></script>
+                }
+                <script>
+                    document.getElementById("register-form")?.addEventListener("submit", function () {
+                        const button = document.getElementById("register-submit");
+                        if (button) {
+                            button.disabled = true;
+                            button.textContent = "Creating account...";
+                        }
+                    });
+                </script>
             }
         </div>
     </div>

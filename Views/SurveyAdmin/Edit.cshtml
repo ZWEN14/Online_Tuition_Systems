@@ -1,0 +1,7 @@
+@model Online_Tuition_Systems.ViewModels.SurveyCreateViewModel
+@{ ViewData["Title"] = "Edit Survey"; ViewData["SaveLabel"] = "Save Changes"; }
+<h2>Edit Survey</h2>
+<partial name="_SurveyBuilder" model="Model" />
+@section Scripts {
+    <script src="~/js/survey-builder.js" asp-append-version="true"></script>
+}

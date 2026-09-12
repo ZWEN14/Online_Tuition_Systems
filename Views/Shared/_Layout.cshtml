@@ -24,7 +24,7 @@
         <div class="container py-2">
             <a class="navbar-brand d-flex align-items-center gap-2" asp-controller="Home" asp-action="@(User.Identity?.IsAuthenticated == true ? "Index" : "Welcome")">
                 <span class="brand-mark">A</span>
-                <span>Anywhere <span class="brand-muted">Edureach</span></span>
+                <span class="brand-muted">Anywhere Edureach</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
                 <span class="navbar-toggler-icon"></span>
@@ -43,11 +43,20 @@
                                 {
                                     <span class="user-avatar">@currentUser?.Name?.FirstOrDefault()</span>
                                 }
-                                <strong class="text-white">@User.Identity!.Name</strong>
+                                <strong class="app-user-name">@User.Identity!.Name</strong>
                             </a>
                         </li>
                         <li class="nav-item">@await Component.InvokeAsync("NotificationBell")</li>
-                        <li class="nav-item"><a class="btn btn-outline-light btn-sm" asp-controller="Account" asp-action="Logout">Logout</a></li>
+                        <li class="nav-item">
+                            <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
+                                <button type="submit" class="app-logout-button" title="Sign out of Anywhere Edureach">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d="M10 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4M14 8l4 4-4 4M18 12H9" />
+                                    </svg>
+                                    <span>Logout</span>
+                                </button>
+                            </form>
+                        </li>
                     </ul>
                 }
                 else
@@ -102,6 +111,19 @@
                     <a class="sidebar-link" asp-controller="AdminBilling" asp-action="Index"><span>RM</span> Billing overview</a>
                     <a class="sidebar-link" asp-controller="Admin" asp-action="Index"><span>◎</span> User management</a>
                 }
+                @if (User.IsInRole("Student") || User.IsInRole("Tutor"))
+                {
+                    <a class="sidebar-link" asp-controller="Survey" asp-action="Index"><span>S</span> Surveys</a>
+                    <a class="sidebar-link" asp-controller="Survey" asp-action="MyResponses"><span>R</span> My survey responses</a>
+                }
+                @if (User.IsInRole("Admin"))
+                {
+                    <a class="sidebar-link" asp-controller="SurveyAdmin" asp-action="Index"><span>S</span> Survey management</a>
+                }
+                @if (User.IsInRole("Admin") || User.IsInRole("Student") || User.IsInRole("Tutor"))
+                {
+                    <a class="sidebar-link" asp-controller="Complaints" asp-action="Index"><span>C</span> Complaints</a>
+                }
                 <a class="sidebar-link" asp-controller="Notification" asp-action="Index">
                     <span>●</span> <span class="sidebar-link-label">Notifications</span>@if (unreadNotificationCount > 0)
                     {
@@ -113,9 +135,16 @@
             <main class="container app-main pb-5">
                 @if (!(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" && ViewContext.RouteData.Values["action"]?.ToString() == "Index"))
                 {
+                    @if (ViewContext.RouteData.Values["controller"]?.ToString() is "SurveyAdmin" or "Survey" or "Complaints" or "ComplaintCategories")
+                    {
+                        <a class="page-back mb-3" asp-controller="@(ViewContext.RouteData.Values["controller"]?.ToString() == "ComplaintCategories" ? "Complaints" : ViewContext.RouteData.Values["controller"]?.ToString())" asp-action="Index">Back to index</a>
+                    }
+                    else
+                    {
                     <button type="button" class="page-back mb-3" data-back-fallback="@Url.Action("Index", "Home")">
                         <span aria-hidden="true">←</span> Back
                     </button>
+                    }
                 }
                 @if (TempData["Info"] != null)
                 {
@@ -123,6 +152,17 @@
                         @Html.Raw(TempData["Info"])
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
+                }
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        @TempData["Error"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+                @if (TempData["Success"] != null)
+                {
+                    <div class="alert alert-success" role="alert">@TempData["Success"]</div>
                 }
                 @RenderBody()
             </main>
@@ -135,6 +175,13 @@
             {
                 <div class="alert alert-info alert-dismissible fade show" role="alert">
                     @Html.Raw(TempData["Info"])
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["Error"]
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             }

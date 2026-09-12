@@ -14,20 +14,22 @@ public sealed class GoogleRecaptchaService(HttpClient httpClient, IOptions<Recap
 {
     private readonly RecaptchaOptions options = options.Value;
 
-    public string SiteKey => options.SiteKey;
+    public bool IsConfigured =>
+        IsUsableSiteKey(options.SiteKey) &&
+        IsUsableProjectId(options.ProjectId) &&
+        IsUsableApiKey(options.ApiKey);
 
-    public async Task<bool> VerifyAsync(string? token, string action, string? remoteIp, CancellationToken cancellationToken = default)
+    public string SiteKey => IsConfigured ? options.SiteKey : "";
+
+    public async Task<bool> VerifyAsync(string? token, string? remoteIp, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(token) ||
-            string.IsNullOrWhiteSpace(options.ProjectId) ||
-            string.IsNullOrWhiteSpace(options.ApiKey) ||
-            string.IsNullOrWhiteSpace(options.SiteKey))
+        if (string.IsNullOrWhiteSpace(token) || !IsConfigured)
         {
             logger.LogWarning("reCAPTCHA Enterprise verification was skipped because token or configuration is missing. TokenPresent={TokenPresent}, ProjectConfigured={ProjectConfigured}, ApiKeyConfigured={ApiKeyConfigured}, SiteKeyConfigured={SiteKeyConfigured}",
                 !string.IsNullOrWhiteSpace(token),
-                !string.IsNullOrWhiteSpace(options.ProjectId),
-                !string.IsNullOrWhiteSpace(options.ApiKey),
-                !string.IsNullOrWhiteSpace(options.SiteKey));
+                IsUsableProjectId(options.ProjectId),
+                IsUsableApiKey(options.ApiKey),
+                IsUsableSiteKey(options.SiteKey));
             return environment.IsDevelopment();
         }
 
@@ -35,7 +37,6 @@ public sealed class GoogleRecaptchaService(HttpClient httpClient, IOptions<Recap
         {
             ["token"] = token,
             ["siteKey"] = options.SiteKey,
-            ["expectedAction"] = action,
         };
 
         if (!string.IsNullOrWhiteSpace(remoteIp))
@@ -48,32 +49,58 @@ public sealed class GoogleRecaptchaService(HttpClient httpClient, IOptions<Recap
             @event = eventData,
         };
 
-        using var response = await httpClient.PostAsJsonAsync(
-            $"https://recaptchaenterprise.googleapis.com/v1/projects/{Uri.EscapeDataString(options.ProjectId)}/assessments?key={Uri.EscapeDataString(options.ApiKey)}",
-            request,
-            cancellationToken);
-
-        if (!response.IsSuccessStatusCode)
+        try
         {
-            var error = await response.Content.ReadAsStringAsync(cancellationToken);
-            logger.LogWarning("reCAPTCHA Enterprise assessment failed with HTTP {StatusCode}: {Response}", response.StatusCode, error);
-            return false;
-        }
+            using var response = await httpClient.PostAsJsonAsync(
+                $"https://recaptchaenterprise.googleapis.com/v1/projects/{Uri.EscapeDataString(options.ProjectId)}/assessments?key={Uri.EscapeDataString(options.ApiKey)}",
+                request,
+                cancellationToken);
 
-        var result = await response.Content.ReadFromJsonAsync<RecaptchaResponse>(cancellationToken);
-        var valid = result?.TokenProperties?.Valid == true;
-        var actionMatches = string.Equals(result?.TokenProperties?.Action, action, StringComparison.Ordinal);
-        if (!valid || !actionMatches)
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync(cancellationToken);
+                logger.LogWarning("reCAPTCHA Enterprise assessment failed with HTTP {StatusCode}: {Response}", response.StatusCode, error);
+                return false;
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<RecaptchaResponse>(cancellationToken);
+            var valid = result?.TokenProperties?.Valid == true;
+            if (!valid)
+            {
+                logger.LogWarning("reCAPTCHA Enterprise checkbox token rejected. Valid={Valid}, InvalidReason={InvalidReason}",
+                    valid,
+                    result?.TokenProperties?.InvalidReason);
+            }
+
+            return valid;
+        }
+        catch (HttpRequestException exception)
         {
-            logger.LogWarning("reCAPTCHA Enterprise token rejected. Valid={Valid}, ExpectedAction={ExpectedAction}, ActualAction={ActualAction}, InvalidReason={InvalidReason}",
-                valid,
-                action,
-                result?.TokenProperties?.Action,
-                result?.TokenProperties?.InvalidReason);
+            logger.LogWarning(exception, "reCAPTCHA Enterprise could not be reached.");
+            return environment.IsDevelopment();
         }
-
-        return valid && actionMatches;
+        catch (OperationCanceledException exception) when (!cancellationToken.IsCancellationRequested)
+        {
+            logger.LogWarning(exception, "reCAPTCHA Enterprise verification timed out.");
+            return environment.IsDevelopment();
+        }
     }
+
+    private static bool IsUsableSiteKey(string value) =>
+        IsRealValue(value) && value.StartsWith("6L", StringComparison.Ordinal) && value.Length >= 30;
+
+    private static bool IsUsableApiKey(string value) =>
+        IsRealValue(value) && value.StartsWith("AIza", StringComparison.Ordinal) && value.Length >= 30;
+
+    private static bool IsUsableProjectId(string value) =>
+        IsRealValue(value) && value.Length >= 6;
+
+    private static bool IsRealValue(string value) =>
+        !string.IsNullOrWhiteSpace(value) &&
+        !value.Contains("your-", StringComparison.OrdinalIgnoreCase) &&
+        !value.Contains("placeholder", StringComparison.OrdinalIgnoreCase) &&
+        !value.Contains("example", StringComparison.OrdinalIgnoreCase) &&
+        !value.Contains("真实", StringComparison.Ordinal);
 
     private sealed class RecaptchaResponse
     {

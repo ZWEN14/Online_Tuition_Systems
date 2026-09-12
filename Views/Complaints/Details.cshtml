@@ -1,0 +1,14 @@
+@model Online_Tuition_Systems.Models.Complaint
+@using Online_Tuition_Systems.Models
+@{ViewData["Title"]="Complaint Details";string F(ComplaintStatus s)=>s==ComplaintStatus.InProgress?"In Progress":s.ToString();}<div class="d-flex justify-content-between"><div><h2>Complaint #@Model.Id</h2><h5>@Model.Title</h5></div><span class="badge bg-secondary fs-6 align-self-start">@F(Model.Status)</span></div><div class="row g-3"><div class="col-md-8"><div class="card"><div class="card-body"><h6>Description</h6><p style="white-space:pre-wrap">@Model.Description</p><hr/><p><strong>Category:</strong> @Model.Category?.Name<br/><strong>Submitted by:</strong> @Model.User?.Name<br/><strong>Assigned tutor:</strong> @(Model.AssignedTutor?.Name??"Not assigned")<br/><strong>Created:</strong> @Model.CreatedAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")</p>@if(!string.IsNullOrWhiteSpace(Model.ResolutionNotes)){<hr/><h6>Resolution Notes</h6><p style="white-space:pre-wrap">@Model.ResolutionNotes</p>}</div></div></div><div class="col-md-4">@if(User.IsInRole("Admin")){<a asp-action="Manage" asp-route-id="@Model.Id" class="btn btn-primary w-100 mb-2">Manage Complaint</a>}@if(User.IsInRole("Tutor")&&Model.AssignedTutorId.ToString()==User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value){<form asp-action="TutorUpdateStatus" method="post" class="card card-body mb-3"><input type="hidden" name="id" value="@Model.Id"/><label class="form-label">Update Status</label><select name="status" class="form-select mb-2"><option value="2">In Progress</option><option value="3">Resolved</option></select><textarea name="note" class="form-control mb-2" maxlength="1000" placeholder="Optional note"></textarea><button class="btn btn-primary">Update</button></form>}@if((User.IsInRole("Student")||User.IsInRole("Tutor"))&&Model.UserId.ToString()==User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value&&Model.Status==ComplaintStatus.Pending){<form asp-action="Delete" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('Delete this complaint?')"><button class="btn btn-outline-danger w-100">Delete Pending Complaint</button></form>}</div></div><h4 class="mt-4">Status History</h4><div class="list-group">@foreach(var h in Model.StatusHistory){<div class="list-group-item"><div class="d-flex justify-content-between"><strong>@F(h.Status)</strong><small>@h.ChangedAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")</small></div><div class="text-muted">Updated by @h.UpdatedByUser?.Name</div>@if(!string.IsNullOrWhiteSpace(h.Note)){<div>@h.Note</div>}</div>}</div>
+
+@if (Model.Attachments.Count > 0)
+{
+    <h4 class="mt-4">Photos</h4>
+    <div class="list-group">
+    @foreach (var file in Model.Attachments)
+    {
+        <a class="list-group-item list-group-item-action" asp-controller="Attachments" asp-action="Download" asp-route-id="@file.Id">@file.FileName</a>
+    }
+    </div>
+}

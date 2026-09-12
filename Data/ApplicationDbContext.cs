@@ -34,9 +34,41 @@ public class ApplicationDbContext : DbContext
     public DbSet<Invoice> Invoices => Set<Invoice>();
     public DbSet<Promotion> Promotions => Set<Promotion>();
 
+    // Survey and Complaint modules.
+    public DbSet<SubmissionAttachment> SubmissionAttachments => Set<SubmissionAttachment>();
+    public DbSet<Survey> Surveys => Set<Survey>();
+    public DbSet<Question> Questions => Set<Question>();
+    public DbSet<QuestionOption> QuestionOptions => Set<QuestionOption>();
+    public DbSet<SurveySection> SurveySections => Set<SurveySection>();
+    public DbSet<SurveyBranchRule> SurveyBranchRules => Set<SurveyBranchRule>();
+    public DbSet<SurveyResponse> SurveyResponses => Set<SurveyResponse>();
+    public DbSet<SurveyAnswer> SurveyAnswers => Set<SurveyAnswer>();
+    public DbSet<ComplaintCategory> ComplaintCategories => Set<ComplaintCategory>();
+    public DbSet<Complaint> Complaints => Set<Complaint>();
+    public DbSet<ComplaintStatusHistory> ComplaintStatusHistories => Set<ComplaintStatusHistory>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<SurveySection>().HasOne(x => x.NextSection).WithMany().HasForeignKey(x => x.NextSectionId).OnDelete(DeleteBehavior.NoAction);
+        modelBuilder.Entity<SubmissionAttachment>().HasOne(x => x.SurveyAnswer).WithMany(x => x.Attachments).HasForeignKey(x => x.SurveyAnswerId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<SubmissionAttachment>().HasOne(x => x.Complaint).WithMany(x => x.Attachments).HasForeignKey(x => x.ComplaintId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<SubmissionAttachment>().ToTable(t => t.HasCheckConstraint("CK_SubmissionAttachment_Owner", "([SurveyAnswerId] IS NOT NULL AND [ComplaintId] IS NULL) OR ([SurveyAnswerId] IS NULL AND [ComplaintId] IS NOT NULL)"));
+        modelBuilder.Entity<SurveyResponse>().HasIndex(x => new { x.SurveyId, x.UserId }).IsUnique();
+        modelBuilder.Entity<SurveyAnswer>().HasIndex(x => new { x.SurveyResponseId, x.QuestionId }).IsUnique();
+        modelBuilder.Entity<SurveyAnswer>().HasOne(x => x.Question).WithMany().HasForeignKey(x => x.QuestionId).OnDelete(DeleteBehavior.NoAction);
+        modelBuilder.Entity<Question>().HasOne(x => x.Section).WithMany(x => x.Questions).HasForeignKey(x => x.SectionId).OnDelete(DeleteBehavior.NoAction);
+        modelBuilder.Entity<SurveyBranchRule>().HasIndex(x => x.QuestionOptionId).IsUnique();
+        modelBuilder.Entity<SurveySection>().HasIndex(x => new { x.SurveyId, x.DisplayOrder }).IsUnique();
+        modelBuilder.Entity<SurveyBranchRule>().HasOne(x => x.QuestionOption).WithOne(x => x.BranchRule).HasForeignKey<SurveyBranchRule>(x => x.QuestionOptionId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<SurveyBranchRule>().HasOne(x => x.DestinationSection).WithMany().HasForeignKey(x => x.DestinationSectionId).OnDelete(DeleteBehavior.NoAction);
+        modelBuilder.Entity<ComplaintCategory>().HasIndex(x => x.Name).IsUnique();
+
+        modelBuilder.Entity<Survey>().HasOne(x => x.Creator).WithMany().HasForeignKey(x => x.CreatorId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<Complaint>().HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<Complaint>().HasOne(x => x.AssignedTutor).WithMany().HasForeignKey(x => x.AssignedTutorId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<ComplaintStatusHistory>().HasOne(x => x.UpdatedByUser).WithMany().HasForeignKey(x => x.UpdatedByUserId).OnDelete(DeleteBehavior.Restrict);
+
 
         ConfigureAnnouncementsAndEvents(modelBuilder);
         ConfigureIntegratedUsersAndBookings(modelBuilder);

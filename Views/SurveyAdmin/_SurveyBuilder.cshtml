@@ -1,0 +1,17 @@
+@model Online_Tuition_Systems.ViewModels.SurveyCreateViewModel
+@using System.Text.Json
+<p class="text-muted">Add questions and sections, then choose where each answer or section leads.</p>
+<form method="post" id="survey-builder-form">
+    <input type="hidden" asp-for="Id" />
+    <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+    <partial name="_SurveyForm" model="Model" />
+    <h3 class="my-4">Sections</h3>
+    <div id="section-builder"></div>
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        <button type="submit" class="btn btn-primary">@ViewData["SaveLabel"]</button>
+        <a asp-action="Index" class="btn btn-secondary">Back to index</a>
+        <button type="button" class="btn btn-outline-primary ms-auto" id="add-section">Add Section</button>
+    </div>
+    <noscript><p class="text-danger">Enable JavaScript to edit survey sections and questions.</p></noscript>
+</form>
+<script type="application/json" id="survey-builder-data">@Html.Raw(JsonSerializer.Serialize(Model.Sections, new JsonSerializerOptions(JsonSerializerDefaults.Web)))</script>

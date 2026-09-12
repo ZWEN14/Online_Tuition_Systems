@@ -4,6 +4,7 @@ global using Online_Tuition_Systems.Data;
 
 using AnywhereEdureach.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Online_Tuition_Systems.Services;
 using Online_Tuition_Systems.Services.Billing;
@@ -14,21 +15,71 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException(
-        "The DefaultConnection connection string was not found.");
+// Keep the SQL Server Express database file inside the project for the
+// assignment's file-based database requirement. |DataDirectory| makes the
+// connection string portable across different team members' computers.
+var databaseDirectory = Path.Combine(builder.Environment.ContentRootPath, "App_Data");
+Directory.CreateDirectory(databaseDirectory);
+var databaseFile = Path.Combine(databaseDirectory, "OnlineTuitionDb.mdf");
 
-// Every module uses the same EF Core context and OnlineTuitionDb database.
+var baseConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("The DefaultConnection connection string was not found.");
+var databaseConnectionBuilder = new SqlConnectionStringBuilder(baseConnectionString);
+var masterConnectionBuilder = new SqlConnectionStringBuilder(baseConnectionString)
+{
+    InitialCatalog = "master"
+};
+masterConnectionBuilder.Remove("AttachDbFilename");
+
+string? attachedDatabaseName = null;
+using (var connection = new SqlConnection(masterConnectionBuilder.ConnectionString))
+{
+    connection.Open();
+
+    using var command = connection.CreateCommand();
+    command.CommandText = """
+        SELECT TOP (1) DB_NAME(database_id)
+        FROM sys.master_files
+        WHERE physical_name = @databaseFile
+        """;
+    command.Parameters.AddWithValue("@databaseFile", databaseFile);
+    attachedDatabaseName = command.ExecuteScalar() as string;
+}
+
+if (attachedDatabaseName is not null)
+{
+    databaseConnectionBuilder.Remove("AttachDbFilename");
+    databaseConnectionBuilder.InitialCatalog = attachedDatabaseName;
+}
+else
+{
+    databaseConnectionBuilder.AttachDBFilename = databaseFile;
+}
+
+var connectionString = databaseConnectionBuilder.ConnectionString;
+
+// Every module uses the same EF Core context and file-based database.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseSqlServer(
+        connectionString,
+        sqlServerOptions => sqlServerOptions.EnableRetryOnFailure(
+            maxRetryCount: 3,
+            maxRetryDelay: TimeSpan.FromSeconds(5),
+            errorNumbersToAdd: null)));
 
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddScoped<SurveyBuilderService>();
+builder.Services.AddScoped<SubmissionUploadService>();
 // Integrated teammate services.
 builder.Services.AddScoped<Helper>();
 builder.Services.AddScoped<AnywhereEdureach.NotificationService>();
 builder.Services.AddScoped<INotificationService, Online_Tuition_Systems.Services.NotificationService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
-builder.Services.AddHttpClient<GoogleRecaptchaService>();
+builder.Services.AddHttpClient<GoogleRecaptchaService>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(5);
+});
 builder.Services.Configure<RecaptchaOptions>(builder.Configuration.GetSection("GoogleRecaptcha"));
 builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Smtp"));
 builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
@@ -55,6 +106,15 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+
+// A fresh checkout does not include the local database file. Create it and
+// apply the schema before development requests can query the database.
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var database = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    await database.Database.MigrateAsync();
+}
 
 if (!app.Environment.IsDevelopment())
 {

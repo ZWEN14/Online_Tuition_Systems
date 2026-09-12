@@ -1034,6 +1034,15 @@ Course/Billing scope and the other team module areas are now recorded. Shared Us
 - Kept analytics inside Course Earnings and did not add or change shared navigation. The separate per-Course analytics drill-down remains the next Course analytics section.
 - No entity or database schema changed, so no EF Core migration is required. Browser verification remains outstanding.
 
+### 2026-09-12 — Final_OTS merge schema integration repaired; awaiting verification
+
+- Preserved the teammate Survey/Complaint implementation while integrating it with the existing Course and Billing domain.
+- Kept the complete Course and Enrollment entities as the shared canonical models; removed the incoming placeholder duplicates that used incompatible `Id` and `UserId` fields.
+- Updated Survey course selection and enrollment checks to use `Course.CourseId` and `Enrollment.StudentId` without changing the Survey workflow.
+- Updated the Survey/Complaint migration so it reuses the Course/Enrollment tables created by the earlier Course/Billing migration instead of creating or deleting duplicate tables.
+- Combined the Course/Billing and Survey/Complaint models in `ApplicationDbContext` and its model snapshot.
+- No database command, Git staging action, merge commit, or system change was performed by Codex. The merged source still requires user-run staging and runtime verification.
+
 ### 2026-09-12 — Idempotent Course demonstration data script added
 
 - Added `Database/AddDemoCourses.sql` to insert ten realistic Course records only; it does not create or change Enrollments, Payments, Invoices, Users, or CourseCategories.

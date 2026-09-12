@@ -180,36 +180,53 @@ public class BookingController(ApplicationDbContext db, NotificationService ns) 
             return BookingError("You already have another booking uring this time. Please choose a different time slot.", vm);
         }
 
-        using var transaction = db.Database.BeginTransaction(IsolationLevel.Serializable);
+        Booking? booking = null;
+        var alreadyBookedDuringTransaction = false;
+        var executionStrategy = db.Database.CreateExecutionStrategy();
 
-        var alreadyBooked = db.Bookings.Any(b =>
-            b.TimeslotId == timeslot.Id &&
-            b.BookingDate == bookingDate &&
-            (b.Status == BookingStatus.Pending ||
-             b.Status == BookingStatus.Accepted ||
-             b.Status == BookingStatus.Paid));
-
-        if (alreadyBooked)
+        executionStrategy.Execute(() =>
         {
-            transaction.Rollback();
+            // A retry must start with a clean tracker and a new transaction.
+            db.ChangeTracker.Clear();
+            booking = null;
+            alreadyBookedDuringTransaction = false;
+
+            using var transaction = db.Database.BeginTransaction(IsolationLevel.Serializable);
+
+            alreadyBookedDuringTransaction = db.Bookings.Any(b =>
+                b.TimeslotId == timeslot.Id &&
+                b.BookingDate == bookingDate &&
+                (b.Status == BookingStatus.Pending ||
+                 b.Status == BookingStatus.Accepted ||
+                 b.Status == BookingStatus.Paid));
+
+            if (alreadyBookedDuringTransaction)
+            {
+                transaction.Rollback();
+                return;
+            }
+
+            booking = new Booking
+            {
+                StudentId = CurrentUserId,
+                TutorId = vm.TutorId,
+                SubjectId = vm.SubjectId,
+                TimeslotId = vm.TimeslotId,
+                BookingDate = vm.BookingDate.Date,
+                Cost = finalCost,
+                Status = BookingStatus.Pending,
+                PaymentStatus = "Unpaid"
+            };
+
+            db.Bookings.Add(booking);
+            db.SaveChanges();
+            transaction.Commit();
+        });
+
+        if (alreadyBookedDuringTransaction || booking is null)
+        {
             return BookingError("This timeslot is already booked", vm);
         }
-
-        var booking = new Booking
-        {
-            StudentId = CurrentUserId,
-            TutorId = vm.TutorId,
-            SubjectId = vm.SubjectId,
-            TimeslotId = vm.TimeslotId,
-            BookingDate = vm.BookingDate.Date,
-            Cost = finalCost,
-            Status = BookingStatus.Pending,
-            PaymentStatus = "Unpaid"
-        };
-
-        db.Bookings.Add(booking);
-        db.SaveChanges();
-        transaction.Commit();
 
         ns.NotifyBookingCreated(booking);
 
