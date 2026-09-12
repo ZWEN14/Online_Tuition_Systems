@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Security.Claims;
 using Online_Tuition_Systems.Authorization;
 using Online_Tuition_Systems.Data;
@@ -59,14 +60,22 @@ public class AnnouncementsController : Controller
             return NotFound();
         }
 
+        ViewData["RelatedCourse"] = announcement.CourseId.HasValue
+            ? await _context.Courses.AsNoTracking()
+                .SingleOrDefaultAsync(item => item.CourseId == announcement.CourseId.Value
+                    && item.Status == CourseStatus.Published)
+            : null;
         return View(announcement);
     }
 
     [HttpGet]
     [Authorize(Roles = AppRoles.Admin)]
-    public IActionResult Create()
+    public async Task<IActionResult> Create()
     {
-        return View(new CreateAnnouncementViewModel());
+        return View(new CreateAnnouncementViewModel
+        {
+            CourseOptions = await GetCourseOptionsAsync()
+        });
     }
 
     [HttpPost]
@@ -74,6 +83,11 @@ public class AnnouncementsController : Controller
     [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> Create(CreateAnnouncementViewModel model)
     {
+        if (model.CourseId.HasValue && !await IsPublishedCourseAsync(model.CourseId.Value))
+        {
+            ModelState.AddModelError(nameof(model.CourseId), "Select a published course.");
+        }
+
         if (model.ExpiresAt.HasValue && model.ExpiresAt.Value <= DateTimeOffset.Now)
         {
             ModelState.AddModelError(
@@ -83,12 +97,14 @@ public class AnnouncementsController : Controller
 
         if (!ModelState.IsValid)
         {
+            model.CourseOptions = await GetCourseOptionsAsync();
             return View(model);
         }
 
         var currentTime = DateTimeOffset.UtcNow;
         var announcement = new Announcement
         {
+            CourseId = model.CourseId,
             Title = model.Title.Trim(),
             Content = model.Content.Trim(),
             Audience = model.Audience,
@@ -130,6 +146,8 @@ public class AnnouncementsController : Controller
         var model = new EditAnnouncementViewModel
         {
             Id = announcement.Id,
+            CourseId = announcement.CourseId,
+            CourseOptions = await GetCourseOptionsAsync(announcement.CourseId),
             Title = announcement.Title,
             Content = announcement.Content,
             Audience = announcement.Audience,
@@ -159,6 +177,7 @@ public class AnnouncementsController : Controller
 
         if (!ModelState.IsValid)
         {
+            model.CourseOptions = await GetCourseOptionsAsync(model.CourseId);
             return View(model);
         }
 
@@ -176,16 +195,36 @@ public class AnnouncementsController : Controller
             return RedirectToAction(nameof(Details), new { id });
         }
 
+        if (model.CourseId.HasValue
+            && announcement.CourseId != model.CourseId
+            && !await IsPublishedCourseAsync(model.CourseId.Value))
+        {
+            ModelState.AddModelError(nameof(model.CourseId), "Select a published course.");
+            model.CourseOptions = await GetCourseOptionsAsync(model.CourseId);
+            return View(model);
+        }
+
+        if (announcement.Status == AnnouncementStatus.Published
+            && announcement.CourseId != model.CourseId)
+        {
+            ModelState.AddModelError(nameof(model.CourseId),
+                "The linked course cannot be changed after publication.");
+            model.CourseOptions = await GetCourseOptionsAsync(model.CourseId);
+            return View(model);
+        }
+
         var title = model.Title.Trim();
         var content = model.Content.Trim();
         var expiresAt = model.ExpiresAt?.ToUniversalTime();
         var hasChanges = announcement.Title != title
+            || announcement.CourseId != model.CourseId
             || announcement.Content != content
             || announcement.Audience != model.Audience
             || announcement.Priority != model.Priority
             || announcement.ExpiresAt != expiresAt;
 
         announcement.Title = title;
+        announcement.CourseId = model.CourseId;
         announcement.Content = content;
         announcement.Audience = model.Audience;
         announcement.Priority = model.Priority;
@@ -219,6 +258,13 @@ public class AnnouncementsController : Controller
         if (announcement.Status != AnnouncementStatus.Draft)
         {
             TempData["ErrorMessage"] = "Only draft announcements can be published.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        if (announcement.CourseId.HasValue
+            && !await IsPublishedCourseAsync(announcement.CourseId.Value))
+        {
+            TempData["ErrorMessage"] = "The linked course must still be published before this announcement can be published.";
             return RedirectToAction(nameof(Details), new { id });
         }
 
@@ -342,5 +388,27 @@ public class AnnouncementsController : Controller
             .Skip((model.Page - 1) * model.PageSize)
             .Take(model.PageSize)
             .ToListAsync();
+    }
+
+    private Task<bool> IsPublishedCourseAsync(int courseId) =>
+        _context.Courses.AnyAsync(item =>
+            item.CourseId == courseId && item.Status == CourseStatus.Published);
+
+    private async Task<List<SelectListItem>> GetCourseOptionsAsync(int? currentCourseId = null)
+    {
+        var courses = await _context.Courses.AsNoTracking()
+            .Where(item => item.Status == CourseStatus.Published
+                || item.CourseId == currentCourseId)
+            .OrderBy(item => item.Title)
+            .Select(item => new { item.CourseId, item.Code, item.Title, item.Status })
+            .ToListAsync();
+
+        return courses.Select(item => new SelectListItem
+        {
+            Value = item.CourseId.ToString(),
+            Text = item.Status == CourseStatus.Published
+                ? $"{item.Code} — {item.Title}"
+                : $"{item.Code} — {item.Title} ({item.Status})"
+        }).ToList();
     }
 }

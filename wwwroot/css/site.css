@@ -1109,6 +1109,7 @@ h1, h2, h3, h4, h5, h6 {
 .notification-type-survey { color: #195b8f; background: #e5f3ff; }
 .notification-type-course { color: #325698; background: #e8edff; }
 .notification-type-enrollment { color: #0f735a; background: #dcf7ee; }
+.notification-type-billing { color: #794591; background: #f4eaff; }
 
 .notification-card-body,
 .notification-card-body span,

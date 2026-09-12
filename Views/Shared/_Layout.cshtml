@@ -1,8 +1,9 @@
 @inject ApplicationDbContext db
+@inject Online_Tuition_Systems.Services.NotificationFeedService notificationFeed
 @{
     var currentUserIdValue = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
     var unreadNotificationCount = int.TryParse(currentUserIdValue, out var currentUserId)
-        ? db.BookingNotifications.Count(n => n.UserId == currentUserId && !n.IsRead)
+        ? await notificationFeed.CountAsync(currentUserId, unreadOnly: true)
         : 0;
     var currentUser = int.TryParse(currentUserIdValue, out var headerUserId)
         ? db.Users.FirstOrDefault(u => u.Id == headerUserId)
@@ -156,7 +157,7 @@
                 {
                     <a class="sidebar-link" asp-controller="Complaints" asp-action="Index"><span>C</span> Complaints</a>
                 }
-                <a class="sidebar-link" asp-controller="Notification" asp-action="Index">
+                <a class="sidebar-link" asp-controller="Notifications" asp-action="Index">
                     <span>●</span> <span class="sidebar-link-label">Notifications</span>@if (unreadNotificationCount > 0)
                     {
                         <span class="notification-count" aria-label="@unreadNotificationCount unread notifications">@unreadNotificationCount</span>

@@ -150,7 +150,7 @@ public sealed class CourseAdministrationService(ApplicationDbContext dbContext)
         {
             UserId = userId, Type = UserNotificationType.CoursePublished,
             Title = "New course available", Message = $"'{course.Title}' is now available for enrollment.",
-            TargetUrl = $"/Courses/Details/{course.CourseId}"
+            TargetUrl = $"/Courses/Details?slug={Uri.EscapeDataString(course.Slug)}"
         }));
         await dbContext.SaveChangesAsync(cancellationToken);
         return new CourseActionResult(true);

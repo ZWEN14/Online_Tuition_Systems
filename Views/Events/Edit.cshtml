@@ -27,7 +27,10 @@
 
             <div class="col-md-4">
                 <label asp-for="CourseId" class="form-label"></label>
-                <input asp-for="CourseId" class="form-control" />
+                <select asp-for="CourseId" asp-items="Model.CourseOptions" class="form-select">
+                    <option value="">Independent event (not linked to a course)</option>
+                </select>
+                <div class="form-text">Only your published courses can be linked.</div>
                 <span asp-validation-for="CourseId" class="text-danger"></span>
             </div>
 

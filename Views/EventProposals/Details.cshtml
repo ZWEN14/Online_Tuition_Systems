@@ -67,6 +67,23 @@
                 </div>
                 <div class="col-lg-5">
                     <dl class="proposal-facts mb-0">
+                        @if (proposal.CourseId.HasValue)
+                        {
+                            <div>
+                                <dt>Related course</dt>
+                                <dd>
+                                    @if (ViewData["RelatedCourse"] is Course course)
+                                    {
+                                        <a asp-controller="Courses" asp-action="Details" asp-route-slug="@course.Slug"
+                                           class="btn btn-sm btn-outline-primary">View @course.Title</a>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Course is no longer published.</span>
+                                    }
+                                </dd>
+                            </div>
+                        }
                         <div>
                             <dt>Schedule</dt>
                             <dd>

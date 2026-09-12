@@ -33,6 +33,22 @@
 </div>
 
 <dl class="row border rounded p-3 bg-light">
+    @if (Model.CourseId.HasValue)
+    {
+        <dt class="col-sm-3">Related course</dt>
+        <dd class="col-sm-9">
+            @if (ViewData["RelatedCourse"] is Course course)
+            {
+                <a asp-controller="Courses" asp-action="Details" asp-route-slug="@course.Slug"
+                   class="btn btn-sm btn-outline-primary">View @course.Title</a>
+            }
+            else
+            {
+                <span class="text-muted">Course is no longer published.</span>
+            }
+        </dd>
+    }
+
     <dt class="col-sm-3">Created</dt>
     <dd class="col-sm-9">@Model.CreatedAt.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")</dd>
 

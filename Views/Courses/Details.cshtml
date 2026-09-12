@@ -57,4 +57,6 @@
     </aside>
 </div>
 
+@await Component.InvokeAsync("CourseActivity", new { courseId = Model.CourseId })
+
 <a asp-action="Index" class="btn btn-link px-0 mt-4">Back to courses</a>

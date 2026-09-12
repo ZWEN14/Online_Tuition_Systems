@@ -1,3 +1,4 @@
+using AnywhereEdureach.Models;
 using Microsoft.EntityFrameworkCore;
 using Online_Tuition_Systems.Data;
 using Online_Tuition_Systems.Models;
@@ -5,13 +6,22 @@ using Online_Tuition_Systems.ViewModels.Notifications;
 
 namespace Online_Tuition_Systems.Services;
 
-// Combines the existing event/announcement and mentor-mentee notification stores.
-// Neither module needs to change its database schema or notification-writing logic.
+// Combines the shared module notifications with the existing booking notification store.
+// Each module keeps its current database schema and notification-writing logic.
 public class NotificationFeedService(ApplicationDbContext context)
 {
+    private static readonly UserNotificationType[] ProposalNotificationTypes =
+    [
+        UserNotificationType.ProposalSubmitted,
+        UserNotificationType.ProposalUpdated,
+        UserNotificationType.ProposalChangesRequested,
+        UserNotificationType.ProposalApproved,
+        UserNotificationType.ProposalRejected
+    ];
+
     public async Task<int> CountAsync(int userId, bool unreadOnly = false)
     {
-        var moduleNotifications = context.Notifications.Where(item => item.UserId == userId);
+        var moduleNotifications = VisibleModuleNotifications(userId);
         var bookingNotifications = context.BookingNotifications.Where(item => item.UserId == userId);
 
         if (unreadOnly)
@@ -32,8 +42,7 @@ public class NotificationFeedService(ApplicationDbContext context)
         // The first skip + take entries from each source contain every possible
         // entry for that range after the two descending timelines are merged.
         var fetchCount = checked(skip + take);
-        var moduleQuery = context.Notifications.AsNoTracking()
-            .Where(item => item.UserId == userId);
+        var moduleQuery = VisibleModuleNotifications(userId).AsNoTracking();
         var bookingQuery = context.BookingNotifications.AsNoTracking()
             .Where(item => item.UserId == userId);
 
@@ -62,6 +71,20 @@ public class NotificationFeedService(ApplicationDbContext context)
             .ToList();
     }
 
+    public Task<UserNotification?> GetVisibleModuleNotificationAsync(int userId, int notificationId)
+    {
+        return VisibleModuleNotifications(userId)
+            .SingleOrDefaultAsync(item => item.Id == notificationId);
+    }
+
+    private IQueryable<UserNotification> VisibleModuleNotifications(int userId)
+    {
+        return context.Notifications.Where(item =>
+            item.UserId == userId
+            && (!ProposalNotificationTypes.Contains(item.Type)
+                || context.Users.Any(user => user.Id == userId && user.Role != UserRole.Student)));
+    }
+
     private static UnifiedNotificationItem ToFeedItem(UserNotification item)
     {
         var category = item.Type switch
@@ -82,8 +105,8 @@ public class NotificationFeedService(ApplicationDbContext context)
                 or UserNotificationType.CourseRejected or UserNotificationType.CourseArchived
                 or UserNotificationType.CourseSuspended or UserNotificationType.CourseRestored
                 => "Course",
-            UserNotificationType.EnrollmentCreated or UserNotificationType.EnrollmentActivated
-                => "Enrollment",
+            UserNotificationType.EnrollmentCreated => "Enrollment",
+            UserNotificationType.EnrollmentActivated => "Billing",
             _ => "Registration"
         };
 
