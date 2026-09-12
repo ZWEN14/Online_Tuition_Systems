@@ -35,7 +35,7 @@
                 @foreach (var notification in Model.RecentItems)
                 {
                     <form asp-controller="Notifications" asp-action="Open"
-                          asp-route-id="@notification.Id" method="post">
+                          asp-route-id="@notification.Id" asp-route-source="@notification.Source" method="post">
                         <button type="submit"
                                 class="notification-dropdown-item @(notification.IsUnread ? "unread" : null)">
                             <span class="notification-dropdown-dot" aria-hidden="true"></span>

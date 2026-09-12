@@ -7,7 +7,7 @@
     <div>
         <span class="notification-eyebrow">YOUR UPDATES</span>
         <h1 class="mb-2">Notifications</h1>
-        <p class="mb-0">Keep track of announcements, events, proposals and registrations.</p>
+        <p class="mb-0">Keep track of bookings, announcements, events, proposals and registrations.</p>
     </div>
     <div class="notification-count-panel">
         <strong>@Model.UnreadCount</strong>
@@ -64,12 +64,9 @@ else
     <div class="notification-list">
         @foreach (var notification in Model.Items)
         {
-            var category = GetCategory(notification.Type);
-            var unreadLabel = notification.Type is UserNotificationType.AnnouncementUpdated
-                or UserNotificationType.EventUpdated
-                    ? "Updated"
-                    : "New";
-            <form asp-action="Open" asp-route-id="@notification.Id" method="post">
+            var category = notification.Category;
+            var unreadLabel = notification.IsUpdate ? "Updated" : "New";
+            <form asp-action="Open" asp-route-id="@notification.Id" asp-route-source="@notification.Source" method="post">
                 <button type="submit"
                         class="notification-card @(notification.IsUnread ? "notification-card-unread" : null)">
                     <span class="notification-type-icon notification-type-@category.ToLowerInvariant()"
@@ -119,20 +116,4 @@ else
             </li>
         </ul>
     </nav>
-}
-
-@functions {
-    private static string GetCategory(UserNotificationType type)
-    {
-        return type switch
-        {
-            UserNotificationType.AnnouncementPublished or UserNotificationType.AnnouncementUpdated => "Announcement",
-            UserNotificationType.EventPublished or UserNotificationType.EventUpdated
-                or UserNotificationType.EventCancelled => "Event",
-            UserNotificationType.ProposalSubmitted or UserNotificationType.ProposalUpdated
-                or UserNotificationType.ProposalChangesRequested
-                or UserNotificationType.ProposalApproved or UserNotificationType.ProposalRejected => "Proposal",
-            _ => "Registration"
-        };
-    }
 }

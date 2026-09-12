@@ -38,6 +38,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddScoped<Helper>();
 builder.Services.AddScoped<AnywhereEdureach.NotificationService>();
 builder.Services.AddScoped<INotificationService, Online_Tuition_Systems.Services.NotificationService>();
+builder.Services.AddScoped<Online_Tuition_Systems.Services.NotificationFeedService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
 builder.Services.AddHttpClient<GoogleRecaptchaService>();

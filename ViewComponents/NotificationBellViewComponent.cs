@@ -1,18 +1,17 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Online_Tuition_Systems.Data;
+using Online_Tuition_Systems.Services;
 using Online_Tuition_Systems.ViewModels.Notifications;
 
 namespace Online_Tuition_Systems.ViewComponents;
 
 public class NotificationBellViewComponent : ViewComponent
 {
-    private readonly ApplicationDbContext _context;
+    private readonly NotificationFeedService _feed;
 
-    public NotificationBellViewComponent(ApplicationDbContext context)
+    public NotificationBellViewComponent(NotificationFeedService feed)
     {
-        _context = context;
+        _feed = feed;
     }
 
     public async Task<IViewComponentResult> InvokeAsync()
@@ -24,17 +23,10 @@ public class NotificationBellViewComponent : ViewComponent
             return Content(string.Empty);
         }
 
-        var query = _context.Notifications
-            .AsNoTracking()
-            .Where(item => item.UserId == userId);
-
         return View(new NotificationBellViewModel
         {
-            UnreadCount = await query.CountAsync(item => !item.ReadAt.HasValue),
-            RecentItems = await query
-                .OrderByDescending(item => item.CreatedAt)
-                .Take(5)
-                .ToListAsync()
+            UnreadCount = await _feed.CountAsync(userId, unreadOnly: true),
+            RecentItems = await _feed.GetItemsAsync(userId, unreadOnly: false, skip: 0, take: 5)
         });
     }
 }
