@@ -20,7 +20,7 @@ builder.Services.AddControllersWithViews();
 // connection string portable across different team members' computers.
 var databaseDirectory = Path.Combine(builder.Environment.ContentRootPath, "App_Data");
 Directory.CreateDirectory(databaseDirectory);
-var databaseFile = Path.Combine(databaseDirectory, "OnlineTuitionDb.mdf");
+var databaseFile = Path.Combine(databaseDirectory, "OnlineTuitionSystems.mdf");
 
 var baseConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("The DefaultConnection connection string was not found.");
@@ -108,8 +108,8 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// A fresh checkout does not include the local database file. Create it and
-// apply the schema before development requests can query the database.
+// Keep local development databases reproducible for the team by applying the
+// committed EF Core migration chain when the application starts.
 if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();

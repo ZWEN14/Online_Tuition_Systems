@@ -1050,6 +1050,36 @@ Course/Billing scope and the other team module areas are now recorded. Shared Us
 - Adapted the notification recipient query to the canonical `Enrollment.StudentId` property used by Course Management.
 - No other teammate notification, Survey, layout, or module behavior was changed. Runtime verification remains outstanding.
 
+### 2026-09-12 — Merged LocalDB file identity repaired; awaiting verification
+
+- The merged startup code targeted `App_Data/OnlineTuitionDb.mdf`, but the established project database files are `OnlineTuitionSystems.mdf` and `OnlineTuitionSystems_log.ldf`.
+- This mismatch made automatic migration attempt to create another database named `OnlineTuitionDb`, which LocalDB rejected because that database name was already attached.
+- Updated only the `Program.cs` database-file path to target the existing `OnlineTuitionSystems.mdf`; the incoming automatic migration behavior remains unchanged.
+- The failed creation happened before migrations were applied, so this startup attempt did not apply a schema migration. Runtime verification remains outstanding.
+
+### 2026-09-12 — Automatic startup migration removed after schema drift detected
+
+- The application reached the existing MDF, but automatic migration failed at `UnifyUserAccounts` because EF history considered the `TemporaryUsers`-to-`Users` rename pending while a `Users` table already existed.
+- Removed the Development-only `Database.MigrateAsync()` startup block so `dotnet watch` no longer changes the database or prevents application startup when migration history and schema differ.
+- Kept the corrected `OnlineTuitionSystems.mdf` file path and all service registrations unchanged.
+- Do not alter tables or manually add migration-history rows until the current database schema and `__EFMigrationsHistory` have been inspected. Database reconciliation remains pending.
+
+### 2026-09-12 — Clean database rebuild selected for reproducibility
+
+- The user confirmed that existing LocalDB data is disposable and chose to rebuild the integrated project database from the committed EF Core migration chain.
+- Audited the merged migrations: application tables are created once, with `TemporaryUsers` intentionally renamed to `Users`; the repaired Survey/Complaint migration reuses the Course/Billing tables.
+- Restored the teammate Development-only `Database.MigrateAsync()` startup behavior. It must be used only after the old project databases and their MDF/LDF files are removed through the controlled rebuild steps.
+- The canonical project data file remains `App_Data/OnlineTuitionSystems.mdf`; database removal and clean runtime verification remain user-run tasks.
+
+### 2026-09-12 — Reproducible generic demonstration dataset expanded
+
+- Replaced personal demo-account details with three generic verified accounts: `student@test.com`, `tutor@test.com`, and `admin@test.com`; all use the development password `password123` through valid ASP.NET Core `PasswordHasher` hashes.
+- `Database/AddDemoUsers.sql` is idempotent and also ensures the Student and Tutor profile rows required by the merged User module exist.
+- Expanded `Database/AddDemoCourses.sql` to create or refresh eleven active Course categories, including `Other`, and thirty unique demonstration Courses distributed across them.
+- The Course seed includes free and paid examples plus Published, PendingReview, and Draft workflow states. Published records include Administrator review snapshots.
+- `Database/SeedDemoSubjects.sql` remains unchanged: Subjects and TutorSubjects support Tutor availability/Booking, while CourseCategories and Courses belong to Course Management.
+- Verified three password hashes, eleven category definitions, thirty unique Course codes, thirty unique slugs, and model length limits. Database execution remains outstanding.
+
 ### 2026-09-12 — Idempotent Course demonstration data script added
 
 - Added `Database/AddDemoCourses.sql` to insert ten realistic Course records only; it does not create or change Enrollments, Payments, Invoices, Users, or CourseCategories.
