@@ -14,10 +14,6 @@
         </div>
         <span class="badge bg-@Model.Status.CssClass() fs-6">@Model.Status</span>
     </div>
-    @if (TempData["Info"] != null)
-    {
-        <div class="alert alert-info">@TempData["Info"]</div>
-    }
 
     <div class="card mb-4">
         <div class="card-body p-4 p-md-5">
@@ -46,7 +42,14 @@
         }
         @if (userId == Model.StudentId && Model.Status == BookingStatus.Accepted && Model.PaymentStatus != "paid")
         {
-            <a class="btn btn-primary" asp-action="Payment" asp-route-id="@Model.Id">Make Payment</a>
+            @if (ViewBag.StripeAvailable == true)
+            {
+                <a class="btn btn-primary" asp-action="Payment" asp-route-id="@Model.Id">Pay securely with Stripe</a>
+            }
+            else
+            {
+                <span class="text-muted align-self-center">Stripe test mode is not configured.</span>
+            }
         }
         @if (Model.Status == BookingStatus.Paid && sessionEnd <= DateTime.Now)
         {

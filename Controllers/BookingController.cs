@@ -5,11 +5,15 @@ using System.Data;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text.Json;
+using Online_Tuition_Systems.Services.Billing;
 
 namespace AnywhereEdureach.Controllers;
 
 [Authorize]
-public class BookingController(ApplicationDbContext db, NotificationService ns) : Controller
+public class BookingController(
+    ApplicationDbContext db,
+    NotificationService ns,
+    IStripeCheckoutService stripeCheckoutService) : Controller
 {
     private int CurrentUserId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
@@ -265,6 +269,7 @@ public class BookingController(ApplicationDbContext db, NotificationService ns) 
             db.SaveChanges();
         }
 
+        ViewBag.StripeAvailable = stripeCheckoutService.IsConfigured;
         return View(booking);
     }
 
@@ -383,69 +388,55 @@ public class BookingController(ApplicationDbContext db, NotificationService ns) 
         return RedirectToAction("Show", new { id });
     }
 
-    public async Task<IActionResult> Payment(int id)
+    [HttpGet]
+    public async Task<IActionResult> Payment(int id, CancellationToken cancellationToken)
     {
-        return StatusError(id, "Payment module is not implemented yet.");
+        var booking = db.Bookings.FirstOrDefault(item => item.Id == id);
+        if (booking == null) return RedirectToAction("Index");
+        if (CurrentUserId != booking.StudentId) return Forbid();
 
-        //var booking = db.Bookings.Find(id);
-        //if (booking == null) return RedirectToAction("Index");
-        //if (CurrentUserId != booking.StudentId) return Forbid();
+        if (!stripeCheckoutService.IsConfigured)
+            return StatusError(id, "Stripe test mode is not configured.");
 
-        //if (booking.Status != BookingStatus.Accepted)
-        //    return StatusError(id, "This booking is not available for payment.");
+        if (booking.Status != BookingStatus.Accepted || booking.PaymentStatus == "paid")
+            return StatusError(id, "This booking is not available for payment.");
 
-        //if (booking.PaymentStatus == "paid")
-        //    return StatusError(id, "This booking has already been paid.");
+        var successUrl = Url.Action(
+            nameof(PaymentSuccess), "Booking", new { id }, Request.Scheme);
+        var cancelUrl = Url.Action(
+            nameof(PaymentCancelled), "Booking", new { id }, Request.Scheme);
+        if (string.IsNullOrWhiteSpace(successUrl) || string.IsNullOrWhiteSpace(cancelUrl))
+            return StatusError(id, "Stripe return URLs could not be created.");
 
-        //if (IsPaymentExpired(booking))
-        //    return StatusError(id, "The payment deadline for this booking has expired.");
+        successUrl += successUrl.Contains('?')
+            ? "&session_id={CHECKOUT_SESSION_ID}"
+            : "?session_id={CHECKOUT_SESSION_ID}";
+        var result = await stripeCheckoutService.CreateBookingCheckoutAsync(
+            CurrentUserId, id, successUrl, cancelUrl, cancellationToken);
 
-        //var requestId = Guid.NewGuid().ToString();
+        if (!result.Succeeded || string.IsNullOrWhiteSpace(result.CheckoutUrl))
+            return StatusError(id, result.Message ?? "Unable to start Stripe payment.");
 
-        //var baseUrl = configuration["PaymentModule:Url"];
-        //var token = configuration["PaymentModule:Token"];
+        return Redirect(result.CheckoutUrl);
+    }
 
-        //if (string.IsNullOrWhiteSpace(baseUrl))
-        //    return StatusError(id, "Payment Module URL is not configured.");
+    [HttpGet]
+    public async Task<IActionResult> PaymentSuccess(
+        int id,
+        [FromQuery(Name = "session_id")] string sessionId,
+        CancellationToken cancellationToken)
+    {
+        var result = await stripeCheckoutService.CompleteBookingCheckoutAsync(
+            CurrentUserId, id, sessionId, cancellationToken);
+        TempData["Info"] = result.Message;
+        return RedirectToAction(nameof(Show), new { id });
+    }
 
-        //using var client = httpClientFactory.CreateClient();
-        //client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-        //var payload = new
-        //{
-        //    requestID = requestId,
-        //    bookingId = booking.Id,
-        //    amount = booking.Cost,
-        //    timestamp = DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm:ss")
-        //};
-
-        //try
-        //{
-        //    var response = await client.PostAsJsonAsync(
-        //        baseUrl.TrimEnd('/') + "/api/payments/example", payload);
-
-        //    if (!response.IsSuccessStatusCode)
-        //        return StatusError(id, "Unable to connect to the Payment Module.");
-
-        //    using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-        //    if (!json.RootElement.TryGetProperty("status", out var status) ||
-        //        status.GetString() != "S")
-        //        return StatusError(id, "Unable to create payment.");
-
-        //    // The payment module is responsible for the actual payment page.
-        //    if (json.RootElement.TryGetProperty("data", out var data) &&
-        //        data.TryGetProperty("paymentUrl", out var paymentUrl) &&
-        //        paymentUrl.ValueKind == JsonValueKind.String)
-        //    {
-        //        return Redirect(paymentUrl.GetString()!);
-        //    }
-
-        //    return StatusError(id, "Payment Module did not provide a payment URL.");
-        //}
-        //catch (HttpRequestException)
-        //{
-        //    return StatusError(id, "Unable to connect to the Payment Module.");
-        //}
+    [HttpGet]
+    public IActionResult PaymentCancelled(int id)
+    {
+        TempData["Info"] = "Stripe Checkout was cancelled. No payment was recorded.";
+        return RedirectToAction(nameof(Show), new { id });
     }
 
     private IActionResult BookingError(string message, BookingInsertVM vm)
