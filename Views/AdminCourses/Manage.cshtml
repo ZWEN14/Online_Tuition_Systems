@@ -1,0 +1,77 @@
+@model IReadOnlyList<Online_Tuition_Systems.ViewModels.Courses.AdminCourseManagementViewModel>
+@{
+    ViewData["Title"] = "Manage Courses";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">Manage Courses</h1>
+        <p class="text-muted mb-0">Moderate published and archived courses.</p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-primary">Pending reviews</a>
+</div>
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+@if (Model.Count == 0)
+{
+    <div class="alert alert-info">No courses have been created.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Course</th>
+                    <th>Tutor</th>
+                    <th>Category</th>
+                    <th>Status</th>
+                    <th>Updated</th>
+                    <th class="text-end">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var course in Model)
+                {
+                    <tr>
+                        <td>@course.Code · @course.Title</td>
+                        <td>@course.TutorName</td>
+                        <td>@course.CategoryName</td>
+                        <td><span class="badge text-bg-secondary">@course.Status</span></td>
+                        <td>@course.UpdatedAtUtc.ToLocalTime().ToString("dd MMM yyyy")</td>
+                        <td class="text-end">
+                            @if (course.CanSuspend)
+                            {
+                                <a asp-action="Suspend" asp-route-id="@course.CourseId"
+                                   class="btn btn-sm btn-outline-danger">Suspend</a>
+                            }
+                            @if (course.CanRestore)
+                            {
+                                <form asp-action="Restore" asp-route-id="@course.CourseId"
+                                      method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-success">Restore</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                    @if (!string.IsNullOrWhiteSpace(course.SuspensionReason))
+                    {
+                        <tr class="table-danger">
+                            <td colspan="6">
+                                <strong>Suspension reason:</strong> @course.SuspensionReason
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+}

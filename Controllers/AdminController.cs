@@ -15,7 +15,9 @@ public class AdminController(ApplicationDbContext db, Helper hp) : Controller
     {
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 5, 50);
-        var usersQuery = db.Users.AsNoTracking();
+        var usersQuery = db.Users
+            .AsNoTracking()
+            .Where(u => u.Role != UserRole.Admin);
         if (!string.IsNullOrWhiteSpace(query))
         {
             query = query.Trim();

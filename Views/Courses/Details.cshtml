@@ -1,0 +1,62 @@
+@model Online_Tuition_Systems.ViewModels.Courses.CourseDetailsViewModel
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="text-muted mb-2">@Model.CategoryName · @Model.Code</div>
+        <h1>@Model.Title</h1>
+        <p class="lead">Tutor: @Model.TutorName</p>
+        <div class="mt-4" style="white-space: pre-line">@Model.Description</div>
+    </div>
+    <aside class="col-lg-5">
+        <div class="card shadow-sm">
+            @if (!string.IsNullOrWhiteSpace(Model.ThumbnailPath))
+            {
+                <img src="@Model.ThumbnailPath"
+                     class="card-img-top"
+                     alt="Thumbnail for @Model.Title" />
+            }
+            <div class="card-body">
+                <div class="h4 mb-3">@(Model.Price == 0 ? "Free" : $"RM {Model.Price:N2}")</div>
+                @if (User.IsInRole(AppRoles.Student))
+                {
+                    @if (Model.CurrentStudentEnrollmentStatus == EnrollmentStatus.Active)
+                    {
+                        <a asp-controller="StudentCourses" asp-action="Access"
+                           asp-route-id="@Model.CourseId"
+                           class="btn btn-primary w-100">Open course</a>
+                    }
+                    else if (Model.CurrentStudentEnrollmentStatus == EnrollmentStatus.PendingPayment)
+                    {
+                        <a asp-controller="StudentCourses" asp-action="Index"
+                           class="btn btn-outline-primary w-100">Payment pending</a>
+                    }
+                    else
+                    {
+                        <form asp-controller="StudentCourses" asp-action="Enroll"
+                              asp-route-id="@Model.CourseId" method="post">
+                            <button class="btn btn-primary w-100" type="submit">
+                                @(Model.Price == 0 ? "Enroll for free" : "Continue to payment")
+                            </button>
+                        </form>
+                    }
+                }
+                else if (User.Identity?.IsAuthenticated == true)
+                {
+                    <p class="text-muted mb-0">Only Student accounts can enroll in courses.</p>
+                }
+                else
+                {
+                    <a asp-controller="Account" asp-action="Login"
+                       class="btn btn-primary w-100">Log in to enroll</a>
+                }
+            </div>
+        </div>
+    </aside>
+</div>
+
+@await Component.InvokeAsync("CourseActivity", new { courseId = Model.CourseId })
+
+<a asp-action="Index" class="btn btn-link px-0 mt-4">Back to courses</a>

@@ -3,6 +3,9 @@
 SET XACT_ABORT ON;
 BEGIN TRANSACTION;
 
+USE [OnlineTuitionDb];
+GO
+
 INSERT INTO dbo.Subjects ([Name], [Description], [BaseCost])
 SELECT demo.[Name], demo.[Description], demo.[BaseCost]
 FROM (VALUES

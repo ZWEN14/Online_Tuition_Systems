@@ -30,6 +30,14 @@
                 </div>
 
                 <div class="row">
+                    <div class="col-12 mb-3">
+                        <label asp-for="CourseId" class="form-label"></label>
+                        <select asp-for="CourseId" asp-items="Model.CourseOptions" class="form-select">
+                            <option value="">General announcement (all eligible users)</option>
+                        </select>
+                        <div class="form-text">For a course announcement, notifications go to active students enrolled in that course and/or its Tutor, according to the audience selected below.</div>
+                        <span asp-validation-for="CourseId" class="text-danger"></span>
+                    </div>
                     <div class="col-md-6 mb-3">
                         <label asp-for="Audience" class="form-label"></label>
                         <select asp-for="Audience"

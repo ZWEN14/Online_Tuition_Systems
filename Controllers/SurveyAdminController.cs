@@ -206,7 +206,7 @@ public class SurveyAdminController(ApplicationDbContext db, ICurrentUserService 
         var recipientIds = await db.Users
             .Where(user => (user.Role == UserRole.Student || user.Role == UserRole.Tutor)
                 && !user.IsBlocked && user.EmailVerified
-                && (!courseId.HasValue || db.Enrollments.Any(enrollment => enrollment.UserId == user.Id && enrollment.CourseId == courseId.Value)))
+                && (!courseId.HasValue || db.Enrollments.Any(enrollment => enrollment.StudentId == user.Id && enrollment.CourseId == courseId.Value && enrollment.Status == EnrollmentStatus.Active)))
             .Select(user => user.Id).ToListAsync();
         db.Notifications.AddRange(recipientIds.Select(userId => new UserNotification
         {
@@ -219,5 +219,5 @@ public class SurveyAdminController(ApplicationDbContext db, ICurrentUserService 
         await db.SaveChangesAsync();
     }
 
-    private async Task LoadCourses(int? selected = null) => ViewBag.CourseId = new SelectList(await db.Courses.OrderBy(x => x.Title).ToListAsync(), "Id", "Title", selected);
+    private async Task LoadCourses(int? selected = null) => ViewBag.CourseId = new SelectList(await db.Courses.OrderBy(x => x.Title).ToListAsync(), "CourseId", "Title", selected);
 }

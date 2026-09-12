@@ -1,0 +1,195 @@
+@model Online_Tuition_Systems.ViewModels.Billing.TutorBillingReportViewModel
+@{
+    ViewData["Title"] = "Course Earnings";
+}
+
+<div class="mb-4">
+    <h1 class="h3 mb-1">Course Earnings</h1>
+    <p class="text-muted mb-0">Enrollment and revenue from your own courses.</p>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl">
+        <div class="card h-100"><div class="card-body">
+            <div class="text-muted small">Your courses</div>
+            <div class="h3 mb-0">@Model.TotalCourses</div>
+        </div></div>
+    </div>
+    <div class="col-sm-6 col-xl">
+        <div class="card h-100"><div class="card-body">
+            <div class="text-muted small">Active enrollments</div>
+            <div class="h3 mb-0">@Model.ActiveEnrollments</div>
+        </div></div>
+    </div>
+    <div class="col-sm-6 col-xl">
+        <div class="card h-100"><div class="card-body">
+            <div class="text-muted small">Pending payments</div>
+            <div class="h3 mb-0">@Model.PendingPayments</div>
+        </div></div>
+    </div>
+    <div class="col-sm-6 col-xl">
+        <div class="card h-100"><div class="card-body">
+            <div class="text-muted small">Gross sales</div>
+            <div class="h3 mb-0">RM @Model.GrossSales.ToString("N2")</div>
+        </div></div>
+    </div>
+    <div class="col-sm-6 col-xl">
+        <div class="card h-100 border-success"><div class="card-body">
+            <div class="text-muted small">Your net earnings</div>
+            <div class="h3 text-success mb-0">RM @Model.TutorEarnings.ToString("N2")</div>
+        </div></div>
+    </div>
+</div>
+
+@if (Model.Courses.Count > 0)
+{
+    <section class="row g-3 align-items-start mb-4" aria-labelledby="courseAnalyticsHeading">
+        <div class="col-12">
+            <h2 id="courseAnalyticsHeading" class="h4 mb-0">Course analytics</h2>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <h3 class="h6 mb-0">Course portfolio</h3>
+                        <button type="button" class="analytics-info-button"
+                                data-bs-toggle="tooltip"
+                                data-bs-title="Your courses grouped by their current workflow status."
+                                aria-label="About Course portfolio">i</button>
+                    </div>
+                    <div class="course-status-summary">
+                        @foreach (var status in Model.CourseStatuses)
+                        {
+                            <div class="course-status-stat">
+                                <strong>@status.Count</strong>
+                                <span>@status.Label</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <h3 class="h6 mb-0">Top courses by net earnings</h3>
+                        <button type="button" class="analytics-info-button"
+                                data-bs-toggle="tooltip"
+                                data-bs-title="Up to five courses ranked by your recorded net earnings after platform fees."
+                                aria-label="About top courses">i</button>
+                    </div>
+                    <div class="course-analytics-list">
+                        @{ var courseRank = 0; }
+                        @foreach (var course in Model.LeadingCourses)
+                        {
+                            courseRank++;
+                            var earningsAriaText = $"RM {course.TutorEarnings:N2} net earnings";
+                            <div>
+                                <div class="d-flex justify-content-between align-items-start gap-3 mb-1">
+                                    <div class="d-flex gap-2 min-w-0">
+                                        <span class="course-rank" aria-label="Rank @courseRank">@courseRank</span>
+                                        <span class="text-truncate">@course.Title</span>
+                                    </div>
+                                    <strong class="text-nowrap">RM @course.TutorEarnings.ToString("N2")</strong>
+                                </div>
+                                <div class="course-analytics-track" role="progressbar"
+                                     aria-label="Net earnings for @course.Title"
+                                     aria-valuenow="@course.EarningsBarPercentage"
+                                     aria-valuemin="0" aria-valuemax="100"
+                                     aria-valuetext="@earningsAriaText">
+                                    <div class="course-analytics-fill course-analytics-fill-success"
+                                         style="width: @course.EarningsBarPercentage%"></div>
+                                </div>
+                                <div class="small text-muted mt-1 ms-4">
+                                    @course.ActiveEnrollments active enrollment(s)
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+}
+
+<div class="alert alert-light border">
+    Successful sales use the stored 15% platform commission snapshot.
+    Platform fees recorded: <strong>RM @Model.PlatformFees.ToString("N2")</strong>.
+</div>
+
+@if (Model.TotalCourses == 0)
+{
+    <div class="alert alert-info">Create a course to begin receiving enrollments.</div>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-end gap-3 mb-2">
+        <h2 class="h4 mb-0">Course breakdown</h2>
+        <span class="small text-muted">
+            Page @Model.CoursePage of @Model.TotalCoursePages
+        </span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Course</th>
+                    <th>Status</th>
+                    <th>Active</th>
+                    <th>Pending</th>
+                    <th>Paid sales</th>
+                    <th>Gross</th>
+                    <th>Platform fee</th>
+                    <th>Net earnings</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var course in Model.Courses)
+                {
+                    <tr>
+                        <td>
+                            <div>@course.Title</div>
+                            <small class="text-muted">@course.Code</small>
+                        </td>
+                        <td><span class="badge text-bg-secondary">@course.Status</span></td>
+                        <td>@course.ActiveEnrollments</td>
+                        <td>@course.PendingPayments</td>
+                        <td>@course.SuccessfulSales</td>
+                        <td>RM @course.GrossSales.ToString("N2")</td>
+                        <td>RM @course.PlatformFees.ToString("N2")</td>
+                        <td class="fw-semibold">RM @course.TutorEarnings.ToString("N2")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (Model.TotalCoursePages > 1)
+    {
+        <nav class="mt-3" aria-label="Course earnings pages">
+            <ul class="pagination pagination-sm justify-content-center">
+                @for (var pageNumber = 1; pageNumber <= Model.TotalCoursePages; pageNumber++)
+                {
+                    <li class="page-item @(pageNumber == Model.CoursePage ? "active" : null)">
+                        <a asp-action="Index" asp-route-coursePage="@pageNumber"
+                           class="page-link"
+                           aria-current="@(pageNumber == Model.CoursePage ? "page" : null)">
+                            @pageNumber
+                        </a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
+}
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.analytics-info-button').forEach(element => {
+            bootstrap.Tooltip.getOrCreateInstance(element);
+        });
+    </script>
+}

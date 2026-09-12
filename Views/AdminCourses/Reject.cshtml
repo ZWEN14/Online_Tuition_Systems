@@ -1,0 +1,32 @@
+@model Online_Tuition_Systems.ViewModels.Courses.CourseRejectionViewModel
+@{
+    ViewData["Title"] = "Reject Course";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <h1 class="h3 mb-1">Reject Course</h1>
+        <p class="text-muted">@Model.Code · @Model.Title</p>
+
+        <form asp-action="Reject" method="post">
+            <input asp-for="CourseId" type="hidden" />
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="mb-3">
+                <label asp-for="Reason" class="form-label"></label>
+                <textarea asp-for="Reason" class="form-control" rows="5"></textarea>
+                <span asp-validation-for="Reason" class="text-danger"></span>
+                <div class="form-text">Explain what the Tutor must correct before resubmitting.</div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-danger">Confirm rejection</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

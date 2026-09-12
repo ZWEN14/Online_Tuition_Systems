@@ -1,0 +1,162 @@
+.app-shell.sidebar-enhanced .app-sidebar {
+    overflow: visible;
+    transition: width 140ms ease-out, min-width 140ms ease-out, padding 140ms ease-out;
+}
+
+.shell-sidebar-controls {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: .4rem;
+    margin: 0 .25rem .65rem;
+}
+
+.shell-sidebar-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.35rem;
+    height: 2.35rem;
+    padding: 0;
+    border: 1px solid #dbe4f0;
+    border-radius: .65rem;
+    background: #fff;
+    color: #334155;
+    transition: color 160ms ease, border-color 160ms ease, background-color 160ms ease;
+}
+
+.shell-sidebar-toggle:hover,
+.shell-sidebar-toggle:focus-visible {
+    border-color: #93b4ee;
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.shell-sidebar-toggle:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, .2);
+    outline-offset: 2px;
+}
+
+.shell-sidebar-toggle svg,
+.shell-nav-icon svg {
+    width: 1.15rem;
+    height: 1.15rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.shell-sidebar-arrow {
+    position: absolute;
+    top: 50%;
+    right: -1.15rem;
+    z-index: 4;
+    width: 2.15rem;
+    height: 2.15rem;
+    border-radius: 50%;
+    box-shadow: 0 .25rem .75rem rgba(31, 47, 70, .14);
+    transform: translateY(-50%);
+}
+
+.shell-sidebar-arrow svg {
+    transition: transform 140ms ease-out;
+}
+
+.shell-nav-icon {
+    display: inline-flex;
+    flex: 0 0 1.25rem;
+    align-items: center;
+    justify-content: center;
+}
+
+.shell-nav-icon .shell-course-icon {
+    fill: currentColor;
+    stroke: none;
+}
+
+.app-shell.sidebar-enhanced .sidebar-link {
+    position: relative;
+    white-space: nowrap;
+    transition: color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+}
+
+.app-shell.sidebar-enhanced .app-sidebar.shell-sidebar-transitioning .sidebar-heading,
+.app-shell.sidebar-enhanced .app-sidebar.shell-sidebar-transitioning .sidebar-link {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.app-shell.sidebar-enhanced .sidebar-link.shell-sidebar-current {
+    color: #1d4ed8;
+    background: #eaf2ff;
+    box-shadow: inset 3px 0 0 #2563eb;
+}
+
+.app-shell.sidebar-enhanced .sidebar-link.shell-sidebar-current:hover,
+.app-shell.sidebar-enhanced .sidebar-link.shell-sidebar-current:focus-visible {
+    color: #1e40af;
+    background: #dfeaff;
+}
+
+.app-shell.sidebar-enhanced .app-sidebar.shell-sidebar-collapsed,
+.shell-sidebar-precollapsed .app-shell.sidebar-enhanced .app-sidebar {
+    width: 4.5rem;
+    min-width: 4.5rem;
+    padding-right: .55rem;
+    padding-left: .55rem;
+}
+
+.shell-sidebar-collapsed .shell-sidebar-controls,
+.shell-sidebar-precollapsed .shell-sidebar-controls {
+    justify-content: center;
+    margin-right: 0;
+    margin-left: 0;
+}
+
+.shell-sidebar-collapsed .sidebar-heading,
+.shell-sidebar-collapsed .sidebar-link,
+.shell-sidebar-precollapsed .sidebar-heading,
+.shell-sidebar-precollapsed .sidebar-link {
+    display: none;
+}
+
+.shell-sidebar-collapsed .shell-sidebar-arrow svg,
+.shell-sidebar-precollapsed .shell-sidebar-arrow svg {
+    transform: rotate(180deg);
+}
+
+.shell-sidebar-precollapsed .app-shell.sidebar-enhanced .app-sidebar,
+.shell-sidebar-precollapsed .shell-sidebar-arrow svg {
+    transition: none;
+}
+
+@media (max-width: 991.98px) {
+    .app-shell.sidebar-enhanced .app-sidebar.shell-sidebar-collapsed,
+    .shell-sidebar-precollapsed .app-shell.sidebar-enhanced .app-sidebar {
+        width: 100%;
+        min-width: 0;
+        min-height: 3.75rem;
+        height: 3.75rem;
+        padding: .55rem .75rem;
+    }
+
+    .shell-sidebar-arrow {
+        right: .75rem;
+    }
+
+    .shell-sidebar-collapsed .shell-sidebar-controls {
+        justify-content: flex-start;
+        flex-wrap: nowrap;
+        margin-bottom: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .app-shell.sidebar-enhanced .app-sidebar,
+    .shell-sidebar-arrow svg {
+        transition: none;
+    }
+}

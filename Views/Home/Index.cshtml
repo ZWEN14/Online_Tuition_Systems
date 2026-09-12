@@ -1,3 +1,4 @@
+@model Online_Tuition_Systems.ViewModels.Home.HomeDashboardViewModel
 @{
     ViewData["Title"] = "Home";
 
@@ -5,208 +6,182 @@
     var isTutor = User.IsInRole(AppRoles.Tutor);
     var isStudent = User.IsInRole(AppRoles.Student);
     var roleName = isAdmin ? "Administrator" : isTutor ? "Tutor" : "Student";
+    var headline = isAdmin ? "Keep the learning community moving."
+        : isTutor ? "Teach, plan and support your learners."
+        : "Everything for your learning, in one place.";
+    var introduction = isAdmin
+        ? "Review courses and proposals, manage people and payments, and stay close to community feedback."
+        : isTutor
+            ? "Manage your courses and tuition sessions, plan events, and keep up with your students."
+            : "Find tutors and courses, manage lessons, and take part in the wider learning community.";
+
+    var workspaceLinks = new List<(string Controller, string Action, string Title, string Description, string Icon, string Tone)>();
+    if (isStudent)
+    {
+        workspaceLinks.Add(("Subject", "Index", "Find a subject", "Browse subjects and start your tutor search.", "S", "feature-blue"));
+        workspaceLinks.Add(("Tutor", "Index", "Find a tutor", "Choose the right support for your studies.", "T", "feature-teal"));
+        workspaceLinks.Add(("Booking", "Index", "My tuition bookings", "Follow your lesson requests and sessions.", "B", "feature-violet"));
+        workspaceLinks.Add(("StudentCourses", "Index", "My courses", "Open enrolled courses and track access.", "C", "feature-amber"));
+        workspaceLinks.Add(("Billing", "Index", "Billing history", "Review course payments and invoices.", "RM", "feature-teal"));
+        workspaceLinks.Add(("EventRegistrations", "MyRegistrations", "Event registrations", "See the activities you have joined.", "R", "feature-rose"));
+    }
+    else if (isTutor)
+    {
+        workspaceLinks.Add(("Timeslot", "Index", "Availability", "Set the times students can book.", "A", "feature-blue"));
+        workspaceLinks.Add(("Booking", "Index", "Student bookings", "Review requests and manage lessons.", "B", "feature-teal"));
+        workspaceLinks.Add(("TutorCourses", "Index", "My courses", "Create, submit and manage your courses.", "C", "feature-violet"));
+        workspaceLinks.Add(("TutorPromotions", "Index", "Promotions", "Manage offers for your published courses.", "%", "feature-amber"));
+        workspaceLinks.Add(("TutorBilling", "Index", "Course earnings", "Track payments and your teaching revenue.", "RM", "feature-teal"));
+        workspaceLinks.Add(("EventProposals", "Index", "Event proposals", "Plan learning activities for review.", "P", "feature-rose"));
+        workspaceLinks.Add(("EventRegistrations", "Manage", "Event participants", "Review registrations for your events.", "R", "feature-blue"));
+    }
+    else if (isAdmin)
+    {
+        workspaceLinks.Add(("Admin", "Index", "User management", "Manage accounts and access.", "U", "feature-blue"));
+        workspaceLinks.Add(("AdminCourseCategories", "Index", "Course categories", "Organise the course catalogue.", "C", "feature-teal"));
+        workspaceLinks.Add(("AdminCourses", "Index", "Course reviews", "Approve and oversee tutor courses.", "CR", "feature-violet"));
+        workspaceLinks.Add(("AdminBilling", "Index", "Billing overview", "Monitor course payments and revenue.", "RM", "feature-amber"));
+        workspaceLinks.Add(("EventProposals", "Index", "Event proposals", "Review tutor event plans.", "P", "feature-rose"));
+        workspaceLinks.Add(("SurveyAdmin", "Index", "Survey management", "Create surveys and review responses.", "S", "feature-blue"));
+    }
+
+    var communityLinks = new List<(string Controller, string Action, string Title, string Description, string Icon, string Tone)>
+    {
+        ("Courses", "Index", "Course catalogue", "Explore published courses across every subject.", "C", "feature-blue"),
+        ("Announcements", "Index", isAdmin ? "Manage announcements" : "Announcements", "Read and share important platform news.", "N", "feature-amber"),
+        ("Events", "Index", isAdmin ? "Manage events" : "Learning events", "Find workshops and community activities.", "E", "feature-rose")
+    };
+    if (isStudent || isTutor)
+        communityLinks.Add(("Survey", "Index", "Surveys", "Share feedback through available surveys.", "S", "feature-violet"));
+    communityLinks.Add(("Complaints", "Index", isAdmin ? "Manage complaints" : "Complaints & support", "Submit or follow up on a concern.", "H", "feature-teal"));
+    communityLinks.Add(("Notifications", "Index", "Notifications", "Keep up with updates across your modules.", "N", "feature-blue"));
+    communityLinks.Add(("Account", "UpdateProfile", "My profile", "Keep your account details up to date.", "P", "feature-violet"));
 }
 
-<section class="home-hero">
-    <div class="home-hero-content">
-        <span class="home-eyebrow">ONLINE TUITION · ONE CONNECTED PLATFORM</span>
-        <h1>Learn, teach and manage tuition in one place</h1>
-        <p>
-            Anywhere Edureach connects students, tutors and administrators with the tools
-            they need for tutoring, scheduling, communication and learning activities.
-        </p>
-
+<section class="home-dashboard-hero" aria-labelledby="home-heading">
+    <div class="home-dashboard-intro">
+        <span class="section-kicker">@roleName.ToUpperInvariant() WORKSPACE</span>
+        <h1 id="home-heading">@headline</h1>
+        <p>@introduction</p>
         <div class="d-flex flex-wrap gap-2 mt-4">
-            @if (isStudent)
-            {
-                <a asp-controller="Subject" asp-action="Index" class="btn btn-primary btn-lg px-4">
-                    Find a subject <span aria-hidden="true">→</span>
-                </a>
-                <a asp-controller="Booking" asp-action="Index" class="btn btn-outline-dark btn-lg px-4">View my learning</a>
-            }
-            else if (isTutor)
-            {
-                <a asp-controller="Booking" asp-action="Index" class="btn btn-primary btn-lg px-4">
-                    View student requests <span aria-hidden="true">→</span>
-                </a>
-                <a asp-controller="Timeslot" asp-action="Index" class="btn btn-outline-dark btn-lg px-4">Manage availability</a>
-            }
-            else if (isAdmin)
-            {
-                <a asp-controller="Admin" asp-action="Index" class="btn btn-primary btn-lg px-4">
-                    Manage users <span aria-hidden="true">→</span>
-                </a>
-                <a asp-controller="Announcements" asp-action="Index" class="btn btn-outline-dark btn-lg px-4">Manage announcements</a>
-            }
-            else
-            {
-                <a asp-controller="Account" asp-action="Login" class="btn btn-primary btn-lg px-4">
-                    Sign in <span aria-hidden="true">→</span>
-                </a>
-                <a asp-controller="Account" asp-action="Register" class="btn btn-outline-dark btn-lg px-4">Create an account</a>
-            }
+            <a asp-controller="Courses" asp-action="Index" class="btn btn-primary px-4">Explore courses</a>
+            <a asp-controller="Notifications" asp-action="Index" class="btn btn-outline-primary px-4">View updates</a>
         </div>
-
-        <div class="home-trust-line">
-            <span class="home-trust-check" aria-hidden="true">✓</span>
-            @if (User.Identity?.IsAuthenticated == true)
-            {
-                <span>Your @roleName workspace brings every available tool together.</span>
-            }
-            else
-            {
-                <span>One secure portal for students, tutors and administrators.</span>
-            }
-        </div>
+    </div>
+    <div class="home-dashboard-summary" aria-label="Platform at a glance">
+        <a asp-controller="Courses" asp-action="Index" class="home-summary-item">
+            <strong>@Model.PublishedCourseCount</strong><span>published courses</span>
+        </a>
+        <a asp-controller="Events" asp-action="Index" class="home-summary-item">
+            <strong>@Model.UpcomingEventCount</strong><span>upcoming events</span>
+        </a>
+        <a asp-controller="Notifications" asp-action="Index" asp-route-filter="unread" class="home-summary-item">
+            <strong>@Model.UnreadNotificationCount</strong><span>unread updates</span>
+        </a>
     </div>
 </section>
 
-<section class="home-section">
-    <div class="home-section-heading text-center">
-        <span class="section-kicker">@(User.Identity?.IsAuthenticated == true ? $"{roleName.ToUpperInvariant()} WORKSPACE" : "PLATFORM FEATURES")</span>
-        <h2>@(User.Identity?.IsAuthenticated == true ? "What would you like to do?" : "Everything needed for online tuition")</h2>
-        <p>@(User.Identity?.IsAuthenticated == true ? "Open any tool available for your role." : "Discover tutors, organise lessons and stay connected with your learning community.")</p>
+<section class="home-dashboard-section" aria-labelledby="workspace-heading">
+    <div class="home-dashboard-heading">
+        <div><span class="section-kicker">YOUR TOOLS</span><h2 id="workspace-heading">Your workspace</h2></div>
+        <p>Start with the tasks available to your role.</p>
     </div>
+    <div class="row g-3">
+        @foreach (var link in workspaceLinks)
+        {
+            <div class="col-sm-6 col-xl-4">
+                <a asp-controller="@link.Controller" asp-action="@link.Action" class="home-feature-card @link.Tone">
+                    <span class="home-feature-icon" aria-hidden="true">@link.Icon</span>
+                    <span class="home-feature-copy"><strong>@link.Title</strong><small>@link.Description</small></span>
+                    <span class="home-feature-arrow" aria-hidden="true">&rarr;</span>
+                </a>
+            </div>
+        }
+    </div>
+</section>
 
-    <div class="row g-4">
-        @if (isStudent)
+<section class="home-dashboard-section home-dashboard-section-soft" aria-labelledby="community-heading">
+    <div class="home-dashboard-heading">
+        <div><span class="section-kicker">STAY CONNECTED</span><h2 id="community-heading">Across the platform</h2></div>
+        <p>Courses, events, news, feedback and support are all connected here.</p>
+    </div>
+    <div class="row g-3">
+        @foreach (var link in communityLinks)
         {
-            <div class="col-md-6 col-xl-4">
-                <a asp-controller="Subject" asp-action="Index" class="home-feature-card feature-blue">
-                    <span class="home-feature-icon">S</span>
-                    <span class="home-feature-copy"><strong>Find a subject</strong><small>Browse available subjects and begin your tutor search.</small></span>
-                    <span class="home-feature-arrow">→</span>
-                </a>
-            </div>
-            <div class="col-md-6 col-xl-4">
-                <a asp-controller="Tutor" asp-action="Index" class="home-feature-card feature-teal">
-                    <span class="home-feature-icon">T</span>
-                    <span class="home-feature-copy"><strong>Find a tutor</strong><small>Compare tutors and choose the right support for your studies.</small></span>
-                    <span class="home-feature-arrow">→</span>
-                </a>
-            </div>
-            <div class="col-md-6 col-xl-4">
-                <a asp-controller="Booking" asp-action="Index" class="home-feature-card feature-violet">
-                    <span class="home-feature-icon">L</span>
-                    <span class="home-feature-copy"><strong>My learning</strong><small>Track tuition bookings, payments and lesson progress.</small></span>
-                    <span class="home-feature-arrow">→</span>
+            <div class="col-sm-6 col-xl-4">
+                <a asp-controller="@link.Controller" asp-action="@link.Action" class="home-feature-card @link.Tone">
+                    <span class="home-feature-icon" aria-hidden="true">@link.Icon</span>
+                    <span class="home-feature-copy"><strong>@link.Title</strong><small>@link.Description</small></span>
+                    <span class="home-feature-arrow" aria-hidden="true">&rarr;</span>
                 </a>
             </div>
         }
-        else if (isTutor)
-        {
-            <div class="col-md-6 col-xl-4">
-                <a asp-controller="Timeslot" asp-action="Index" class="home-feature-card feature-blue">
-                    <span class="home-feature-icon">A</span>
-                    <span class="home-feature-copy"><strong>Availability</strong><small>Create and manage the timeslots students can book.</small></span>
-                    <span class="home-feature-arrow">→</span>
-                </a>
-            </div>
-            <div class="col-md-6 col-xl-4">
-                <a asp-controller="Booking" asp-action="Index" class="home-feature-card feature-teal">
-                    <span class="home-feature-icon">B</span>
-                    <span class="home-feature-copy"><strong>Student requests</strong><small>Review bookings and manage each tuition session.</small></span>
-                    <span class="home-feature-arrow">→</span>
-                </a>
-            </div>
-            <div class="col-md-6 col-xl-4">
-                <a asp-controller="EventProposals" asp-action="Index" class="home-feature-card feature-violet">
-                    <span class="home-feature-icon">P</span>
-                    <span class="home-feature-copy"><strong>Event proposals</strong><small>Propose learning activities and follow the review process.</small></span>
-                    <span class="home-feature-arrow">→</span>
-                </a>
-            </div>
-            <div class="col-md-6 col-xl-4">
-                <a asp-controller="EventRegistrations" asp-action="Manage" class="home-feature-card feature-amber">
-                    <span class="home-feature-icon">R</span>
-                    <span class="home-feature-copy"><strong>Registration review</strong><small>Review registration requests for events you organise.</small></span>
-                    <span class="home-feature-arrow">→</span>
-                </a>
-            </div>
-        }
-        else if (isAdmin)
-        {
-            <div class="col-md-6 col-xl-4">
-                <a asp-controller="Admin" asp-action="Index" class="home-feature-card feature-blue">
-                    <span class="home-feature-icon">U</span>
-                    <span class="home-feature-copy"><strong>User management</strong><small>Maintain user accounts, access and account status.</small></span>
-                    <span class="home-feature-arrow">→</span>
-                </a>
-            </div>
-            <div class="col-md-6 col-xl-4">
-                <a asp-controller="EventProposals" asp-action="Index" class="home-feature-card feature-violet">
-                    <span class="home-feature-icon">P</span>
-                    <span class="home-feature-copy"><strong>Proposal review</strong><small>Approve, reject or request changes to tutor proposals.</small></span>
-                    <span class="home-feature-arrow">→</span>
-                </a>
-            </div>
-        }
+    </div>
+</section>
 
-        <div class="col-md-6 col-xl-4">
-            <a asp-controller="Announcements" asp-action="Index" class="home-feature-card feature-amber">
-                <span class="home-feature-icon">N</span>
-                <span class="home-feature-copy">
-                    <strong>@(isAdmin ? "Manage announcements" : "Announcements")</strong>
-                    <small>@(isAdmin ? "Create and publish important platform updates." : "Read important course and platform updates.")</small>
-                </span>
-                <span class="home-feature-arrow">→</span>
-            </a>
+<section class="home-dashboard-section" aria-labelledby="latest-heading">
+    <div class="home-dashboard-heading">
+        <div><span class="section-kicker">HAPPENING NOW</span><h2 id="latest-heading">Latest from your community</h2></div>
+        <p>Real updates from the course, event and announcement modules.</p>
+    </div>
+    <div class="row g-3">
+        <div class="col-lg-4">
+            <div class="home-latest-panel">
+                <div class="home-latest-panel-head"><h3>Courses</h3><a asp-controller="Courses" asp-action="Index">View all</a></div>
+                @if (Model.Courses.Count == 0)
+                {
+                    <p class="home-latest-empty">No published courses yet.</p>
+                }
+                else
+                {
+                    @foreach (var course in Model.Courses)
+                    {
+                        <a asp-controller="Courses" asp-action="Details" asp-route-id="@course.Id" class="home-latest-item">
+                            <strong>@course.Title</strong><small>@course.Category · @(course.Price == 0 ? "Free" : $"RM {course.Price:0.00}")</small>
+                        </a>
+                    }
+                }
+            </div>
         </div>
-        <div class="col-md-6 col-xl-4">
-            <a asp-controller="Events" asp-action="Index" class="home-feature-card feature-rose">
-                <span class="home-feature-icon">E</span>
-                <span class="home-feature-copy">
-                    <strong>@(isAdmin ? "Manage events" : "Learning events")</strong>
-                    <small>@(isAdmin ? "Review event status and perform administrative actions." : "Discover workshops and activities for the learning community.")</small>
-                </span>
-                <span class="home-feature-arrow">→</span>
-            </a>
+        <div class="col-lg-4">
+            <div class="home-latest-panel">
+                <div class="home-latest-panel-head"><h3>Upcoming events</h3><a asp-controller="Events" asp-action="Index">View all</a></div>
+                @if (Model.Events.Count == 0)
+                {
+                    <p class="home-latest-empty">No upcoming events yet.</p>
+                }
+                else
+                {
+                    @foreach (var tuitionEvent in Model.Events)
+                    {
+                        <a asp-controller="Events" asp-action="Details" asp-route-id="@tuitionEvent.Id" class="home-latest-item">
+                            <strong>@tuitionEvent.Title</strong><small>@tuitionEvent.StartsAt.ToLocalTime().ToString("dd MMM yyyy, h:mm tt")</small>
+                        </a>
+                    }
+                }
+            </div>
         </div>
-
-        @if (isStudent)
-        {
-            <div class="col-md-6 col-xl-4">
-                <a asp-controller="EventRegistrations" asp-action="MyRegistrations" class="home-feature-card feature-rose">
-                    <span class="home-feature-icon">R</span>
-                    <span class="home-feature-copy"><strong>My event registrations</strong><small>Track the status of activities you have registered for.</small></span>
-                    <span class="home-feature-arrow">→</span>
-                </a>
+        <div class="col-lg-4">
+            <div class="home-latest-panel">
+                <div class="home-latest-panel-head"><h3>Announcements</h3><a asp-controller="Announcements" asp-action="Index">View all</a></div>
+                @if (Model.Announcements.Count == 0)
+                {
+                    <p class="home-latest-empty">No new announcements right now.</p>
+                }
+                else
+                {
+                    @foreach (var announcement in Model.Announcements)
+                    {
+                        <a asp-controller="Announcements" asp-action="Details" asp-route-id="@announcement.Id" class="home-latest-item">
+                            <strong>@announcement.Title</strong>
+                            @if (announcement.PublishedAt.HasValue)
+                            {
+                                <small>@announcement.PublishedAt.Value.ToLocalTime().ToString("dd MMM yyyy")</small>
+                            }
+                        </a>
+                    }
+                }
             </div>
-        }
-        else if (isTutor)
-        {
-            <div class="col-md-6 col-xl-4">
-                <a asp-controller="EventRegistrations" asp-action="MyRegistrations" class="home-feature-card feature-rose">
-                    <span class="home-feature-icon">M</span>
-                    <span class="home-feature-copy"><strong>My registrations</strong><small>Track activities that you have registered to attend.</small></span>
-                    <span class="home-feature-arrow">→</span>
-                </a>
-            </div>
-        }
-
-        @if (User.Identity?.IsAuthenticated != true)
-        {
-            <div class="col-md-6 col-xl-4">
-                <a asp-controller="Account" asp-action="Register" class="home-feature-card feature-blue">
-                    <span class="home-feature-icon">1</span>
-                    <span class="home-feature-copy"><strong>Create your account</strong><small>Join the platform as a student and complete your profile.</small></span>
-                    <span class="home-feature-arrow">→</span>
-                </a>
-            </div>
-            <div class="col-md-6 col-xl-4">
-                <a asp-controller="Tutor" asp-action="Index" class="home-feature-card feature-teal">
-                    <span class="home-feature-icon">2</span>
-                    <span class="home-feature-copy"><strong>Discover tutors</strong><small>Find learning support across the available subjects.</small></span>
-                    <span class="home-feature-arrow">→</span>
-                </a>
-            </div>
-            <div class="col-md-6 col-xl-4">
-                <a asp-controller="Account" asp-action="Login" class="home-feature-card feature-violet">
-                    <span class="home-feature-icon">3</span>
-                    <span class="home-feature-copy"><strong>Manage your learning</strong><small>Sign in to access bookings, events and account tools.</small></span>
-                    <span class="home-feature-arrow">→</span>
-                </a>
-            </div>
-        }
+        </div>
     </div>
 </section>

@@ -1,0 +1,74 @@
+@model Online_Tuition_Systems.ViewModels.Billing.InvoiceDetailsViewModel
+@{
+    ViewData["Title"] = "Invoice";
+}
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+
+<article class="card shadow-sm">
+    <div class="card-body p-4 p-lg-5">
+        <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
+            <div>
+                <h1 class="h2 mb-1">Invoice</h1>
+                <div class="text-muted">@Model.InvoiceNumber</div>
+            </div>
+            <div class="text-md-end">
+                <div>Issued @Model.IssuedAtUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm")</div>
+                <div class="text-muted">Payment @Model.PaymentReference</div>
+            </div>
+        </div>
+
+        <section class="mb-4">
+            <h2 class="h5">Billed to</h2>
+            <div>@Model.CustomerName</div>
+            <div>@Model.CustomerEmail</div>
+        </section>
+
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Course</th>
+                        <th class="text-end">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            @Model.CourseTitle
+                            <div class="small text-muted">@Model.CourseCode</div>
+                        </td>
+                        <td class="text-end">RM @Model.OriginalAmount.ToString("N2")</td>
+                    </tr>
+                    @if (Model.DiscountAmount > 0)
+                    {
+                        <tr>
+                            <td>
+                                Promotion discount
+                                @if (!string.IsNullOrWhiteSpace(Model.PromotionCode))
+                                {
+                                    <span class="badge text-bg-success ms-1">@Model.PromotionCode</span>
+                                }
+                            </td>
+                            <td class="text-end">- RM @Model.DiscountAmount.ToString("N2")</td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr class="fw-bold">
+                        <td>Total paid</td>
+                        <td class="text-end">RM @Model.FinalAmount.ToString("N2")</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</article>
+
+<div class="d-flex gap-2 mt-4">
+    <a asp-controller="StudentCourses" asp-action="Index" class="btn btn-primary">My courses</a>
+    <a asp-action="Index" class="btn btn-outline-secondary">Billing history</a>
+</div>

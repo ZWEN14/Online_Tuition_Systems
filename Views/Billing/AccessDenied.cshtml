@@ -1,0 +1,17 @@
+@{
+    ViewData["Title"] = "Invoice access denied";
+}
+
+<div class="text-center py-5">
+    <div class="display-4 mb-3" aria-hidden="true">🔒</div>
+    <h1 class="h2">Invoice access denied</h1>
+    <p class="text-muted mx-auto" style="max-width: 36rem">
+        You can only view invoices that belong to your own Student account.
+        The requested invoice may also no longer be available.
+    </p>
+    <div class="d-flex justify-content-center gap-2 mt-4">
+        <a asp-controller="Billing" asp-action="Index" class="btn btn-primary">Billing history</a>
+        <a asp-controller="StudentCourses" asp-action="Index"
+           class="btn btn-outline-secondary">My courses</a>
+    </div>
+</div>

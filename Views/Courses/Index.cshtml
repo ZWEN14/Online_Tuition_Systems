@@ -1,0 +1,70 @@
+@model Online_Tuition_Systems.ViewModels.Courses.CourseCatalogViewModel
+@{
+    ViewData["Title"] = "Courses";
+}
+
+<div class="mb-4">
+    <h1 class="mb-1">Explore courses</h1>
+    <p class="text-muted mb-0">Learn online with our approved tutors.</p>
+</div>
+
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+<form asp-action="Index" method="get" id="courseCatalogFilters"
+      class="card card-body mb-4">
+    <div>
+        <label asp-for="Search" class="form-label">Search courses</label>
+        <input asp-for="Search" class="form-control"
+               autocomplete="off"
+               placeholder="Title, code, or description" />
+        <div class="d-flex align-items-center gap-2 mt-2 small text-muted">
+            <span id="courseResultCount">@Model.TotalCourses course(s)</span>
+            <span id="courseSearchLoading" class="d-none" role="status">
+                <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+                Searching...
+            </span>
+        </div>
+    </div>
+
+    <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mt-3 pt-3 border-top">
+        <div class="catalog-filter-control">
+            <label asp-for="CategoryId" class="form-label fw-semibold">Category</label>
+            <select asp-for="CategoryId"
+                    class="form-select catalog-category-select">
+                <option value="">All categories</option>
+                @foreach (var category in Model.Categories)
+                {
+                    <option value="@category.CourseCategoryId">@category.Name</option>
+                }
+            </select>
+        </div>
+
+        <div class="catalog-filter-control">
+            <label asp-for="Sort" class="form-label fw-semibold">Sort by</label>
+            <select asp-for="Sort"
+                    class="form-select catalog-sort-select">
+                <option value="newest">Newest</option>
+                <option value="title">Title A-Z</option>
+                <option value="price-low">Lowest price</option>
+                <option value="price-high">Highest price</option>
+            </select>
+        </div>
+    </div>
+
+    <noscript>
+        <button type="submit" class="btn btn-primary mt-3">Search courses</button>
+    </noscript>
+</form>
+
+<div id="courseCatalogError" class="alert alert-danger d-none" role="alert"></div>
+<div id="courseCatalogStatus" class="visually-hidden" role="status" aria-live="polite"></div>
+<div id="courseCatalogResults" aria-live="polite">
+    <partial name="_CourseCatalogResults" model="Model" />
+</div>
+
+@section Scripts {
+    <script src="~/js/course-catalog.js" asp-append-version="true"></script>
+}

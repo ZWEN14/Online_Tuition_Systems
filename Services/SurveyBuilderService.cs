@@ -58,7 +58,7 @@ public class SurveyBuilderService(ApplicationDbContext db)
         model.Sections ??= [];
         if (model.Sections.Count is < 1 or > 50)
             Error("Use between 1 and 50 sections.");
-        if (model.CourseId.HasValue && !await db.Courses.AnyAsync(x => x.Id == model.CourseId))
+        if (model.CourseId.HasValue && !await db.Courses.AnyAsync(x => x.CourseId == model.CourseId))
             Error("Select a valid course.");
         var keys = model.Sections.Select(x => x.ClientKey).ToList();
         if (keys.Distinct().Count() != keys.Count || keys.Any(x => string.IsNullOrWhiteSpace(x) || x == "submit"))

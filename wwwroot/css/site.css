@@ -707,6 +707,66 @@ h1, h2, h3, h4, h5, h6 {
 .feature-rose .home-feature-icon { color: #a23c63; background: #ffe7f0; }
 .feature-rose .home-feature-arrow { color: #c64b78; }
 
+.home-dashboard-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(16rem, .8fr);
+  gap: 2rem;
+  align-items: center;
+  margin-bottom: 2.5rem;
+  padding: clamp(1.75rem, 4vw, 3.5rem);
+  border: 1px solid #dce7f7;
+  border-radius: 1.5rem;
+  background: linear-gradient(125deg, #fff 8%, #f1f6ff 65%, #e9f7f3);
+}
+
+.home-dashboard-intro h1 {
+  max-width: 17ch;
+  margin-bottom: .9rem;
+  color: var(--app-ink);
+  font-size: clamp(2.2rem, 4vw, 3.6rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -.045em;
+}
+
+.home-dashboard-intro p { max-width: 42rem; margin: 0; color: var(--app-muted); line-height: 1.65; }
+
+.home-dashboard-summary { display: grid; gap: .7rem; }
+.home-summary-item {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  padding: .9rem 1.15rem;
+  color: var(--app-ink);
+  text-decoration: none;
+  border: 1px solid #e3ebf7;
+  border-radius: .9rem;
+  background: rgba(255, 255, 255, .85);
+  transition: border-color .18s ease, transform .18s ease;
+}
+.home-summary-item:hover { color: var(--app-ink); border-color: #9cb7ed; transform: translateX(3px); }
+.home-summary-item strong { min-width: 2.5rem; color: var(--app-primary); font-size: 1.7rem; line-height: 1; }
+.home-summary-item span { color: var(--app-muted); font-size: .9rem; }
+
+.home-dashboard-section { margin: 0 0 2.5rem; }
+.home-dashboard-section-soft { padding: 2rem; border-radius: 1.25rem; background: #f2f5ff; }
+.home-dashboard-heading { display: flex; align-items: end; justify-content: space-between; gap: 1rem; margin-bottom: 1.3rem; }
+.home-dashboard-heading h2 { margin: 0; color: var(--app-ink); font-size: clamp(1.5rem, 2.4vw, 2rem); font-weight: 780; }
+.home-dashboard-heading p { max-width: 25rem; margin: 0; color: var(--app-muted); font-size: .92rem; }
+.home-dashboard-section .home-feature-card { min-height: 11rem; padding: 1.15rem; }
+.home-dashboard-section .home-feature-icon { margin-bottom: .9rem; }
+
+.home-latest-panel { height: 100%; padding: 1.2rem; border: 1px solid #e0e8f4; border-radius: 1.1rem; background: #fff; }
+.home-latest-panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: .75rem; padding-bottom: .5rem; }
+.home-latest-panel-head h3 { margin: 0; font-size: 1.06rem; font-weight: 760; }
+.home-latest-panel-head a { flex: none; font-size: .85rem; font-weight: 650; text-decoration: none; }
+.home-latest-item { display: block; padding: .8rem 0; color: var(--app-ink); text-decoration: none; border-top: 1px solid #edf1f7; }
+.home-latest-item:hover strong { color: var(--app-primary); text-decoration: underline; }
+.home-latest-item strong, .home-latest-item small { display: block; }
+.home-latest-item strong { font-size: .93rem; line-height: 1.4; }
+.home-latest-item small { margin-top: .25rem; color: var(--app-muted); font-size: .78rem; }
+.home-latest-empty { margin: .7rem 0 0; padding-top: .8rem; color: var(--app-muted); border-top: 1px solid #edf1f7; }
+
 /* Module pages */
 .module-header {
   position: relative;
@@ -891,6 +951,9 @@ h1, h2, h3, h4, h5, h6 {
   .home-hero { grid-template-columns: 1fr; }
   .home-hero-content { padding: 3.25rem; }
   .home-hero-visual { display: none; }
+  .home-dashboard-hero { grid-template-columns: 1fr; }
+  .home-dashboard-summary { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .home-summary-item { display: grid; gap: .35rem; }
 }
 
 @media (max-width: 575.98px) {
@@ -900,6 +963,12 @@ h1, h2, h3, h4, h5, h6 {
   .home-hero-content { padding: 2.25rem 1.5rem; }
   .home-hero h1 { font-size: 2.35rem; }
   .home-section { padding: 3rem 1rem; }
+  .home-dashboard-hero { padding: 1.5rem; }
+  .home-dashboard-summary { grid-template-columns: 1fr; }
+  .home-summary-item { display: flex; }
+  .home-dashboard-section-soft { padding: 1.25rem; }
+  .home-dashboard-heading { display: block; }
+  .home-dashboard-heading p { margin-top: .5rem; }
   .module-header { align-items: flex-start; flex-direction: column; padding: 1.5rem; }
   .module-detail-header { flex-direction: column; padding: 1.25rem; }
 }
@@ -1038,6 +1107,9 @@ h1, h2, h3, h4, h5, h6 {
 .notification-type-booking { color: #78551a; background: #fff1d8; }
 .notification-type-complaint { color: #a03149; background: #ffe9ed; }
 .notification-type-survey { color: #195b8f; background: #e5f3ff; }
+.notification-type-course { color: #325698; background: #e8edff; }
+.notification-type-enrollment { color: #0f735a; background: #dcf7ee; }
+.notification-type-billing { color: #794591; background: #f4eaff; }
 
 .notification-card-body,
 .notification-card-body span,
@@ -1263,4 +1335,111 @@ h1, h2, h3, h4, h5, h6 {
 
 @media (prefers-reduced-motion: reduce) {
   .notification-card { transition: none; }
+}
+
+.catalog-filter-control {
+  width: min(100%, 22rem);
+}
+
+.catalog-category-select {
+  width: min(100%, 22rem);
+}
+
+.catalog-sort-select {
+  width: min(100%, 14rem);
+}
+
+.course-analytics-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.course-analytics-track {
+  width: 100%;
+  height: .55rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--bs-tertiary-bg);
+}
+
+.course-analytics-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--bs-primary);
+}
+
+.course-analytics-fill-success {
+  background: var(--bs-success);
+}
+
+.course-analytics-fill-secondary {
+  background: var(--bs-info);
+}
+
+.course-performance-card {
+  padding: 1rem;
+  border: 1px solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius);
+  background: var(--bs-body-bg);
+}
+
+.course-status-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .75rem;
+}
+
+.course-status-stat {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  min-width: 0;
+  padding: .75rem;
+  border: 1px solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius);
+  background: var(--bs-tertiary-bg);
+}
+
+.course-status-stat strong {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.course-status-stat span {
+  overflow: hidden;
+  color: var(--bs-secondary-color);
+  font-size: .8rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.analytics-info-button {
+  display: inline-grid;
+  place-items: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  padding: 0;
+  color: var(--bs-secondary-color);
+  font-size: .72rem;
+  font-weight: 700;
+  line-height: 1;
+  border: 1px solid var(--bs-secondary-color);
+  border-radius: 50%;
+  background: transparent;
+}
+
+.course-rank {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--bs-secondary-color);
+  font-size: .72rem;
+  border-radius: 50%;
+  background: var(--bs-tertiary-bg);
+}
+
+.min-w-0 {
+  min-width: 0;
 }

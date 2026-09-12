@@ -2,11 +2,14 @@ global using AnywhereEdureach;
 global using AnywhereEdureach.Models;
 global using Online_Tuition_Systems.Data;
 
+using AnywhereEdureach.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using AnywhereEdureach.Services;
 using Online_Tuition_Systems.Services;
+using Online_Tuition_Systems.Services.Billing;
+using Online_Tuition_Systems.Services.Courses;
+using Online_Tuition_Systems.Services.Enrollments;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -67,6 +70,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<SurveyBuilderService>();
 builder.Services.AddScoped<SubmissionUploadService>();
+// Integrated teammate services.
 builder.Services.AddScoped<Helper>();
 builder.Services.AddScoped<AnywhereEdureach.NotificationService>();
 builder.Services.AddScoped<INotificationService, Online_Tuition_Systems.Services.NotificationService>();
@@ -81,6 +85,16 @@ builder.Services.Configure<RecaptchaOptions>(builder.Configuration.GetSection("G
 builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Smtp"));
 builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 
+// Course Management services.
+builder.Services.AddScoped<ICourseService, CourseService>();
+builder.Services.AddScoped<ICourseAdministrationService, CourseAdministrationService>();
+builder.Services.AddScoped<ILocalCourseImageStorage, LocalCourseImageStorage>();
+builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
+builder.Services.AddScoped<IBillingService, BillingService>();
+builder.Services.AddScoped<IStripeCheckoutService, StripeCheckoutService>();
+builder.Services.AddScoped<IPromotionService, PromotionService>();
+builder.Services.AddScoped<IPromotionPricingService, PromotionPricingService>();
+
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
@@ -94,8 +108,8 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// A fresh checkout does not include the local database file. Create it and
-// apply the schema before development requests can query the database.
+// Keep local development databases reproducible for the team by applying the
+// committed EF Core migration chain when the application starts.
 if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();

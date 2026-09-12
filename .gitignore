@@ -28,8 +28,12 @@ coverage.*
 *.db-wal
 *.sqlite
 *.sqlite3
+App_Data/*
+!App_Data/.gitkeep
 
 # Local-only configuration and secrets
+.env
+.env.*
 appsettings.Local.json
 appsettings.*.Local.json
 secrets.json
@@ -48,17 +52,20 @@ packages/
 Thumbs.db
 Desktop.ini
 
-# Logs and temporary files
+# Logs, temporary files, and local safety backups
 *.log
 *.tmp
 *.temp
 ~$*
-
-# Local safety backup created while consolidating a teammate's legacy EF context
 .merge-backup/
+
+# Temporary Laravel reference project
+Anywhere-Edureach/
+
+# Runtime user uploads
 wwwroot/uploads/
 
-# Duplicate client libraries from the teammate branch (LibMan restores the used copy)
+# Duplicate client libraries restored through LibMan
 wwwroot/js/jquery/
 wwwroot/js/jquery-ajax-unobtrusive/
 wwwroot/js/jquery-validate/

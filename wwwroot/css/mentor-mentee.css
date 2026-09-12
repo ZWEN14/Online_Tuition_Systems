@@ -10,6 +10,12 @@ body {
     place-items: center;
 }
 
+.welcome-overview { width: 100%; margin: 1.5rem 0 2rem; }
+.welcome-overview-card { height: 100%; padding: 1.25rem; border: 1px solid #dbe8f5; border-radius: 1rem; background: #fff; }
+.welcome-overview-card strong { display: block; margin-bottom: .45rem; color: #193b67; }
+.welcome-overview-card p { margin: 0; color: #64748b; font-size: .9rem; line-height: 1.55; }
+.welcome-overview-note { margin: 1rem 0 0; color: #64748b; font-size: .85rem; text-align: center; }
+
 .welcome-hero {
     display: grid;
     grid-template-columns: minmax(0, 1.1fr) minmax(18rem, .9fr);

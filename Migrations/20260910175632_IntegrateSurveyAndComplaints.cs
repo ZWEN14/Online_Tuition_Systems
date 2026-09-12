@@ -26,19 +26,6 @@ namespace Online_Tuition_Systems.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Courses",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Title = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Courses", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Complaints",
                 columns: table => new
                 {
@@ -78,32 +65,6 @@ namespace Online_Tuition_Systems.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Enrollments",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    UserId = table.Column<int>(type: "int", nullable: false),
-                    CourseId = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Enrollments", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Enrollments_Courses_CourseId",
-                        column: x => x.CourseId,
-                        principalTable: "Courses",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Enrollments_Users_UserId",
-                        column: x => x.UserId,
-                        principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Surveys",
                 columns: table => new
                 {
@@ -124,7 +85,7 @@ namespace Online_Tuition_Systems.Migrations
                         name: "FK_Surveys_Courses_CourseId",
                         column: x => x.CourseId,
                         principalTable: "Courses",
-                        principalColumn: "Id");
+                        principalColumn: "CourseId");
                     table.ForeignKey(
                         name: "FK_Surveys_Users_CreatorId",
                         column: x => x.CreatorId,
@@ -345,17 +306,6 @@ namespace Online_Tuition_Systems.Migrations
                 column: "UpdatedByUserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Enrollments_CourseId",
-                table: "Enrollments",
-                column: "CourseId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Enrollments_UserId_CourseId",
-                table: "Enrollments",
-                columns: new[] { "UserId", "CourseId" },
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "IX_QuestionOptions_QuestionId",
                 table: "QuestionOptions",
                 column: "QuestionId");
@@ -432,9 +382,6 @@ namespace Online_Tuition_Systems.Migrations
                 name: "ComplaintStatusHistories");
 
             migrationBuilder.DropTable(
-                name: "Enrollments");
-
-            migrationBuilder.DropTable(
                 name: "SurveyAnswers");
 
             migrationBuilder.DropTable(
@@ -461,8 +408,6 @@ namespace Online_Tuition_Systems.Migrations
             migrationBuilder.DropTable(
                 name: "Surveys");
 
-            migrationBuilder.DropTable(
-                name: "Courses");
         }
     }
 }

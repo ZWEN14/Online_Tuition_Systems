@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Online_Tuition_Systems.Authorization;
 using Online_Tuition_Systems.Data;
@@ -45,14 +46,21 @@ public class EventProposalsController : Controller
             return NotFound();
         }
 
+        ViewData["RelatedCourse"] = proposal.CourseId.HasValue
+            ? await _context.Courses.AsNoTracking()
+                .SingleOrDefaultAsync(item => item.CourseId == proposal.CourseId.Value
+                    && item.Status == CourseStatus.Published)
+            : null;
         return View(BuildDetailsViewModel(proposal));
     }
 
     [HttpGet]
     [Authorize(Roles = AppRoles.Tutor)]
-    public IActionResult Create()
+    public async Task<IActionResult> Create()
     {
-        return View(new EventProposalFormViewModel());
+        var model = new EventProposalFormViewModel();
+        await PopulateCourseOptionsAsync(model);
+        return View(model);
     }
 
     [HttpPost]
@@ -60,8 +68,10 @@ public class EventProposalsController : Controller
     [Authorize(Roles = AppRoles.Tutor)]
     public async Task<IActionResult> Create(EventProposalFormViewModel model)
     {
+        await ValidateCourseAsync(model);
         if (!ModelState.IsValid)
         {
+            await PopulateCourseOptionsAsync(model);
             return View(model);
         }
 
@@ -103,7 +113,9 @@ public class EventProposalsController : Controller
             return NotFound();
         }
 
-        return View(ToFormViewModel(proposal));
+        var model = ToFormViewModel(proposal);
+        await PopulateCourseOptionsAsync(model);
+        return View(model);
     }
 
     [HttpPost]
@@ -116,8 +128,10 @@ public class EventProposalsController : Controller
             return NotFound();
         }
 
+        await ValidateCourseAsync(model);
         if (!ModelState.IsValid)
         {
+            await PopulateCourseOptionsAsync(model);
             return View(model);
         }
 
@@ -218,6 +232,13 @@ public class EventProposalsController : Controller
         if (completenessError is not null)
         {
             TempData["ErrorMessage"] = completenessError;
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        if (pendingProposal.CourseId.HasValue && !await IsOwnedPublishedCourseAsync(
+                pendingProposal.CourseId.Value, pendingProposal.ProposedByUserId))
+        {
+            TempData["ErrorMessage"] = "The related course is no longer a published course owned by the proposing Tutor.";
             return RedirectToAction(nameof(Details), new { id });
         }
 
@@ -490,6 +511,52 @@ public class EventProposalsController : Controller
     private static string? CleanOptionalText(string? value)
     {
         return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    }
+
+    private async Task ValidateCourseAsync(EventProposalFormViewModel model)
+    {
+        if (model.CourseId.HasValue && !await IsOwnedPublishedCourseAsync(
+                model.CourseId.Value, User.FindFirstValue(ClaimTypes.NameIdentifier)))
+        {
+            ModelState.AddModelError(nameof(model.CourseId), "Select one of your published courses.");
+        }
+    }
+
+    private Task<bool> IsOwnedPublishedCourseAsync(int courseId, string? tutorReference)
+    {
+        if (!int.TryParse(tutorReference, out var tutorId))
+        {
+            return Task.FromResult(false);
+        }
+
+        return _context.Courses.AnyAsync(item =>
+            item.CourseId == courseId
+            && item.TutorId == tutorId
+            && item.Status == CourseStatus.Published);
+    }
+
+    private async Task PopulateCourseOptionsAsync(EventProposalFormViewModel model)
+    {
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var tutorId))
+        {
+            return;
+        }
+
+        var courses = await _context.Courses.AsNoTracking()
+            .Where(item => item.TutorId == tutorId
+                && (item.Status == CourseStatus.Published
+                    || item.CourseId == model.CourseId))
+            .OrderBy(item => item.Title)
+            .Select(item => new { item.CourseId, item.Code, item.Title, item.Status })
+            .ToListAsync();
+
+        model.CourseOptions = courses.Select(item => new SelectListItem
+        {
+            Value = item.CourseId.ToString(),
+            Text = item.Status == CourseStatus.Published
+                ? $"{item.Code} — {item.Title}"
+                : $"{item.Code} — {item.Title} ({item.Status})"
+        }).ToList();
     }
 
     private static string? GetProposalCompletenessError(EventProposal proposal)

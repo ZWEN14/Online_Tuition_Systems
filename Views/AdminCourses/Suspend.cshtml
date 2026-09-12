@@ -1,0 +1,34 @@
+@model Online_Tuition_Systems.ViewModels.Courses.CourseSuspensionViewModel
+@{
+    ViewData["Title"] = "Suspend Course";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <h1 class="h3 mb-1">Suspend Course</h1>
+        <p class="text-muted">@Model.Code · @Model.Title</p>
+        <div class="alert alert-warning">
+            A suspended course is removed from the catalogue and course access will be blocked until restoration.
+        </div>
+
+        <form asp-action="Suspend" method="post">
+            <input asp-for="CourseId" type="hidden" />
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="mb-3">
+                <label asp-for="Reason" class="form-label"></label>
+                <textarea asp-for="Reason" class="form-control" rows="5"></textarea>
+                <span asp-validation-for="Reason" class="text-danger"></span>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-danger">Confirm suspension</button>
+                <a asp-action="Manage" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

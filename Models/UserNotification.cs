@@ -25,7 +25,15 @@ public enum UserNotificationType
     ComplaintSubmitted,
     ComplaintAssigned,
     SurveyPublished,
-    SurveyResponseSubmitted
+    SurveyResponseSubmitted,
+    CourseSubmitted,
+    CoursePublished,
+    CourseRejected,
+    CourseArchived,
+    CourseSuspended,
+    CourseRestored,
+    EnrollmentCreated,
+    EnrollmentActivated
 }
 
 [Index(nameof(UserId), nameof(ReadAt), nameof(CreatedAt))]

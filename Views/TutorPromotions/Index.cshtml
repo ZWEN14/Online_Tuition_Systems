@@ -1,0 +1,113 @@
+@model IReadOnlyList<Online_Tuition_Systems.ViewModels.Billing.PromotionListItemViewModel>
+@{
+    ViewData["Title"] = "Promotions";
+    var nowMyt = DateTime.UtcNow.AddHours(8);
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">Promotions</h1>
+        <p class="text-muted mb-0">Manage discounts for your paid published courses.</p>
+    </div>
+    <a asp-action="Create" class="btn btn-primary">Create promotion</a>
+</div>
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+@if (Model.Count == 0)
+{
+    <div class="alert alert-info">No promotions have been created.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Course</th>
+                    <th>Discount</th>
+                    <th>Price after discount</th>
+                    <th>Validity (MYT)</th>
+                    <th>Redemptions</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var promotion in Model)
+                {
+                    var withinDates = promotion.StartsAtMyt <= nowMyt
+                        && promotion.EndsAtMyt >= nowMyt;
+                    var withinLimit = !promotion.RedemptionLimit.HasValue
+                        || promotion.RedemptionCount < promotion.RedemptionLimit.Value;
+
+                    <tr>
+                        <td class="fw-semibold">@promotion.Code</td>
+                        <td>@promotion.CourseCode &middot; @promotion.CourseTitle</td>
+                        <td>
+                            @promotion.DiscountPercentage.ToString("0.##")%
+                            <div class="small text-success">
+                                Save RM @promotion.DiscountAmount.ToString("N2")
+                            </div>
+                        </td>
+                        <td>
+                            <span class="text-muted text-decoration-line-through">
+                                RM @promotion.OriginalPrice.ToString("N2")
+                            </span><br />
+                            <strong>RM @promotion.FinalPrice.ToString("N2")</strong>
+                        </td>
+                        <td>
+                            @promotion.StartsAtMyt.ToString("dd MMM yyyy HH:mm")<br />
+                            <span class="text-muted">
+                                to @promotion.EndsAtMyt.ToString("dd MMM yyyy HH:mm")
+                            </span>
+                        </td>
+                        <td>
+                            @promotion.RedemptionCount /
+                            @(promotion.RedemptionLimit?.ToString() ?? "Unlimited")
+                        </td>
+                        <td>
+                            @if (promotion.IsActive && withinDates && withinLimit)
+                            {
+                                <span class="badge text-bg-success">Available</span>
+                            }
+                            else if (!promotion.IsActive)
+                            {
+                                <span class="badge text-bg-secondary">Disabled</span>
+                            }
+                            else if (!withinLimit)
+                            {
+                                <span class="badge text-bg-warning">Limit reached</span>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-light">Scheduled/expired</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <div class="d-flex justify-content-end gap-1">
+                                <a asp-action="Edit" asp-route-id="@promotion.PromotionId"
+                                   class="btn btn-sm btn-outline-secondary">Edit</a>
+                                <form asp-action="SetActive" asp-route-id="@promotion.PromotionId"
+                                      asp-route-isActive="@(!promotion.IsActive)" method="post">
+                                    <button class="btn btn-sm @(promotion.IsActive ? "btn-outline-danger" : "btn-outline-success")"
+                                            type="submit">
+                                        @(promotion.IsActive ? "Disable" : "Enable")
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

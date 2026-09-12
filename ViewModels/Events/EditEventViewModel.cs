@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Online_Tuition_Systems.Models;
 
 namespace Online_Tuition_Systems.ViewModels.Events;
@@ -7,8 +8,11 @@ public class EditEventViewModel : IValidatableObject
 {
     public int Id { get; set; }
 
-    [Display(Name = "Course ID")]
+    [Display(Name = "Related course")]
+    [Range(1, int.MaxValue, ErrorMessage = "Select a valid course.")]
     public int? CourseId { get; set; }
+
+    public List<SelectListItem> CourseOptions { get; set; } = [];
 
     [Required]
     [StringLength(150)]

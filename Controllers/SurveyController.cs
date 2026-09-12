@@ -17,7 +17,7 @@ public class SurveyController(ApplicationDbContext db, ICurrentUserService curre
         var now = DateTime.UtcNow;
         var surveys = await db.Surveys.Include(x => x.Course).Include(x => x.Questions)
             .Where(x => x.IsActive && (x.ExpiresAt == null || x.ExpiresAt > now)).OrderByDescending(x => x.CreatedAt).ToListAsync();
-        var courseIds = await db.Enrollments.Where(x => x.UserId == currentUser.UserId).Select(x => x.CourseId).ToListAsync();
+        var courseIds = await db.Enrollments.Where(x => x.StudentId == currentUser.UserId && x.Status == EnrollmentStatus.Active).Select(x => x.CourseId).ToListAsync();
         ViewBag.EligibleIds = surveys.Where(x => x.CourseId == null || courseIds.Contains(x.CourseId.Value)).Select(x => x.Id).ToHashSet();
         ViewBag.AnsweredIds = await db.SurveyResponses.Where(x => x.UserId == currentUser.UserId).Select(x => x.SurveyId).ToListAsync();
         return View(surveys);
@@ -205,7 +205,7 @@ public class SurveyController(ApplicationDbContext db, ICurrentUserService curre
     private Task<Survey?> LoadAvailable(int id) => db.Surveys.Include(x => x.Course)
         .Include(x => x.Sections.OrderBy(s => s.DisplayOrder)).ThenInclude(s => s.Questions.OrderBy(q => q.DisplayOrder)).ThenInclude(q => q.Options.OrderBy(o => o.DisplayOrder)).ThenInclude(o => o.BranchRule)
         .FirstOrDefaultAsync(x => x.Id == id && x.IsActive && (x.ExpiresAt == null || x.ExpiresAt > DateTime.UtcNow));
-    private Task<bool> CanAccess(Survey survey) => survey.CourseId is null ? Task.FromResult(true) : db.Enrollments.AnyAsync(x => x.UserId == currentUser.UserId && x.CourseId == survey.CourseId);
+    private Task<bool> CanAccess(Survey survey) => survey.CourseId is null ? Task.FromResult(true) : db.Enrollments.AnyAsync(x => x.StudentId == currentUser.UserId && x.CourseId == survey.CourseId && x.Status == EnrollmentStatus.Active);
     private static string? NormalizeAnswer(Question question, PostedAnswer? answer)
     {
         if (question.Type != SurveyQuestionType.Checkbox)

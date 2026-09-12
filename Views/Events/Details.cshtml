@@ -127,6 +127,22 @@
             <dt class="col-sm-3">Event organizer</dt>
             <dd class="col-sm-9">@(tuitionEvent.OrganizerUserId ?? "Not assigned")</dd>
 
+            @if (tuitionEvent.CourseId.HasValue)
+            {
+                <dt class="col-sm-3">Related course</dt>
+                <dd class="col-sm-9">
+                    @if (ViewData["RelatedCourse"] is Course course)
+                    {
+                        <a asp-controller="Courses" asp-action="Details" asp-route-slug="@course.Slug"
+                           class="btn btn-sm btn-outline-primary">View @course.Title</a>
+                    }
+                    else
+                    {
+                        <span class="text-muted">Course is no longer published.</span>
+                    }
+                </dd>
+            }
+
             <dt class="col-sm-3">Location</dt>
             <dd class="col-sm-9">@(tuitionEvent.Location ?? "Not applicable")</dd>
 

@@ -1,0 +1,32 @@
+@model Online_Tuition_Systems.ViewModels.Enrollments.CourseAccessViewModel
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="text-muted mb-2">@Model.Code · Tutor: @Model.TutorName</div>
+        <h1>@Model.Title</h1>
+
+        @if (Model.CourseStatus == CourseStatus.Archived)
+        {
+            <div class="alert alert-secondary">
+                This course is archived, but your existing enrollment remains accessible.
+            </div>
+        }
+
+        <section class="card card-body mt-4">
+            <h2 class="h4">Course overview</h2>
+            <div style="white-space: pre-line">@Model.Description</div>
+        </section>
+    </div>
+    @if (!string.IsNullOrWhiteSpace(Model.ThumbnailPath))
+    {
+        <aside class="col-lg-4">
+            <img src="@Model.ThumbnailPath" class="img-fluid rounded shadow-sm"
+                 alt="Thumbnail for @Model.Title" />
+        </aside>
+    }
+</div>
+
+<a asp-action="Index" class="btn btn-link px-0 mt-4">Back to my courses</a>

@@ -1,0 +1,27 @@
+@model Online_Tuition_Systems.ViewModels.Courses.CourseCatalogViewModel
+
+<div data-course-catalog-results data-total-courses="@Model.TotalCourses">
+    <partial name="_CourseCards" model="Model.Courses" />
+
+    @if (Model.TotalPages > 1)
+    {
+        <nav class="mt-4" aria-label="Course pages">
+            <ul class="pagination justify-content-center mb-0">
+                @for (var pageNumber = 1; pageNumber <= Model.TotalPages; pageNumber++)
+                {
+                    <li class="page-item @(pageNumber == Model.Page ? "active" : null)">
+                        <a class="page-link"
+                           asp-action="Index"
+                           asp-route-page="@pageNumber"
+                           asp-route-search="@Model.Search"
+                           asp-route-categoryId="@Model.CategoryId"
+                           asp-route-sort="@(Model.Sort == "newest" ? null : Model.Sort)"
+                           aria-current="@(pageNumber == Model.Page ? "page" : null)">
+                            @pageNumber
+                        </a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
+</div>
