@@ -21,10 +21,39 @@ var databaseFile = Path.Combine(databaseDirectory, "OnlineTuitionDb.mdf");
 
 var baseConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("The DefaultConnection connection string was not found.");
-var connectionString = new SqlConnectionStringBuilder(baseConnectionString)
+var databaseConnectionBuilder = new SqlConnectionStringBuilder(baseConnectionString);
+var masterConnectionBuilder = new SqlConnectionStringBuilder(baseConnectionString)
 {
-    AttachDBFilename = databaseFile
-}.ConnectionString;
+    InitialCatalog = "master"
+};
+masterConnectionBuilder.Remove("AttachDbFilename");
+
+string? attachedDatabaseName = null;
+using (var connection = new SqlConnection(masterConnectionBuilder.ConnectionString))
+{
+    connection.Open();
+
+    using var command = connection.CreateCommand();
+    command.CommandText = """
+        SELECT TOP (1) DB_NAME(database_id)
+        FROM sys.master_files
+        WHERE physical_name = @databaseFile
+        """;
+    command.Parameters.AddWithValue("@databaseFile", databaseFile);
+    attachedDatabaseName = command.ExecuteScalar() as string;
+}
+
+if (attachedDatabaseName is not null)
+{
+    databaseConnectionBuilder.Remove("AttachDbFilename");
+    databaseConnectionBuilder.InitialCatalog = attachedDatabaseName;
+}
+else
+{
+    databaseConnectionBuilder.AttachDBFilename = databaseFile;
+}
+
+var connectionString = databaseConnectionBuilder.ConnectionString;
 
 // Every module uses the same EF Core context and file-based database.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -40,7 +69,10 @@ builder.Services.AddScoped<AnywhereEdureach.NotificationService>();
 builder.Services.AddScoped<INotificationService, Online_Tuition_Systems.Services.NotificationService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
-builder.Services.AddHttpClient<GoogleRecaptchaService>();
+builder.Services.AddHttpClient<GoogleRecaptchaService>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(5);
+});
 builder.Services.Configure<RecaptchaOptions>(builder.Configuration.GetSection("GoogleRecaptcha"));
 builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Smtp"));
 builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
