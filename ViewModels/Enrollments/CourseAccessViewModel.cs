@@ -1,8 +1,8 @@
 using Online_Tuition_Systems.Models;
 
-namespace Online_Tuition_Systems.ViewModels.Courses;
+namespace Online_Tuition_Systems.ViewModels.Enrollments;
 
-public sealed class CourseDetailsViewModel
+public sealed class CourseAccessViewModel
 {
     public int CourseId { get; init; }
 
@@ -10,17 +10,11 @@ public sealed class CourseDetailsViewModel
 
     public string Title { get; init; } = string.Empty;
 
-    public string CategoryName { get; init; } = string.Empty;
-
     public string TutorName { get; init; } = string.Empty;
 
     public string Description { get; init; } = string.Empty;
 
     public string? ThumbnailPath { get; init; }
 
-    public decimal Price { get; init; }
-
-    public DateTime? PublishedAtUtc { get; init; }
-
-    public EnrollmentStatus? CurrentStudentEnrollmentStatus { get; set; }
+    public CourseStatus CourseStatus { get; init; }
 }

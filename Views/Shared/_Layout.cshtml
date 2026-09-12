@@ -81,6 +81,8 @@
                 }
                 @if (User.IsInRole("Student"))
                 {
+                    <a class="sidebar-link" asp-controller="StudentCourses" asp-action="Index"><span>▤</span> My courses</a>
+                    <a class="sidebar-link" asp-controller="Billing" asp-action="Index"><span>RM</span> Billing history</a>
                     <a class="sidebar-link" asp-controller="Subject" asp-action="Index"><span>＋</span> Find a subject</a>
                     <a class="sidebar-link" asp-controller="Tutor" asp-action="Index"><span>⌕</span> Find a tutor</a>
                     <a class="sidebar-link" asp-controller="Booking" asp-action="Index"><span>▣</span> My learning</a>
@@ -88,6 +90,8 @@
                 @if (User.IsInRole("Tutor"))
                 {
                     <a class="sidebar-link" asp-controller="TutorCourses" asp-action="Index"><span>▤</span> My courses</a>
+                    <a class="sidebar-link" asp-controller="TutorPromotions" asp-action="Index"><span>%</span> Promotions</a>
+                    <a class="sidebar-link" asp-controller="TutorBilling" asp-action="Index"><span>RM</span> Course earnings</a>
                     <a class="sidebar-link" asp-controller="Timeslot" asp-action="Index"><span>◷</span> Availability</a>
                     <a class="sidebar-link" asp-controller="Booking" asp-action="Index"><span>▣</span> Student requests</a>
                 }
@@ -95,6 +99,7 @@
                 {
                     <a class="sidebar-link" asp-controller="AdminCourseCategories" asp-action="Index"><span>▦</span> Course categories</a>
                     <a class="sidebar-link" asp-controller="AdminCourses" asp-action="Index"><span>✓</span> Course reviews</a>
+                    <a class="sidebar-link" asp-controller="AdminBilling" asp-action="Index"><span>RM</span> Billing overview</a>
                     <a class="sidebar-link" asp-controller="Admin" asp-action="Index"><span>◎</span> User management</a>
                 }
                 <a class="sidebar-link" asp-controller="Notification" asp-action="Index">

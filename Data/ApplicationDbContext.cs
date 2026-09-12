@@ -32,6 +32,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Enrollment> Enrollments => Set<Enrollment>();
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
+    public DbSet<Promotion> Promotions => Set<Promotion>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -199,6 +200,12 @@ public class ApplicationDbContext : DbContext
             .HasOne(invoice => invoice.Payment)
             .WithOne(payment => payment.Invoice)
             .HasForeignKey<Invoice>(invoice => invoice.PaymentId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Promotion>()
+            .HasOne(promotion => promotion.Course)
+            .WithMany(course => course.Promotions)
+            .HasForeignKey(promotion => promotion.CourseId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

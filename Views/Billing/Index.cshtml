@@ -1,0 +1,55 @@
+@model Online_Tuition_Systems.ViewModels.Billing.BillingHistoryViewModel
+@{
+    ViewData["Title"] = "Billing History";
+}
+
+<div class="mb-4">
+    <h1 class="mb-1">Billing History</h1>
+    <p class="text-muted mb-0">Review your course payments and invoices.</p>
+</div>
+
+@if (Model.Payments.Count == 0)
+{
+    <div class="alert alert-info">You do not have any course payments yet.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Reference</th>
+                    <th>Course</th>
+                    <th>Provider</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th class="text-end">Invoice</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var payment in Model.Payments)
+                {
+                    <tr>
+                        <td>@payment.CreatedAtUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm")</td>
+                        <td>@payment.Reference</td>
+                        <td>
+                            <div>@payment.CourseTitle</div>
+                            <small class="text-muted">@payment.CourseCode</small>
+                        </td>
+                        <td>@payment.Provider · @payment.Method</td>
+                        <td>RM @payment.FinalAmount.ToString("N2")</td>
+                        <td><span class="badge text-bg-success">@payment.Status</span></td>
+                        <td class="text-end">
+                            @if (payment.InvoiceId.HasValue)
+                            {
+                                <a asp-action="Invoice" asp-route-id="@payment.InvoiceId.Value"
+                                   class="btn btn-sm btn-outline-primary">View</a>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

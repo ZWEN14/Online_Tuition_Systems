@@ -1,0 +1,101 @@
+@model Online_Tuition_Systems.ViewModels.Billing.CheckoutViewModel
+@{
+    ViewData["Title"] = "Checkout";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        @if (TempData["ErrorMessage"] is string errorMessage)
+        {
+            <div class="alert alert-danger">@errorMessage</div>
+        }
+        @if (TempData["InfoMessage"] is string infoMessage)
+        {
+            <div class="alert alert-info">@infoMessage</div>
+        }
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <div class="text-muted mb-2">@Model.CourseCode</div>
+                <h1 class="h3">Confirm course payment</h1>
+                <p class="mb-1"><strong>@Model.CourseTitle</strong></p>
+                <p class="text-muted">Tutor: @Model.TutorName</p>
+
+                <hr />
+                <form asp-action="ApplyPromotion" method="post" class="mb-4">
+                    <input type="hidden" name="enrollmentId" value="@Model.EnrollmentId" />
+                    <label for="promotionCode" class="form-label">Promotion code</label>
+                    <div class="input-group">
+                        <input id="promotionCode" name="promotionCode"
+                               value="@Model.PromotionCodeInput" maxlength="50"
+                               class="form-control text-uppercase"
+                               placeholder="Enter a code" />
+                        <button type="submit" class="btn btn-outline-primary">Apply</button>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(Model.PromotionError))
+                    {
+                        <div class="text-danger small mt-1">
+                            @Model.PromotionError Clear the field and apply again to pay without a promotion.
+                        </div>
+                    }
+                    else if (!string.IsNullOrWhiteSpace(Model.AppliedPromotionCode))
+                    {
+                        <div class="text-success small mt-1">
+                            Promotion <strong>@Model.AppliedPromotionCode</strong> applied.
+                        </div>
+                    }
+                </form>
+
+                <div class="d-flex justify-content-between">
+                    <span>Original price</span>
+                    <span>RM @Model.OriginalAmount.ToString("N2")</span>
+                </div>
+                @if (Model.DiscountAmount > 0)
+                {
+                    <div class="d-flex justify-content-between text-success mt-1">
+                        <span>Promotion discount</span>
+                        <span>- RM @Model.DiscountAmount.ToString("N2")</span>
+                    </div>
+                }
+                <hr />
+                <div class="d-flex justify-content-between h5 mb-0">
+                    <span>Total</span>
+                    <span>RM @Model.FinalAmount.ToString("N2")</span>
+                </div>
+
+                @if (Model.StripeAvailable)
+                {
+                    <div class="alert alert-info mt-4">
+                        Stripe test mode is enabled. Use Stripe's test payment details only.
+                    </div>
+                    <form asp-action="StartStripe" method="post">
+                        <input type="hidden" name="enrollmentId" value="@Model.EnrollmentId" />
+                        <input type="hidden" name="promotionCode" value="@Model.PromotionCodeInput" />
+                        <button type="submit" class="btn btn-primary w-100">
+                            Pay securely with Stripe (test)
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <div class="alert alert-warning mt-4">
+                        Stripe test mode is not configured on this machine.
+                    </div>
+                }
+
+                <details class="mt-3">
+                    <summary class="text-muted">Classroom fallback</summary>
+                    <p class="small text-muted mt-2">
+                        This local simulation collects no card or bank details.
+                    </p>
+                    <form asp-action="Complete" method="post">
+                        <input type="hidden" name="enrollmentId" value="@Model.EnrollmentId" />
+                        <input type="hidden" name="promotionCode" value="@Model.PromotionCodeInput" />
+                        <button type="submit" class="btn btn-outline-secondary w-100">
+                            Simulate successful payment
+                        </button>
+                    </form>
+                </details>
+            </div>
+        </div>
+    </div>
+</div>

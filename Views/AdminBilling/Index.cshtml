@@ -1,0 +1,198 @@
+@model Online_Tuition_Systems.ViewModels.Billing.AdminBillingReportViewModel
+@{
+    ViewData["Title"] = "Billing Overview";
+}
+
+<div class="mb-4">
+    <h1 class="h3 mb-1">Billing Overview</h1>
+    <p class="text-muted mb-0">System-wide course payments and commission totals.</p>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl">
+        <div class="card h-100"><div class="card-body">
+            <div class="text-muted small">Pending enrollments</div>
+            <div class="h3 mb-0">@Model.PendingPayments</div>
+        </div></div>
+    </div>
+    <div class="col-sm-6 col-xl">
+        <div class="card h-100"><div class="card-body">
+            <div class="text-muted small">Successful payments</div>
+            <div class="h3 mb-0">@Model.SuccessfulPayments</div>
+        </div></div>
+    </div>
+    <div class="col-sm-6 col-xl">
+        <div class="card h-100"><div class="card-body">
+            <div class="text-muted small">Gross sales</div>
+            <div class="h3 mb-0">RM @Model.GrossSales.ToString("N2")</div>
+        </div></div>
+    </div>
+    <div class="col-sm-6 col-xl">
+        <div class="card h-100 border-primary"><div class="card-body">
+            <div class="text-muted small">Platform revenue</div>
+            <div class="h3 text-primary mb-0">RM @Model.PlatformRevenue.ToString("N2")</div>
+        </div></div>
+    </div>
+    <div class="col-sm-6 col-xl">
+        <div class="card h-100"><div class="card-body">
+            <div class="text-muted small">Tutor net total</div>
+            <div class="h3 mb-0">RM @Model.TutorNetTotal.ToString("N2")</div>
+        </div></div>
+    </div>
+</div>
+
+<section class="mb-4" aria-labelledby="systemCourseAnalyticsHeading">
+    <div class="d-flex flex-column flex-md-row justify-content-between gap-2 mb-3">
+        <div>
+            <h2 id="systemCourseAnalyticsHeading" class="h4 mb-1">Course analytics</h2>
+            <p class="text-muted mb-0">System-wide Course activity alongside Billing performance.</p>
+        </div>
+        <div class="d-flex gap-3">
+            <div><strong class="d-block h4 mb-0">@Model.TotalCourses</strong><span class="small text-muted">Courses</span></div>
+            <div><strong class="d-block h4 mb-0">@Model.TotalEnrollments</strong><span class="small text-muted">Enrollments</span></div>
+        </div>
+    </div>
+
+    @if (Model.TotalCourses == 0)
+    {
+        <div class="alert alert-info">No Course records are available for analytics.</div>
+    }
+    else
+    {
+        <div class="row g-3">
+            <div class="col-lg-6">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h3 class="h6">Courses by status</h3>
+                        <div class="course-analytics-list mt-3">
+                            @foreach (var status in Model.CourseStatuses)
+                            {
+                                <div>
+                                    <div class="d-flex justify-content-between small mb-1">
+                                        <span>@status.Label</span><strong>@status.Count</strong>
+                                    </div>
+                                    <div class="course-analytics-track" role="progressbar"
+                                         aria-label="@status.Label courses"
+                                         aria-valuenow="@status.Count" aria-valuemin="0"
+                                         aria-valuemax="@Model.TotalCourses">
+                                        <div class="course-analytics-fill"
+                                             style="width: @status.Percentage%"></div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h3 class="h6">Courses by category</h3>
+                        <div class="course-analytics-list mt-3">
+                            @foreach (var category in Model.CourseCategories)
+                            {
+                                <div>
+                                    <div class="d-flex justify-content-between small mb-1">
+                                        <span>@category.CategoryName</span><strong>@category.CourseCount</strong>
+                                    </div>
+                                    <div class="course-analytics-track" role="progressbar"
+                                         aria-label="Courses in @category.CategoryName"
+                                         aria-valuenow="@category.Percentage" aria-valuemin="0"
+                                         aria-valuemax="100">
+                                        <div class="course-analytics-fill course-analytics-fill-secondary"
+                                             style="width: @category.Percentage%"></div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (Model.LeadingCourses.Count > 0)
+            {
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h3 class="h6">Leading courses</h3>
+                            <p class="small text-muted">Up to five courses ranked by successful revenue and active enrollment.</p>
+                            <div class="row g-3">
+                                @foreach (var course in Model.LeadingCourses)
+                                {
+                                    <div class="col-md-6 col-xl">
+                                        <div class="course-performance-card h-100">
+                                            <div class="fw-semibold text-truncate">@course.Title</div>
+                                            <div class="small text-muted text-truncate">@course.Code &middot; @course.TutorName</div>
+                                            <div class="small mt-3 d-flex justify-content-between">
+                                                <span>Active</span><strong>@course.ActiveEnrollments</strong>
+                                            </div>
+                                            <div class="course-analytics-track mt-1">
+                                                <div class="course-analytics-fill"
+                                                     style="width: @course.EnrollmentBarPercentage%"></div>
+                                            </div>
+                                            <div class="small mt-3 d-flex justify-content-between">
+                                                <span>Gross</span><strong>RM @course.GrossSales.ToString("N2")</strong>
+                                            </div>
+                                            <div class="course-analytics-track mt-1">
+                                                <div class="course-analytics-fill course-analytics-fill-success"
+                                                     style="width: @course.RevenueBarPercentage%"></div>
+                                            </div>
+                                            <div class="small text-muted mt-2">@course.SuccessfulSales successful sale(s)</div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</section>
+
+@if (Model.Payments.Count == 0)
+{
+    <div class="alert alert-info">No course payment transactions have been recorded.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Reference</th>
+                    <th>Course</th>
+                    <th>Student</th>
+                    <th>Tutor</th>
+                    <th>Provider</th>
+                    <th>Status</th>
+                    <th>Paid</th>
+                    <th>Platform</th>
+                    <th>Tutor net</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var payment in Model.Payments)
+                {
+                    <tr>
+                        <td>@payment.CreatedAtUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm")</td>
+                        <td>@payment.Reference</td>
+                        <td>
+                            <div>@payment.CourseTitle</div>
+                            <small class="text-muted">@payment.CourseCode</small>
+                        </td>
+                        <td>@payment.StudentName</td>
+                        <td>@payment.TutorName</td>
+                        <td>@payment.Provider</td>
+                        <td><span class="badge text-bg-secondary">@payment.Status</span></td>
+                        <td>RM @payment.FinalAmount.ToString("N2")</td>
+                        <td>RM @payment.PlatformFee.ToString("N2")</td>
+                        <td>RM @payment.TutorNetAmount.ToString("N2")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

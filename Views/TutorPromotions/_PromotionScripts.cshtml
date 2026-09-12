@@ -1,0 +1,110 @@
+<script>
+    (() => {
+        const codeInput = document.getElementById("Code");
+        const generateButton = document.getElementById("generatePromotionCode");
+        const courseSelect = document.getElementById("CourseId");
+        const discountInput = document.getElementById("DiscountPercentage");
+        const presetButtons = Array.from(document.querySelectorAll(".discount-preset"));
+        const customButton = document.getElementById("customDiscount");
+        const customContainer = document.getElementById("customDiscountContainer");
+        const originalOutput = document.getElementById("previewOriginal");
+        const discountOutput = document.getElementById("previewDiscount");
+        const finalOutput = document.getElementById("previewFinal");
+        const money = new Intl.NumberFormat("en-MY", {
+            style: "currency",
+            currency: "MYR"
+        });
+
+        function generateCode() {
+            const characters = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+            const randomValues = new Uint32Array(6);
+            window.crypto.getRandomValues(randomValues);
+            const suffix = Array.from(
+                randomValues,
+                value => characters[value % characters.length]
+            ).join("");
+
+            codeInput.value = `PROMO-${suffix}`;
+            codeInput.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+
+        function updatePreview() {
+            const selectedOption = courseSelect.options[courseSelect.selectedIndex];
+            const originalPrice = Number.parseFloat(selectedOption?.dataset.price ?? "");
+            const percentage = Number.parseFloat(discountInput.value);
+
+            if (!Number.isFinite(originalPrice)) {
+                originalOutput.textContent = "Select a course";
+                discountOutput.textContent = "Not available";
+                finalOutput.textContent = "Not available";
+                return;
+            }
+
+            const validPercentage = Number.isFinite(percentage)
+                ? Math.min(Math.max(percentage, 5), 90)
+                : 0;
+            const discountAmount = originalPrice * validPercentage / 100;
+            const finalPrice = originalPrice - discountAmount;
+
+            originalOutput.textContent = money.format(originalPrice);
+            discountOutput.textContent =
+                `${money.format(discountAmount)} (${validPercentage}% off)`;
+            finalOutput.textContent = money.format(finalPrice);
+        }
+
+        function selectPreset(button) {
+            presetButtons.forEach(candidate => {
+                candidate.classList.toggle("btn-primary", candidate === button);
+                candidate.classList.toggle("btn-outline-primary", candidate !== button);
+                candidate.setAttribute("aria-pressed", candidate === button ? "true" : "false");
+            });
+            customButton.classList.remove("btn-secondary");
+            customButton.classList.add("btn-outline-secondary");
+            customButton.setAttribute("aria-pressed", "false");
+            customContainer.classList.add("d-none");
+            customContainer.classList.remove("d-inline-flex");
+            discountInput.readOnly = true;
+            discountInput.value = button.dataset.percentage;
+            discountInput.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+
+        function selectCustom(focusInput = true) {
+            presetButtons.forEach(candidate => {
+                candidate.classList.remove("btn-primary");
+                candidate.classList.add("btn-outline-primary");
+                candidate.setAttribute("aria-pressed", "false");
+            });
+            customButton.classList.remove("btn-outline-secondary");
+            customButton.classList.add("btn-secondary");
+            customButton.setAttribute("aria-pressed", "true");
+            customContainer.classList.remove("d-none");
+            customContainer.classList.add("d-inline-flex");
+            discountInput.readOnly = false;
+
+            if (focusInput) {
+                discountInput.focus();
+                discountInput.select();
+            }
+        }
+
+        generateButton?.addEventListener("click", generateCode);
+        courseSelect?.addEventListener("change", updatePreview);
+        discountInput?.addEventListener("input", updatePreview);
+
+        presetButtons.forEach(button => {
+            button.addEventListener("click", () => selectPreset(button));
+        });
+        customButton?.addEventListener("click", () => selectCustom());
+
+        const selectedPreset = presetButtons.find(
+            button => Number(button.dataset.percentage) === Number(discountInput.value)
+        );
+        if (selectedPreset) {
+            selectPreset(selectedPreset);
+        } else {
+            selectCustom(false);
+        }
+
+        updatePreview();
+    })();
+</script>

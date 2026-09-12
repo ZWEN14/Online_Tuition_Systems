@@ -750,8 +750,301 @@ Course/Billing scope and the other team module areas are now recorded. Shared Us
 - Multiple demo users may share the same email domain and demo password, but each complete email address must remain unique because the database enforces a unique email index.
 - Course/Billing now distinguishes Tutor management, Admin review, and Student/public browsing through the teammate authentication module; browser verification remains pending.
 
+### 2026-09-10 — Authentication functionality accepted; UI refinement deferred
+
+- The user confirmed the integrated authentication functionality works, although the login experience is not yet sufficiently user-friendly.
+- Preserve the teammate-owned Account behavior and avoid an isolated redesign that conflicts with the shared application shell.
+- After Course, Enrollment, and core Billing workflows are functional, perform one system-wide presentation pass using the shared layout, shared CSS, and reusable partial views; Account views may receive scoped presentation overrides without replacing teammate controller logic.
+- Functional correctness, role protection, ownership, validation, and end-to-end module flow remain higher priority than heading sizes or visual polish.
+
 ### 2026-09-10 — Team Git integration target confirmed
 
 - The shared `ZWEN14/Online_Tuition_Systems` repository is configured locally as `origin`, and the user has push access.
 - `origin/Final_OTS` is the team's final integration branch; Course/Billing pull requests should target `Final_OTS` rather than `main` unless the team changes this convention.
 - The personal `Ethan-sew/Online_Tuition_Systems` repository is configured as `fork` and is optional now that the shared repository accepts the user's feature branch.
+
+### 2026-09-10 — Integration checkpoint accepted; Student Enrollment started
+
+- The user confirmed the merged integrated application is functioning and the Course role flow works with the teammate authentication module.
+- Started the next Course Management section: Student enrollment and protected course access.
+- The first enrollment version will activate free courses immediately, create `PendingPayment` enrollment for paid courses, prevent duplicate enrollment, provide Student **My Courses**, and enforce the confirmed archive/suspension access rules.
+- Paid enrollment will stop at `PendingPayment`; payment verification, invoice creation, and activation belong to the following Billing section.
+- This section uses the existing `Enrollments` schema and should not require a new migration.
+
+### 2026-09-10 — Student Enrollment source added, awaiting verification
+
+- Added Student-only enrollment actions using the shared authenticated User ID and `Student` role.
+- Free published courses become active immediately; paid published courses create one `PendingPayment` enrollment for the next Billing section.
+- Added duplicate-enrollment protection in both application logic and the existing unique database index.
+- Added Student **My Courses** and protected course access pages without changing the teammate-owned Booking **My learning** workflow.
+- Active enrollments retain access after a Tutor archives a course; suspended courses remain visible to enrolled Students but access is blocked until restored.
+- Registered the Enrollment service and added only the required Student navigation link; no Account or teammate business logic was changed.
+- No entity or schema change was made, so no new EF Core migration is required.
+- Browser verification is still required before this section is marked complete.
+
+### 2026-09-10 — Student Enrollment verified; core Billing started
+
+- The user verified Student free enrollment, My Courses access, duplicate prevention, archived-course access, suspended-course blocking, and paid `PendingPayment` enrollment through the browser.
+- Marked the Student Enrollment and protected Course access section complete.
+- Started the core Billing section with a local simulated checkout suitable for classroom demonstration.
+- Billing must recalculate the course price and 15% commission on the server, complete the Payment and Invoice with enrollment activation atomically, protect records by Student ownership, and handle repeated completion safely.
+- Stripe sandbox redirection, promotions, emailed receipts, and reporting remain later sections after the normal-price local Billing flow is verified.
+
+### 2026-09-10 — Core simulated Billing source added, awaiting verification
+
+- Added Student-owned checkout for paid `PendingPayment` enrollments and clearly labelled it as a classroom simulation that collects no financial credentials.
+- The server reloads the Enrollment and current Course price rather than accepting price or ownership data from the browser.
+- Successful completion snapshots the normal price, zero baseline discount, 15% commission, platform fee, Tutor net amount, course details, payer details, currency, and UTC timestamps.
+- Enrollment activation, successful Payment, and one Invoice are persisted through one atomic `SaveChanges` operation.
+- Deterministic unique local payment and invoice references plus an existing-success check make repeat submission safe for this simulated provider.
+- Added Student Billing History and ownership-protected Invoice details, and connected pending enrollments to checkout.
+- Added only Billing-owned controller/service/ViewModels/views plus shared service registration and one Student navigation link; teammate module business logic remains unchanged.
+- No entity or schema change was made, so no new EF Core migration is required.
+- Browser verification is required before core Billing is marked complete.
+
+### 2026-09-10 — Billing ownership-denial UX refined
+
+- Cross-Student invoice access remains blocked without revealing whether the requested invoice exists.
+- Replaced the raw 404 response for an inaccessible invoice with a Billing-owned HTTP 403 page that explains invoice ownership and links back to Billing History and My Courses.
+- Kept the teammate-owned shared Account Access Denied page and Account behavior unchanged.
+
+### 2026-09-10 — Billing reporting started
+
+- Started the remaining internal Billing workflow before external Stripe integration.
+- Tutor reporting will expose only the authenticated Tutor's course enrollments, successful sales, gross sales, platform fees, and net earnings.
+- Administrator reporting will expose system-wide pending payments, transactions, gross sales, 15% platform revenue, and Tutor net amounts.
+- Reports use immutable Payment snapshots for financial totals and require no schema change.
+
+### 2026-09-10 — Billing reporting source added, awaiting verification
+
+- Added a Tutor Course Earnings dashboard limited to the authenticated Tutor's courses, with active and pending enrollments, successful sales, gross sales, platform fees, and Tutor net earnings.
+- Added an Administrator Billing Overview with pending enrollment count, successful-payment count, gross sales, platform revenue, Tutor net total, and transaction details.
+- Financial report totals use stored Payment snapshots and count only successful payments as revenue.
+- Blocked or incorrectly assigned Tutor/Admin accounts cannot retrieve the reports even if an old authentication cookie remains.
+- Added only Billing-owned controllers, ViewModels, service queries, views, and the necessary role-specific navigation links.
+- No entity or schema change was made, so no new EF Core migration is required.
+- Browser verification is required before internal Billing is marked complete and Stripe work begins.
+
+### 2026-09-10 — Internal Billing verified; Stripe sandbox started
+
+- The user verified Tutor Course Earnings ownership and the RM100 calculation of RM100 gross, RM15 platform fee, and RM85 Tutor net earnings.
+- The user verified that the Administrator Billing Overview shows the matching system-wide transaction and totals, while another Tutor cannot see the first Tutor's earnings.
+- Marked the normal-price internal Billing workflow and reporting complete.
+- Started the Stripe-hosted Checkout test-mode enhancement. The existing local simulation remains a classroom fallback until Stripe is fully verified.
+- Stripe completion must retrieve and verify the Checkout Session server-side, match Student/Enrollment metadata, amount and MYR currency, and reuse the existing atomic/idempotent Payment–Invoice–Enrollment completion rules.
+- No webhook is planned initially under the confirmed classroom scope; document this as a production limitation.
+
+### 2026-09-12 — Stripe-hosted Checkout source added, awaiting verification
+
+- Confirmed the official `Stripe.net` package is pinned at version `52.4.1` and the test secret is supplied through .NET User Secrets rather than committed configuration.
+- Added Student-owned Stripe Checkout Session creation for a paid `PendingPayment` enrollment, with the course price loaded from the database and converted to MYR minor units on the server.
+- Checkout Sessions carry server-generated Student and Enrollment metadata, client reference, customer email, success URL, and cancellation URL.
+- A Stripe Payment attempt is recorded as `Pending` with immutable course, amount, 15% commission, provider-session, and expiry snapshots before redirecting the Student.
+- The success return retrieves the Checkout Session directly from Stripe and verifies test mode, payment mode, complete/paid status, MYR currency, exact amount, Student ownership, Enrollment metadata, and client reference before activation.
+- Verified Stripe completion atomically updates the Payment, activates Enrollment, and creates one Invoice; repeated success returns reuse the existing invoice.
+- The local simulated checkout remains available as a clearly separated classroom fallback.
+- No webhook was added. Return-page-only fulfillment is acceptable for the confirmed demonstration scope but remains explicitly unsuitable for production reliability.
+- No entity or database schema change was required; browser verification with a new pending paid enrollment remains outstanding.
+
+### 2026-09-12 — Stripe Checkout verified; Promotions started
+
+- The user confirmed that a Stripe-hosted test payment completed successfully through the application.
+- Marked the Stripe Checkout creation, verified return, Payment/Invoice completion, and Enrollment activation path complete for the classroom scope.
+- Started course-specific Promotion codes as the next planned Billing enhancement.
+- Promotion delivery is split into schema/management first and checkout application second so the application does not query a missing table before the user applies the migration.
+
+### 2026-09-12 — Promotion schema and Tutor management source added
+
+- Added a course-specific Promotion entity with unique Course/code pairing, 1–90% percentage discount, UTC start/end, active flag, optional redemption limit, and audit timestamps.
+- Added Tutor-only Promotion management with server-side Tutor identity/ownership checks and eligibility restricted to the Tutor's paid published courses.
+- Promotion codes are normalized to uppercase, date ordering is validated, and physical deletion is replaced by enable/disable behavior.
+- Redemption usage is derived from successful Payment promotion snapshots so unsuccessful attempts do not consume the displayed count.
+- Registered Promotion in the shared EF Core context with restricted Course deletion and added a Tutor navigation entry.
+- Checkout application remains deliberately disconnected until the user generates, reviews, and applies the additive Promotion migration.
+
+### 2026-09-12 — Promotion management verified; UX refinement started
+
+- The user confirmed the Promotion migration and Tutor create/edit/enable/disable workflow work.
+- Keep database timestamps in UTC for consistency, but accept and display Promotion times as Malaysia Time (MYT, UTC+8) in the UI.
+- Improve the form with random code generation, common percentage presets, custom percentage entry, and a live original-price/discount/final-price preview.
+- These are ViewModel, service-conversion, Razor, and JavaScript changes only; no new migration is required.
+
+### 2026-09-12 — Promotion management UX refined; awaiting browser verification
+
+- Added a browser-side `PROMO-XXXXXX` code generator using the Web Crypto API; the existing server-side normalization and duplicate validation remain authoritative.
+- Added a sensible 10% default and common 5%, 10%, 15%, 20%, 25%, and 50% choices while retaining a validated custom percentage field from 1% to 90%.
+- Added a live MYR preview showing the original course price, Student savings, and final price before a Promotion is saved.
+- Added server-calculated original price, savings, and final price to the Tutor Promotion list so the displayed amounts do not depend on browser JavaScript.
+- Promotion forms and lists now use Malaysia Time (MYT, UTC+8). The service converts MYT input to UTC for database storage and UTC values back to MYT for display.
+- No entity or database schema changed, so no EF Core migration is required. Browser verification remains outstanding.
+
+### 2026-09-12 — Promotion discount selection refinement started
+
+- Refine discount entry so Tutors normally select a common percentage and explicitly choose Custom before manually entering another value.
+- Existing Promotions whose percentages are not presets must automatically open in Custom mode.
+- Added selectable preset buttons with a distinct selected state and a Custom button that explicitly unlocks the percentage field.
+- Existing preset values reopen with their matching selection highlighted; other valid values reopen in editable Custom mode.
+
+### 2026-09-12 — Promotion Checkout application added; awaiting verification
+
+- Added a shared server-side Promotion pricing service that normalizes the code and validates course ownership, active status, UTC validity dates, and successful-payment redemption usage.
+- Checkout now allows a Student to apply or clear a Promotion code and shows original price, savings, and final MYR price before payment.
+- Both Stripe and simulated Checkout revalidate the submitted code and recalculate the amount from current database records; browser-displayed and hidden amounts are never trusted.
+- Stripe creates the Checkout Session for the discounted final amount, includes Promotion metadata, and verifies that metadata and the exact final amount on successful return.
+- Stripe Session reuse now requires the same Promotion snapshot and final amount, preventing a previous full-price Session from being reused after applying a code.
+- Successful Payment and Invoice records snapshot the Promotion code, original amount, discount, final amount, and commission calculated from the final amount.
+- Stripe cancellation returns to the same Checkout and preserves the applied code. The Invoice identifies the Promotion used.
+- No schema change or EF Core migration is required because the existing Payment and Invoice Promotion snapshot columns are reused.
+- End-to-end browser verification for valid, invalid, expired, disabled, limited, Stripe, and simulated Promotion payment paths remains outstanding.
+
+### 2026-09-12 — Promotion Checkout verified; discount controls simplified
+
+- The user confirmed the Promotion management and Checkout discount workflow works.
+- Marked server-side Promotion validation, discounted Stripe/simulated payment calculation, snapshots, and Invoice display as verified.
+- Simplify Tutor discount entry to four common choices—5%, 10%, 20%, and 50%—plus one Custom choice.
+- Keep the numeric percentage input hidden unless Custom is selected; existing non-preset values must still reopen in Custom mode.
+- Implemented five visible choices in total: 5%, 10%, 20%, 50%, and Custom. The numeric input is hidden for presets and appears only in Custom mode.
+- The selected choice receives a distinct visual and accessible pressed state, while existing non-preset values automatically reveal the Custom input on edit.
+
+### 2026-09-12 — Custom discount limit and compact control refinement started
+
+- Increase the maximum Promotion discount from 90% to 99%; 100% remains excluded because free courses use the separate free-enrollment workflow.
+- Replace the full-width Custom percentage input with a compact underline-style input revealed immediately beside the Custom button.
+- Updated entity and form validation to allow 1%–99%; this changes validation only and does not require a database migration.
+- The Custom control now appears inline as a small underline field with a percent suffix and remains hidden for preset selections.
+
+### 2026-09-12 — Promotion discount range restored
+
+- Restore the permitted Promotion range to 5%–90% as the final business rule.
+- Keep the compact inline Custom field, but strengthen its theme-aware background and underline contrast for visibility in both light and dark themes.
+
+### 2026-09-12 — AJAX Course catalogue started
+
+- Add progressive-enhancement AJAX filtering and paging to the public Course catalogue using the existing server-side query and reusable course-card partial.
+- Preserve the normal GET form and links as a complete non-JavaScript fallback, and keep filter/page state in the browser URL.
+- Provide accessible loading, result-count, empty, and request-error feedback without changing the Course database schema.
+- The later analytics section must cover Course activity and status metrics in addition to Tutor/Admin Billing revenue charts.
+
+### 2026-09-12 — AJAX Course catalogue source added; awaiting verification
+
+- The existing Course Index GET action now returns a server-rendered catalogue-results partial only when explicitly requested through AJAX; ordinary requests still return the complete page.
+- Added a reusable results partial containing course cards and paging, while retaining the existing Course service query as the only source of filtering and paging logic.
+- Added project-owned JavaScript that intercepts filter submission, category changes, and pagination; cancels superseded requests; swaps only the results region; updates the result count; and preserves query state through browser history.
+- Added accessible loading and result announcements plus an inline request-error message that leaves the current results usable.
+- Browser Back/Forward restores the form and reloads the matching partial. With JavaScript unavailable, the GET form and pagination links continue to work normally.
+- Corrected the merged encoding artifact in the Course card category/code separator.
+- No entity or database schema changed, so no EF Core migration is required. Browser verification remains outstanding.
+
+### 2026-09-12 — Advanced AJAX Course filters started
+
+- Expand the catalogue beyond search and category with free/paid pricing type, optional minimum/maximum MYR price, and newest/title/price sorting.
+- Keep all filter combinations server-authoritative, query-string reproducible, AJAX-enabled, and compatible with ordinary GET requests.
+- Add an AJAX reset action and ensure pagination retains every active filter.
+
+### 2026-09-12 — Advanced AJAX Course filters added; awaiting verification
+
+- Added free/paid pricing type, minimum and maximum MYR price, and newest/title/price ordering to the existing search and category filters.
+- Search refreshes after a short typing delay; category, pricing type, and sorting refresh immediately; price ranges use the shared Apply Filters action.
+- Added AJAX Reset Filters, compact default query strings, and Back/Forward restoration for all new filter fields.
+- Pagination links preserve every active filter for both AJAX and ordinary navigation.
+- Course filtering and ordering remain server-side EF Core queries; the browser supplies criteria but never supplies result data.
+- Invalid minimum/maximum ranges return an explicit warning and zero results rather than silently applying an ambiguous range.
+- No entity or database schema changed, so no EF Core migration is required. Browser verification remains outstanding.
+
+### 2026-09-12 — Course catalogue UX redesign planned
+
+- Do not present every available criterion in one large filter form. Replace the current advanced-filter layout with a marketplace-style search-results layout.
+- Place one prominent Course search bar at the top. Search applies across all published courses when All Categories is selected and is scoped to the selected category otherwise.
+- Place Course categories in a left sidebar on desktop and a compact collapsible filter control on smaller screens. Include All Categories as the first choice and make the active category visually clear.
+- Place a compact results/count and Sort By toolbar directly below the search area and above the Course cards.
+- Remove free/paid pricing and minimum/maximum price controls from the public catalogue UI and remove their unused query logic during implementation. Retain useful sorting such as newest, title, and price order.
+- Continue using AJAX for search, category selection, sorting, paging, reset, and browser-history restoration, with ordinary links/forms as the non-JavaScript fallback.
+- Do not build a separate Advanced Search page now. Large marketplaces use filter panels because they have richer Course attributes and very large catalogues; this assignment catalogue does not yet justify a separate page.
+- Language, level, duration, rating, and similar filters remain future schema decisions. Do not display filters until the matching Course fields, Tutor input, validation, migration, and representative data exist.
+
+### 2026-09-12 — Clean Course catalogue controls finalized
+
+- Keep one prominent search field and explicit Search button at the top of the Course filter card.
+- Place a compact secondary row below it with Category on the left and Sort By on the right.
+- Search all published Courses when All Categories is selected; otherwise combine the search text and selected category in the same server-side query.
+- Remove pricing type, minimum price, maximum price, Apply Filters, Reset Filters, automatic search-as-you-type, and automatic category refresh from the public UI.
+- Retain lowest-price and highest-price choices under Sort By as the simple way for Students to compare prices.
+- Keep AJAX for Search submission, Sort By changes, pagination, and browser Back/Forward; preserve the ordinary GET form fallback.
+
+### 2026-09-12 — Clean Course catalogue redesign implemented; awaiting verification
+
+- Replaced the crowded filter grid with a full-width search row and explicit Search button.
+- Added a compact row beneath search with Category on the left and Sort By on the right, responsive to a stacked mobile layout.
+- Removed pricing type, minimum/maximum price, Apply Filters, Reset Filters, and their ViewModel, EF Core query, pagination, and JavaScript state handling.
+- Retained Newest, Title A-Z, Lowest Price, and Highest Price ordering without presenting price as a separate filter.
+- Search and Category are submitted together, so All Categories searches the entire published catalogue while another selection scopes the same search text to that category.
+- Search submission, sorting, pagination, request cancellation, result replacement, count announcements, and browser history remain AJAX-enabled with an ordinary GET fallback.
+- Added only a Course-specific compact-select CSS rule to the shared stylesheet; no teammate module behavior or global navigation structure was changed.
+- No entity or database schema changed, so no EF Core migration is required. Browser verification remains outstanding.
+
+### 2026-09-12 — Course catalogue control refinement started
+
+- The user confirmed the simplified catalogue design is substantially better.
+- Remove the visible Search button and restore debounced AJAX search while retaining Enter-to-submit and a no-JavaScript fallback.
+- Move the total matching Course count from the page heading to immediately below the search field.
+- Stack the Category and Sort By labels above their controls, widen Category for long names, and keep Sort compact and readable.
+
+### 2026-09-12 — Course catalogue control refinement implemented; awaiting verification
+
+- Removed the visible Search button and added a 450 ms debounced AJAX search that cancels superseded requests.
+- Kept Enter-to-search through the GET form and added a visible submit button inside `noscript` when JavaScript is unavailable.
+- Moved the total matching Course count immediately below the search field and placed the AJAX loading indicator beside it.
+- Category and Sort By now use labels above their controls. Category is wider for long names, while Sort By remains compact.
+- Category and Sort By changes refresh through AJAX and preserve the current search; pagination and browser Back/Forward remain supported.
+- No shared navigation, layout, or teammate-owned module was changed. No database migration is required.
+
+### 2026-09-12 — Course and Billing analytics started
+
+- Extend the existing Tutor Course Earnings and Administrator Billing Overview pages instead of adding another controller, navigation item, or shared-layout dependency.
+- Tutor analytics will summarize the Tutor's Course portfolio by status and compare leading Courses by active enrollments and net earnings.
+- Administrator analytics will summarize system-wide Courses by status and category and show leading Courses using enrollment and successful-payment data.
+- Use project-owned responsive HTML/CSS bars and existing EF Core data; do not add a chart package or database schema solely for visualization.
+- Preserve the existing ownership checks: Tutors see only their Courses, while only Administrators receive system-wide analytics.
+
+### 2026-09-12 — Course and Billing analytics source added; awaiting verification
+
+- Extended Tutor Course Earnings with total Course count, a status-distribution chart, and up to five leading Courses comparing active enrollments and net earnings.
+- Extended Administrator Billing Overview with total system Course/Enrollment counts, Course status and category charts, and up to five leading Courses comparing active enrollments, successful sales, and gross revenue.
+- All financial analytics count only successful Payment snapshots; Course and enrollment analytics use the current Course/Enrollment records.
+- Relative bar widths and labels are calculated server-side and rendered with accessible project-owned HTML/CSS rather than a chart dependency.
+- Existing detailed Tutor Course and Administrator transaction tables remain available beneath the summaries.
+- Existing controller role protection and service-level active-account/Tutor ownership checks remain unchanged.
+- No controller, shared navigation, teammate module, entity, or database schema changed. No migration is required; Tutor/Admin browser verification remains outstanding.
+
+### 2026-09-12 — Tutor analytics UX and drill-down design started
+
+- Keep overview analytics as a distinct section within the existing Tutor Course Earnings page rather than creating another overview destination.
+- Present Course status totals as compact horizontal statistics without forcing the portfolio card to match the taller leading-Course panel.
+- Make leading Courses a single, explicitly labelled net-earnings comparison; show active enrollment as supporting text and omit Course codes from this chart to reduce visual ambiguity.
+- Replace persistent explanatory paragraphs with accessible info icons that reveal concise tooltips on hover or keyboard focus.
+- Add server-side pagination to the detailed Tutor Course list while calculating summary and chart data from all Tutor-owned Courses.
+- Plan ownership-protected per-Course analytics as a later drill-down page reached from the Course list; do not overload the overview with detailed time-series or Student-level data.
+
+### 2026-09-12 — Tutor analytics UX refined; awaiting verification
+
+- Replaced the vertical Course portfolio bars with compact horizontal status statistics and removed forced equal card heights so the panel does not leave unnecessary empty space.
+- Replaced the ambiguous two-colour leading-Course comparison with one green net-earnings bar, explicit RM values, numeric ranking, Course title, and active enrollment supporting text; Course codes are omitted from this overview chart.
+- Replaced persistent helper paragraphs with Bootstrap info tooltips initialized only for the Tutor analytics controls and usable through hover or keyboard focus.
+- Added server-side pagination to the detailed Tutor Course breakdown at eight Courses per page. Summary cards and analytics continue to calculate across all Tutor-owned Courses, not only the displayed page.
+- Kept analytics inside Course Earnings and did not add or change shared navigation. The separate per-Course analytics drill-down remains the next Course analytics section.
+- No entity or database schema changed, so no EF Core migration is required. Browser verification remains outstanding.
+
+### 2026-09-12 — Idempotent Course demonstration data script added
+
+- Added `Database/AddDemoCourses.sql` to insert ten realistic Course records only; it does not create or change Enrollments, Payments, Invoices, Users, or CourseCategories.
+- The script requires and reuses existing unblocked Tutor/Admin accounts and active Course Categories, distributes records across the available Tutor/category IDs, and fails clearly when prerequisites are absent.
+- Eight courses are Published for catalogue, enrollment, payment, and promotion testing; one is PendingReview and one remains Draft for role-workflow demonstrations.
+- Demo codes and slugs use a `DEMO-` prefix, and rerunning the script inserts only missing records without overwriting existing courses.
+
+### 2026-09-10 — Windows Smart App Control blocked local Debug output
+
+- `dotnet watch` compiled the application but Windows refused to load `bin/Debug/net10.0/Online_Tuition_Systems.dll` with error `0x800711C7`.
+- Read-only diagnostics found Code Integrity events 3033/3077 and Smart App Control event 3118 for the generated DLL under policy `{0283ac0f-fff1-49ae-ada1-8a933130cad6}`.
+- The generated DLL has no downloaded-file `Zone.Identifier`; this is not a file-unblock or ASP.NET/Billing source error.
+- Smart App Control is enforcing its verified-and-reputable policy and rejected the normal unsigned local development assembly.
+- No Windows security setting, project output, or system policy was changed by Codex. The user must decide whether to turn Smart App Control off for local development or retain it and use a suitably trusted signing/development environment.

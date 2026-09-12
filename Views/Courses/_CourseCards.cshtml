@@ -19,7 +19,9 @@ else
                              alt="Thumbnail for @course.Title" />
                     }
                     <div class="card-body d-flex flex-column">
-                        <div class="small text-muted mb-2">@course.CategoryName · @course.Code</div>
+                        <div class="small text-muted mb-2">
+                            @course.CategoryName &middot; @course.Code
+                        </div>
                         <h2 class="h5 card-title">@course.Title</h2>
                         <p class="card-text text-muted flex-grow-1">
                             @(course.ShortDescription ?? "View the course details to learn more.")

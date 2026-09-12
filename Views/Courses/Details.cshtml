@@ -20,9 +20,38 @@
             }
             <div class="card-body">
                 <div class="h4 mb-3">@(Model.Price == 0 ? "Free" : $"RM {Model.Price:N2}")</div>
-                <button class="btn btn-primary w-100" type="button" disabled>
-                    Enrollment coming next
-                </button>
+                @if (User.IsInRole(AppRoles.Student))
+                {
+                    @if (Model.CurrentStudentEnrollmentStatus == EnrollmentStatus.Active)
+                    {
+                        <a asp-controller="StudentCourses" asp-action="Access"
+                           asp-route-id="@Model.CourseId"
+                           class="btn btn-primary w-100">Open course</a>
+                    }
+                    else if (Model.CurrentStudentEnrollmentStatus == EnrollmentStatus.PendingPayment)
+                    {
+                        <a asp-controller="StudentCourses" asp-action="Index"
+                           class="btn btn-outline-primary w-100">Payment pending</a>
+                    }
+                    else
+                    {
+                        <form asp-controller="StudentCourses" asp-action="Enroll"
+                              asp-route-id="@Model.CourseId" method="post">
+                            <button class="btn btn-primary w-100" type="submit">
+                                @(Model.Price == 0 ? "Enroll for free" : "Continue to payment")
+                            </button>
+                        </form>
+                    }
+                }
+                else if (User.Identity?.IsAuthenticated == true)
+                {
+                    <p class="text-muted mb-0">Only Student accounts can enroll in courses.</p>
+                }
+                else
+                {
+                    <a asp-controller="Account" asp-action="Login"
+                       class="btn btn-primary w-100">Log in to enroll</a>
+                }
             </div>
         </div>
     </aside>

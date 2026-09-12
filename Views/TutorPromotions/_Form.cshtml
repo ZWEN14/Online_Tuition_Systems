@@ -1,0 +1,112 @@
+@model Online_Tuition_Systems.ViewModels.Billing.PromotionFormViewModel
+
+<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+<input asp-for="PromotionId" type="hidden" />
+
+<div class="mb-3">
+    <label asp-for="CourseId" class="form-label"></label>
+    <select asp-for="CourseId" class="form-select">
+        <option value="">Select a course</option>
+        @foreach (var course in Model.Courses)
+        {
+            var invariantPrice = course.Price.ToString(
+                "0.00",
+                System.Globalization.CultureInfo.InvariantCulture);
+            <option value="@course.CourseId" data-price="@invariantPrice">
+                @course.Code &mdash; @course.Title (RM @course.Price.ToString("N2"))
+            </option>
+        }
+    </select>
+    <span asp-validation-for="CourseId" class="text-danger"></span>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <label asp-for="Code" class="form-label"></label>
+        <div class="input-group">
+            <input asp-for="Code" class="form-control" placeholder="WELCOME10" />
+            <button id="generatePromotionCode" type="button"
+                    class="btn btn-outline-secondary">Generate</button>
+        </div>
+        <div class="form-text">Generate a code or enter a memorable one.</div>
+        <span asp-validation-for="Code" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="DiscountPercentage" class="form-label"></label>
+        <div class="d-flex flex-wrap gap-2" aria-label="Discount choices">
+            @foreach (var percentage in new[] { 5, 10, 20, 50 })
+            {
+                <button type="button" class="btn btn-outline-primary discount-preset"
+                        data-percentage="@percentage">@percentage%</button>
+            }
+            <button id="customDiscount" type="button"
+                    class="btn btn-outline-secondary">Custom</button>
+            <div id="customDiscountContainer"
+                 class="d-none align-items-center gap-1 ms-1">
+                <label for="DiscountPercentage" class="visually-hidden">
+                    Custom percentage
+                </label>
+                <input asp-for="DiscountPercentage"
+                       class="form-control form-control-sm border-0 border-bottom border-primary border-2 rounded-0 px-2 text-center"
+                       style="width: 4.75rem; box-shadow: none; background-color: var(--bs-tertiary-bg);"
+                       min="5" max="90" step="0.5"
+                       inputmode="decimal" aria-describedby="discountHelp" />
+                <span aria-hidden="true">%</span>
+            </div>
+        </div>
+        <div id="discountHelp" class="form-text">
+            Select a common discount or choose Custom to enter a value from 5% to 90%.
+        </div>
+        <span asp-validation-for="DiscountPercentage" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="StartsAtMyt" class="form-label"></label>
+        <input asp-for="StartsAtMyt" type="datetime-local" class="form-control" />
+        <span asp-validation-for="StartsAtMyt" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="EndsAtMyt" class="form-label"></label>
+        <input asp-for="EndsAtMyt" type="datetime-local" class="form-control" />
+        <span asp-validation-for="EndsAtMyt" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="RedemptionLimit" class="form-label"></label>
+        <input asp-for="RedemptionLimit" class="form-control"
+               placeholder="Leave empty for unlimited" />
+        <div class="form-text">The number of successful payments allowed.</div>
+        <span asp-validation-for="RedemptionLimit" class="text-danger"></span>
+    </div>
+</div>
+
+<div id="promotionPricePreview" class="card bg-light border-0 mt-4" aria-live="polite">
+    <div class="card-body">
+        <div class="fw-semibold mb-2">Student price preview</div>
+        <div class="d-flex justify-content-between">
+            <span>Original course price</span>
+            <span id="previewOriginal">Select a course</span>
+        </div>
+        <div class="d-flex justify-content-between text-success">
+            <span>Student saves</span>
+            <span id="previewDiscount">Not available</span>
+        </div>
+        <hr class="my-2" />
+        <div class="d-flex justify-content-between fw-bold">
+            <span>Final price</span>
+            <span id="previewFinal">Not available</span>
+        </div>
+    </div>
+</div>
+
+<div class="form-text mt-3">
+    Dates and times use Malaysia Time (MYT, UTC+8). They are stored internally as UTC.
+    Discounts must be between 5% and 90%.
+</div>
+
+<div class="d-flex gap-2 mt-4">
+    <button type="submit" class="btn btn-primary">Save promotion</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+</div>

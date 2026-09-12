@@ -79,4 +79,6 @@ public class Course
     public User? ReviewedBy { get; set; }
 
     public ICollection<Enrollment> Enrollments { get; set; } = [];
+
+    public ICollection<Promotion> Promotions { get; set; } = [];
 }

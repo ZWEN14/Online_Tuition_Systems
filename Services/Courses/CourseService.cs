@@ -20,6 +20,13 @@ public sealed partial class CourseService(
         var now = DateTime.UtcNow;
         var page = Math.Max(query.Page, 1);
         var search = query.Search?.Trim();
+        var sort = query.Sort?.Trim().ToLowerInvariant() switch
+        {
+            "title" => "title",
+            "price-low" => "price-low",
+            "price-high" => "price-high",
+            _ => "newest"
+        };
 
         var courses = dbContext.Courses
             .AsNoTracking()
@@ -46,9 +53,21 @@ public sealed partial class CourseService(
         var totalPages = Math.Max(1, (int)Math.Ceiling(totalCourses / (double)PageSize));
         page = Math.Min(page, totalPages);
 
+        courses = sort switch
+        {
+            "title" => courses.OrderBy(course => course.Title),
+            "price-low" => courses
+                .OrderBy(course => course.Price)
+                .ThenBy(course => course.Title),
+            "price-high" => courses
+                .OrderByDescending(course => course.Price)
+                .ThenBy(course => course.Title),
+            _ => courses
+                .OrderByDescending(course => course.PublishedAtUtc)
+                .ThenBy(course => course.Title)
+        };
+
         var items = await courses
-            .OrderByDescending(course => course.PublishedAtUtc)
-            .ThenBy(course => course.Title)
             .Skip((page - 1) * PageSize)
             .Take(PageSize)
             .Select(course => new CourseListItemViewModel
@@ -69,6 +88,7 @@ public sealed partial class CourseService(
         {
             Search = search,
             CategoryId = query.CategoryId,
+            Sort = sort,
             Page = page,
             TotalPages = totalPages,
             TotalCourses = totalCourses,

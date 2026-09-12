@@ -6,7 +6,9 @@ using AnywhereEdureach.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Online_Tuition_Systems.Services;
+using Online_Tuition_Systems.Services.Billing;
 using Online_Tuition_Systems.Services.Courses;
+using Online_Tuition_Systems.Services.Enrollments;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,6 +37,11 @@ builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<ICourseAdministrationService, CourseAdministrationService>();
 builder.Services.AddScoped<ILocalCourseImageStorage, LocalCourseImageStorage>();
+builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
+builder.Services.AddScoped<IBillingService, BillingService>();
+builder.Services.AddScoped<IStripeCheckoutService, StripeCheckoutService>();
+builder.Services.AddScoped<IPromotionService, PromotionService>();
+builder.Services.AddScoped<IPromotionPricingService, PromotionPricingService>();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
