@@ -1,8 +1,8 @@
 @model EventProposalDetailsViewModel
 
 @{
-    ViewData["Title"] = "Proposal details";
     var proposal = Model.Proposal;
+    ViewData["Title"] = proposal.Title;
     var canEdit = User.IsInRole(AppRoles.Tutor)
         && proposal.Status is EventProposalStatus.Pending or EventProposalStatus.ChangesRequested;
     var statusText = proposal.Status == EventProposalStatus.ChangesRequested
@@ -136,7 +136,7 @@
                             <a asp-controller="Events"
                                asp-action="Details"
                                asp-route-id="@proposal.CreatedEventId"
-                               class="btn btn-sm btn-outline-primary">Open Event #@proposal.CreatedEventId</a>
+                               class="btn btn-sm btn-outline-primary">View @(proposal.CreatedEvent?.Title ?? "created event")</a>
                         </dd>
                     }
                 </dl>

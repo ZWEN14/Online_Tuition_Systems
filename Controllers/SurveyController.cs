@@ -97,6 +97,13 @@ public class SurveyController(ApplicationDbContext db, ICurrentUserService curre
             if (!string.IsNullOrWhiteSpace(value)) response.Answers.Add(new SurveyAnswer { QuestionId = question.Id, Value = value });
         }
         db.SurveyResponses.Add(response);
+        if (survey.CreatorId != currentUser.UserId)
+            db.Notifications.Add(new UserNotification
+            {
+                UserId = survey.CreatorId, Type = UserNotificationType.SurveyResponseSubmitted,
+                Title = "New survey response", Message = $"A response was submitted for '{survey.Title}'.",
+                TargetUrl = $"/SurveyAdmin/Responses/{survey.Id}"
+            });
         try { await db.SaveChangesAsync(); }
         catch (DbUpdateException ex) when (ex.InnerException is Microsoft.Data.SqlClient.SqlException { Number: 2601 or 2627 }) { TempData["Error"] = "This survey has already been submitted."; return RedirectToAction(nameof(Index)); }
         TempData["Success"] = "Survey submitted successfully."; return RedirectToAction(nameof(MyResponses));

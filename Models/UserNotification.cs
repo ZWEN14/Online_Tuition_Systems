@@ -21,7 +21,11 @@ public enum UserNotificationType
     RegistrationCancelled,
     RegistrationApproved,
     RegistrationRejected,
-    ComplaintStatusChanged
+    ComplaintStatusChanged,
+    ComplaintSubmitted,
+    ComplaintAssigned,
+    SurveyPublished,
+    SurveyResponseSubmitted
 }
 
 [Index(nameof(UserId), nameof(ReadAt), nameof(CreatedAt))]

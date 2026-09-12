@@ -1,5 +1,3 @@
-using Online_Tuition_Systems.Models;
-
 namespace Online_Tuition_Systems.ViewModels.Notifications;
 
 public class NotificationIndexViewModel
@@ -14,8 +12,8 @@ public class NotificationIndexViewModel
 
     public int UnreadCount { get; set; }
 
-    public IReadOnlyList<UserNotification> Items { get; set; }
-        = Array.Empty<UserNotification>();
+    public IReadOnlyList<UnifiedNotificationItem> Items { get; set; }
+        = Array.Empty<UnifiedNotificationItem>();
 
     public int TotalPages => Math.Max(
         1,

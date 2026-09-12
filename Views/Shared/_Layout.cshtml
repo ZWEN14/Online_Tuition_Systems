@@ -133,11 +133,11 @@
                 <a class="sidebar-link" asp-controller="Account" asp-action="UpdateProfile"><span>◯</span> Profile settings</a>
             </aside>
             <main class="container app-main pb-5">
-                @if (!(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" && ViewContext.RouteData.Values["action"]?.ToString() == "Index"))
+                @if (!(ViewContext.RouteData.Values["action"]?.ToString() == "Index" && ViewContext.RouteData.Values["controller"]?.ToString() is ("Home" or "SurveyAdmin" or "Complaints")))
                 {
                     @if (ViewContext.RouteData.Values["controller"]?.ToString() is "SurveyAdmin" or "Survey" or "Complaints" or "ComplaintCategories")
                     {
-                        <a class="page-back mb-3" asp-controller="@(ViewContext.RouteData.Values["controller"]?.ToString() == "ComplaintCategories" ? "Complaints" : ViewContext.RouteData.Values["controller"]?.ToString())" asp-action="Index">Back to index</a>
+                        <a class="page-back mb-3" asp-controller="@(ViewContext.RouteData.Values["controller"]?.ToString() == "ComplaintCategories" ? "Complaints" : ViewContext.RouteData.Values["controller"]?.ToString())" asp-action="Index"><span aria-hidden="true">&larr;</span> Back</a>
                     }
                     else
                     {

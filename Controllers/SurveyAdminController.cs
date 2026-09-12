@@ -24,6 +24,7 @@ public class SurveyAdminController(ApplicationDbContext db, ICurrentUserService 
         await builder.ValidateAsync(model, null, ModelState);
         if (!ModelState.IsValid) { await LoadCourses(model.CourseId); return View(model); }
         await builder.SaveAsync(model, currentUser.UserId);
+        if (model.IsActive) await NotifySurveyPublishedAsync(model.Id);
         TempData["Success"] = "Survey created.";
         return RedirectToAction(nameof(Index));
     }
@@ -53,13 +54,15 @@ public class SurveyAdminController(ApplicationDbContext db, ICurrentUserService 
         if (survey is null) return NotFound();
         await builder.ValidateAsync(model, survey, ModelState);
         if (!ModelState.IsValid) { await LoadCourses(model.CourseId); return View(model); }
+        var wasActive = survey.IsActive;
         await builder.SaveAsync(model, currentUser.UserId);
+        if (!wasActive && model.IsActive) await NotifySurveyPublishedAsync(model.Id);
         TempData["Success"] = "Survey changes saved.";
         return RedirectToAction(nameof(Index));
     }
 
     [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> ToggleActive(int id) { var survey = await db.Surveys.FindAsync(id); if (survey is null) return NotFound(); survey.IsActive = !survey.IsActive; await db.SaveChangesAsync(); return RedirectToAction(nameof(Index)); }
+    public async Task<IActionResult> ToggleActive(int id) { var survey = await db.Surveys.FindAsync(id); if (survey is null) return NotFound(); survey.IsActive = !survey.IsActive; await db.SaveChangesAsync(); if (survey.IsActive) await NotifySurveyPublishedAsync(id); return RedirectToAction(nameof(Index)); }
 
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(int id) { var survey = await db.Surveys.FindAsync(id); if (survey is null) return NotFound(); db.Remove(survey); await db.SaveChangesAsync(); TempData["Success"] = "Survey deleted."; return RedirectToAction(nameof(Index)); }
@@ -248,6 +251,46 @@ public class SurveyAdminController(ApplicationDbContext db, ICurrentUserService 
         return "\"" + value.Replace("\"", "\"\"") + "\"";
     }
     public async Task<IActionResult> ResponseDetails(int id) { var response = await db.SurveyResponses.Include(x => x.Survey).Include(x => x.User).Include(x => x.Answers).ThenInclude(x => x.Attachments).Include(x => x.Answers).ThenInclude(x => x.Question).ThenInclude(x => x!.Options).FirstOrDefaultAsync(x => x.Id == id); return response is null ? NotFound() : View(response); }
+
+    private async Task NotifySurveyPublishedAsync(int surveyId)
+    {
+        var survey = await db.Surveys.AsNoTracking().FirstAsync(x => x.Id == surveyId);
+        if (!survey.IsActive || survey.ExpiresAt <= DateTime.UtcNow) return;
+
+        var courseId = survey.CourseId;
+        var recipientIds = await db.Users
+            .Where(user => (user.Role == UserRole.Student || user.Role == UserRole.Tutor)
+                && !user.IsBlocked && user.EmailVerified
+                && (!courseId.HasValue || db.Enrollments.Any(enrollment => enrollment.UserId == user.Id && enrollment.CourseId == courseId.Value)))
+            .Select(user => user.Id).ToListAsync();
+        db.Notifications.AddRange(recipientIds.Select(userId => new UserNotification
+        {
+            UserId = userId, Type = UserNotificationType.SurveyPublished,
+            Title = "New survey available", Message = $"'{survey.Title}' is ready for your response.",
+            TargetUrl = $"/Survey/Take/{survey.Id}"
+        }));
+        await db.SaveChangesAsync();
+    }
+
+    private async Task NotifySurveyPublishedAsync(int surveyId)
+    {
+        var survey = await db.Surveys.AsNoTracking().FirstAsync(x => x.Id == surveyId);
+        if (!survey.IsActive || survey.ExpiresAt <= DateTime.UtcNow) return;
+
+        var courseId = survey.CourseId;
+        var recipientIds = await db.Users
+            .Where(user => (user.Role == UserRole.Student || user.Role == UserRole.Tutor)
+                && !user.IsBlocked && user.EmailVerified
+                && (!courseId.HasValue || db.Enrollments.Any(enrollment => enrollment.UserId == user.Id && enrollment.CourseId == courseId.Value)))
+            .Select(user => user.Id).ToListAsync();
+        db.Notifications.AddRange(recipientIds.Select(userId => new UserNotification
+        {
+            UserId = userId, Type = UserNotificationType.SurveyPublished,
+            Title = "New survey available", Message = $"'{survey.Title}' is ready for your response.",
+            TargetUrl = $"/Survey/Take/{survey.Id}"
+        }));
+        await db.SaveChangesAsync();
+    }
 
     private async Task ValidateSurvey(SurveyEditViewModel model) { if (model.CourseId.HasValue && !await db.Courses.AnyAsync(x => x.CourseId == model.CourseId)) ModelState.AddModelError(nameof(model.CourseId), "Select a valid course."); }
     private void ValidateSections(List<SurveySectionCreateViewModel> sections)

@@ -308,12 +308,9 @@ h1, h2, h3, h4, h5, h6 {
   stroke-linejoin: round;
 }
 
-.proposal-reference-id {
-  padding: .2rem .38rem;
-  color: #5865cf;
-  font-size: .72rem;
-  border-radius: 99px;
-  background: #fff;
+.proposal-reference-title {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .proposal-reference-arrow {
@@ -707,6 +704,8 @@ h1, h2, h3, h4, h5, h6 {
 .feature-violet .home-feature-arrow { color: #7655d6; }
 .feature-amber .home-feature-icon { color: #986213; background: #fff2d7; }
 .feature-amber .home-feature-arrow { color: #d78d16; }
+.feature-rose .home-feature-icon { color: #a23c63; background: #ffe7f0; }
+.feature-rose .home-feature-arrow { color: #c64b78; }
 
 /* Module pages */
 .module-header {
@@ -1036,6 +1035,9 @@ h1, h2, h3, h4, h5, h6 {
 .notification-type-event { color: #765109; background: #fff2cd; }
 .notification-type-proposal { color: #6b3bb5; background: #f0e8ff; }
 .notification-type-registration { color: #0f735a; background: #dcf7ee; }
+.notification-type-booking { color: #78551a; background: #fff1d8; }
+.notification-type-complaint { color: #a03149; background: #ffe9ed; }
+.notification-type-survey { color: #195b8f; background: #e5f3ff; }
 
 .notification-card-body,
 .notification-card-body span,

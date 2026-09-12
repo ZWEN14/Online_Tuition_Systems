@@ -13,12 +13,8 @@ public class NotificationController(ApplicationDbContext db) : Controller
     // GET: Notification/Index
     public IActionResult Index()
     {
-        var model = db.BookingNotifications
-            .Where(n => n.UserId == CurrentUserId)
-            .OrderByDescending(n => n.CreatedAt)
-            .ToList();
-
-        return View(model);
+        // Keep old mentor-mentee links working while showing the unified feed.
+        return RedirectToAction("Index", "Notifications");
     }
 
     [HttpPost]

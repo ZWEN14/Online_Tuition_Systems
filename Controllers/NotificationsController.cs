@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Online_Tuition_Systems.Authorization;
 using Online_Tuition_Systems.Data;
+using Online_Tuition_Systems.Services;
 using Online_Tuition_Systems.ViewModels.Notifications;
 
 namespace Online_Tuition_Systems.Controllers;
@@ -12,10 +13,12 @@ namespace Online_Tuition_Systems.Controllers;
 public class NotificationsController : Controller
 {
     private readonly ApplicationDbContext _context;
+    private readonly NotificationFeedService _feed;
 
-    public NotificationsController(ApplicationDbContext context)
+    public NotificationsController(ApplicationDbContext context, NotificationFeedService feed)
     {
         _context = context;
+        _feed = feed;
     }
 
     [HttpGet]
@@ -33,41 +36,59 @@ public class NotificationsController : Controller
             : "all";
         page = Math.Max(1, page);
 
-        var allForUser = _context.Notifications
-            .AsNoTracking()
-            .Where(item => item.UserId == userId.Value);
-
-        var query = filter == "unread"
-            ? allForUser.Where(item => !item.ReadAt.HasValue)
-            : allForUser;
-
         var model = new NotificationIndexViewModel
         {
             Filter = filter,
             Page = page,
-            UnreadCount = await allForUser.CountAsync(item => !item.ReadAt.HasValue),
-            TotalCount = await query.CountAsync()
+            UnreadCount = await _feed.CountAsync(userId.Value, unreadOnly: true),
+            TotalCount = await _feed.CountAsync(userId.Value, unreadOnly: filter == "unread")
         };
 
         model.Page = Math.Min(model.Page, model.TotalPages);
-        model.Items = await query
-            .OrderByDescending(item => item.CreatedAt)
-            .Skip((model.Page - 1) * model.PageSize)
-            .Take(model.PageSize)
-            .ToListAsync();
+        model.Items = await _feed.GetItemsAsync(
+            userId.Value,
+            unreadOnly: filter == "unread",
+            skip: (model.Page - 1) * model.PageSize,
+            take: model.PageSize);
 
         return View(model);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Open(int id)
+    public async Task<IActionResult> Open(int id, string source = "module")
     {
         var userId = await GetCurrentUserId();
 
         if (!userId.HasValue)
         {
             return Forbid();
+        }
+
+        if (source == "booking")
+        {
+            var bookingNotification = await _context.BookingNotifications
+                .SingleOrDefaultAsync(item => item.Id == id && item.UserId == userId.Value);
+
+            if (bookingNotification is null)
+            {
+                return NotFound();
+            }
+
+            if (!bookingNotification.IsRead)
+            {
+                bookingNotification.IsRead = true;
+                await _context.SaveChangesAsync();
+            }
+
+            return bookingNotification.BookingId.HasValue
+                ? RedirectToAction("Show", "Booking", new { id = bookingNotification.BookingId.Value })
+                : RedirectToAction(nameof(Index));
+        }
+
+        if (source != "module")
+        {
+            return BadRequest();
         }
 
         var notification = await _context.Notifications
@@ -110,6 +131,10 @@ public class NotificationsController : Controller
                 && !item.ReadAt.HasValue)
             .ExecuteUpdateAsync(setters => setters
                 .SetProperty(item => item.ReadAt, currentTime));
+        await _context.BookingNotifications
+            .Where(item => item.UserId == userId.Value && !item.IsRead)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(item => item.IsRead, true));
 
         TempData["SuccessMessage"] = "All notifications were marked as read.";
         return RedirectToAction(nameof(Index));

@@ -25,5 +25,5 @@
         <div class="card-footer">After this section: @(surveySection.AfterSectionAction == SurveyBranchAction.Submit ? "Submit form" : surveySection.AfterSectionAction == SurveyBranchAction.GoToSection ? "Go to: " + Model.Sections.FirstOrDefault(x => x.Id == surveySection.NextSectionId)?.Title : "Next section")</div>
     </section>
 }
-<a asp-action="Index" class="btn btn-secondary">Back to index</a>
+<a asp-action="Index" class="btn btn-secondary"><span aria-hidden="true">&larr;</span> Back</a>
 <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-inline" onsubmit="return confirm('Delete this survey and all responses?')"><button class="btn btn-outline-danger">Delete Survey</button></form>
