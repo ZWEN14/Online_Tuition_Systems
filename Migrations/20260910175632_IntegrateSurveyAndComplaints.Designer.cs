@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Online_Tuition_Systems.Data;
 
@@ -11,9 +12,11 @@ using Online_Tuition_Systems.Data;
 namespace Online_Tuition_Systems.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260910175632_IntegrateSurveyAndComplaints")]
+    partial class IntegrateSurveyAndComplaints
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -859,46 +862,6 @@ namespace Online_Tuition_Systems.Migrations
                     b.ToTable("QuestionOptions");
                 });
 
-            modelBuilder.Entity("Online_Tuition_Systems.Models.SubmissionAttachment", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("ComplaintId")
-                        .HasColumnType("int");
-
-                    b.Property<byte[]>("Content")
-                        .IsRequired()
-                        .HasColumnType("varbinary(max)");
-
-                    b.Property<string>("ContentType")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<int?>("SurveyAnswerId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ComplaintId");
-
-                    b.HasIndex("SurveyAnswerId");
-
-                    b.ToTable("SubmissionAttachments", t =>
-                        {
-                            t.HasCheckConstraint("CK_SubmissionAttachment_Owner", "([SurveyAnswerId] IS NOT NULL AND [ComplaintId] IS NULL) OR ([SurveyAnswerId] IS NULL AND [ComplaintId] IS NOT NULL)");
-                        });
-                });
-
             modelBuilder.Entity("Online_Tuition_Systems.Models.Survey", b =>
                 {
                     b.Property<int>("Id")
@@ -1030,17 +993,11 @@ namespace Online_Tuition_Systems.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("AfterSectionAction")
-                        .HasColumnType("int");
-
                     b.Property<string>("Description")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
                     b.Property<int>("DisplayOrder")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("NextSectionId")
                         .HasColumnType("int");
 
                     b.Property<int>("SurveyId")
@@ -1052,8 +1009,6 @@ namespace Online_Tuition_Systems.Migrations
                         .HasColumnType("nvarchar(150)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("NextSectionId");
 
                     b.HasIndex("SurveyId", "DisplayOrder")
                         .IsUnique();
@@ -1345,23 +1300,6 @@ namespace Online_Tuition_Systems.Migrations
                     b.Navigation("Question");
                 });
 
-            modelBuilder.Entity("Online_Tuition_Systems.Models.SubmissionAttachment", b =>
-                {
-                    b.HasOne("Online_Tuition_Systems.Models.Complaint", "Complaint")
-                        .WithMany("Attachments")
-                        .HasForeignKey("ComplaintId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.HasOne("Online_Tuition_Systems.Models.SurveyAnswer", "SurveyAnswer")
-                        .WithMany("Attachments")
-                        .HasForeignKey("SurveyAnswerId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.Navigation("Complaint");
-
-                    b.Navigation("SurveyAnswer");
-                });
-
             modelBuilder.Entity("Online_Tuition_Systems.Models.Survey", b =>
                 {
                     b.HasOne("Online_Tuition_Systems.Models.Course", "Course")
@@ -1437,18 +1375,11 @@ namespace Online_Tuition_Systems.Migrations
 
             modelBuilder.Entity("Online_Tuition_Systems.Models.SurveySection", b =>
                 {
-                    b.HasOne("Online_Tuition_Systems.Models.SurveySection", "NextSection")
-                        .WithMany()
-                        .HasForeignKey("NextSectionId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
                     b.HasOne("Online_Tuition_Systems.Models.Survey", "Survey")
                         .WithMany("Sections")
                         .HasForeignKey("SurveyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("NextSection");
 
                     b.Navigation("Survey");
                 });
@@ -1482,8 +1413,6 @@ namespace Online_Tuition_Systems.Migrations
 
             modelBuilder.Entity("Online_Tuition_Systems.Models.Complaint", b =>
                 {
-                    b.Navigation("Attachments");
-
                     b.Navigation("StatusHistory");
                 });
 
@@ -1513,11 +1442,6 @@ namespace Online_Tuition_Systems.Migrations
                     b.Navigation("Responses");
 
                     b.Navigation("Sections");
-                });
-
-            modelBuilder.Entity("Online_Tuition_Systems.Models.SurveyAnswer", b =>
-                {
-                    b.Navigation("Attachments");
                 });
 
             modelBuilder.Entity("Online_Tuition_Systems.Models.SurveyResponse", b =>

@@ -247,6 +247,7 @@ public class AdminController(ApplicationDbContext db, Helper hp) : Controller
         }
         catch (DbUpdateException ex)
         {
+            throw ex;
             TempData["Info"] = "User Deleted";
         }
 

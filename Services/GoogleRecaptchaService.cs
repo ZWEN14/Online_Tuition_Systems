@@ -49,28 +49,41 @@ public sealed class GoogleRecaptchaService(HttpClient httpClient, IOptions<Recap
             @event = eventData,
         };
 
-        using var response = await httpClient.PostAsJsonAsync(
-            $"https://recaptchaenterprise.googleapis.com/v1/projects/{Uri.EscapeDataString(options.ProjectId)}/assessments?key={Uri.EscapeDataString(options.ApiKey)}",
-            request,
-            cancellationToken);
-
-        if (!response.IsSuccessStatusCode)
+        try
         {
-            var error = await response.Content.ReadAsStringAsync(cancellationToken);
-            logger.LogWarning("reCAPTCHA Enterprise assessment failed with HTTP {StatusCode}: {Response}", response.StatusCode, error);
-            return false;
-        }
+            using var response = await httpClient.PostAsJsonAsync(
+                $"https://recaptchaenterprise.googleapis.com/v1/projects/{Uri.EscapeDataString(options.ProjectId)}/assessments?key={Uri.EscapeDataString(options.ApiKey)}",
+                request,
+                cancellationToken);
 
-        var result = await response.Content.ReadFromJsonAsync<RecaptchaResponse>(cancellationToken);
-        var valid = result?.TokenProperties?.Valid == true;
-        if (!valid)
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync(cancellationToken);
+                logger.LogWarning("reCAPTCHA Enterprise assessment failed with HTTP {StatusCode}: {Response}", response.StatusCode, error);
+                return false;
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<RecaptchaResponse>(cancellationToken);
+            var valid = result?.TokenProperties?.Valid == true;
+            if (!valid)
+            {
+                logger.LogWarning("reCAPTCHA Enterprise checkbox token rejected. Valid={Valid}, InvalidReason={InvalidReason}",
+                    valid,
+                    result?.TokenProperties?.InvalidReason);
+            }
+
+            return valid;
+        }
+        catch (HttpRequestException exception)
         {
-            logger.LogWarning("reCAPTCHA Enterprise checkbox token rejected. Valid={Valid}, InvalidReason={InvalidReason}",
-                valid,
-                result?.TokenProperties?.InvalidReason);
+            logger.LogWarning(exception, "reCAPTCHA Enterprise could not be reached.");
+            return environment.IsDevelopment();
         }
-
-        return valid;
+        catch (OperationCanceledException exception) when (!cancellationToken.IsCancellationRequested)
+        {
+            logger.LogWarning(exception, "reCAPTCHA Enterprise verification timed out.");
+            return environment.IsDevelopment();
+        }
     }
 
     private static bool IsUsableSiteKey(string value) =>

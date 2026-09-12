@@ -1,0 +1,31 @@
+@model Online_Tuition_Systems.ViewModels.ComplaintIndexViewModel
+@using Online_Tuition_Systems.Models
+@{ViewData["Title"]="Complaints";}<div class="d-flex justify-content-between"><h2>Complaints</h2>@if(User.IsInRole("Student")||User.IsInRole("Tutor")){<a asp-action="Create" class="btn btn-primary">Submit Complaint</a>}</div><form method="get" class="row g-2 my-3"><div class="col-md-5"><input name="search" value="@ViewBag.Search" class="form-control" placeholder="Search complaints"/></div><div class="col-md-4"><select name="status" class="form-select"><option value="">All statuses</option>@foreach(var s in Enum.GetValues<ComplaintStatus>()){<option value="@s" selected="@(ViewBag.Status==s.ToString())">@(s==ComplaintStatus.InProgress?"In Progress":s)</option>}</select></div><div class="col"><button class="btn btn-outline-primary">Filter</button> <a asp-action="Index" class="btn btn-outline-secondary">Reset</a></div></form><div class="table-responsive"><table class="table table-hover"><thead><tr><th>#</th><th>Title</th><th>Category</th><th>Status</th><th>Submitted By</th><th>Assigned Tutor</th><th>Date</th><th></th></tr></thead><tbody>@foreach(var c in Model.Complaints){<tr><td>@c.Id</td><td>@c.Title</td><td>@c.Category?.Name</td><td>@(c.Status==ComplaintStatus.InProgress?"In Progress":c.Status)</td><td>@c.User?.Name</td><td>@(c.AssignedTutor?.Name??"—")</td><td>@c.CreatedAt.ToLocalTime().ToString("dd MMM yyyy")</td><td><a asp-action="Details" asp-route-id="@c.Id">View</a></td></tr>}</tbody></table></div>
+
+@if (User.IsInRole("Admin"))
+{
+    <section id="complaint-categories" class="card mt-4">
+        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <h3 class="mb-0">Complaint Categories</h3>
+            <a asp-controller="ComplaintCategories" asp-action="Create" class="btn btn-primary">Add Category</a>
+        </div>
+        <div class="card-body">
+            <p class="text-muted">Manage the categories available when submitting a complaint.</p>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead><tr><th>Name</th><th>Status</th><th></th></tr></thead>
+                    <tbody>
+                    @foreach (var category in Model.Categories)
+                    {
+                        <tr><td>@category.Name</td><td>@(category.IsActive ? "Active" : "Inactive")</td><td><a asp-controller="ComplaintCategories" asp-action="Edit" asp-route-id="@category.Id">Edit</a></td></tr>
+                    }
+                    @if (Model.Categories.Count == 0)
+                    {
+                        <tr><td colspan="3" class="text-muted">No categories yet. Add a category to enable complaint submissions.</td></tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+}

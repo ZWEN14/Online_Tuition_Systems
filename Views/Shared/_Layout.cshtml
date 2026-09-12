@@ -24,7 +24,7 @@
         <div class="container py-2">
             <a class="navbar-brand d-flex align-items-center gap-2" asp-controller="Home" asp-action="@(User.Identity?.IsAuthenticated == true ? "Index" : "Welcome")">
                 <span class="brand-mark">A</span>
-                <span>Anywhere <span class="brand-muted">Edureach</span></span>
+                <span class="brand-muted">Anywhere Edureach</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
                 <span class="navbar-toggler-icon"></span>
@@ -101,6 +101,19 @@
                 {
                     <a class="sidebar-link" asp-controller="Admin" asp-action="Index"><span>◎</span> User management</a>
                 }
+                @if (User.IsInRole("Student") || User.IsInRole("Tutor"))
+                {
+                    <a class="sidebar-link" asp-controller="Survey" asp-action="Index"><span>S</span> Surveys</a>
+                    <a class="sidebar-link" asp-controller="Survey" asp-action="MyResponses"><span>R</span> My survey responses</a>
+                }
+                @if (User.IsInRole("Admin"))
+                {
+                    <a class="sidebar-link" asp-controller="SurveyAdmin" asp-action="Index"><span>S</span> Survey management</a>
+                }
+                @if (User.IsInRole("Admin") || User.IsInRole("Student") || User.IsInRole("Tutor"))
+                {
+                    <a class="sidebar-link" asp-controller="Complaints" asp-action="Index"><span>C</span> Complaints</a>
+                }
                 <a class="sidebar-link" asp-controller="Notification" asp-action="Index">
                     <span>●</span> <span class="sidebar-link-label">Notifications</span>@if (unreadNotificationCount > 0)
                     {
@@ -110,11 +123,18 @@
                 <a class="sidebar-link" asp-controller="Account" asp-action="UpdateProfile"><span>◯</span> Profile settings</a>
             </aside>
             <main class="container app-main pb-5">
-                @if (!(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" && ViewContext.RouteData.Values["action"]?.ToString() == "Index"))
+                @if (!(ViewContext.RouteData.Values["action"]?.ToString() == "Index" && ViewContext.RouteData.Values["controller"]?.ToString() is ("Home" or "SurveyAdmin" or "Complaints")))
                 {
+                    @if (ViewContext.RouteData.Values["controller"]?.ToString() is "SurveyAdmin" or "Survey" or "Complaints" or "ComplaintCategories")
+                    {
+                        <a class="page-back mb-3" asp-controller="@(ViewContext.RouteData.Values["controller"]?.ToString() == "ComplaintCategories" ? "Complaints" : ViewContext.RouteData.Values["controller"]?.ToString())" asp-action="Index"><span aria-hidden="true">&larr;</span> Back</a>
+                    }
+                    else
+                    {
                     <button type="button" class="page-back mb-3" data-back-fallback="@Url.Action("Index", "Home")">
                         <span aria-hidden="true">←</span> Back
                     </button>
+                    }
                 }
                 @if (TempData["Info"] != null)
                 {
@@ -129,6 +149,10 @@
                         @TempData["Error"]
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
+                }
+                @if (TempData["Success"] != null)
+                {
+                    <div class="alert alert-success" role="alert">@TempData["Success"]</div>
                 }
                 @RenderBody()
             </main>

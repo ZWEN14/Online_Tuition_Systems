@@ -1,0 +1,19 @@
+@model Online_Tuition_Systems.Models.SurveyResponse
+@using Online_Tuition_Systems.Models
+@functions {
+    static string DisplayAnswer(SurveyAnswer answer)
+    {
+        if (string.IsNullOrWhiteSpace(answer.Value)) return "—";
+        if (answer.Question?.Type is SurveyQuestionType.MultipleChoice or SurveyQuestionType.Dropdown && int.TryParse(answer.Value, out var selectedId))
+            return answer.Question.Options.FirstOrDefault(x => x.Id == selectedId)?.Text ?? answer.Value;
+        if (answer.Question?.Type == SurveyQuestionType.Checkbox)
+        {
+            var ids = answer.Value.Split(',').Select(x => int.TryParse(x, out var id) ? id : 0).ToHashSet();
+            return string.Join(", ", answer.Question.Options.Where(x => ids.Contains(x.Id)).OrderBy(x => x.DisplayOrder).Select(x => x.Text));
+        }
+        return answer.Value;
+    }
+}
+@{ ViewData["Title"] = "Response Details"; }
+<h2>@Model.Survey?.Title</h2><p class="text-muted">Submitted @Model.SubmittedAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")</p>
+@foreach (var answer in Model.Answers.OrderBy(x => x.Question?.DisplayOrder)) { <div class="card mb-2"><div class="card-body"><strong>@answer.Question?.Text</strong>@if (answer.Attachments.Count > 0) { foreach (var file in answer.Attachments) { <div><a asp-controller="Attachments" asp-action="Download" asp-route-id="@file.Id">@file.FileName</a></div> } } else { <div>@DisplayAnswer(answer)</div> }</div></div> }
