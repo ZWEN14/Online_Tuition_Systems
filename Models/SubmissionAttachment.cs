@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Online_Tuition_Systems.Models;
 
+// Stores a file belonging to either a survey answer or a complaint.
 public class SubmissionAttachment
 {
     public int Id { get; set; }

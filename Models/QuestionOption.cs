@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Online_Tuition_Systems.Models;
 
+// One selectable answer for a choice question.
 public class QuestionOption
 {
     public int Id { get; set; }

@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Online_Tuition_Systems.Models;
 
+// One submission per respondent and survey; contains the saved answers.
 public class SurveyResponse
 {
     public int Id { get; set; }

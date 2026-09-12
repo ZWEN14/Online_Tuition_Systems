@@ -1,3 +1,4 @@
+// Shared Create/Edit builder. Array positions become MVC form field indexes.
 (() => {
     'use strict';
     const host = document.getElementById('section-builder');
@@ -31,6 +32,7 @@
     function button(parent, text, run) {
         const b = element('button', 'btn btn-sm btn-outline-secondary', text); b.type = 'button'; b.addEventListener('click', run); parent.append(b); return b;
     }
+    // Offer only later sections so the survey cannot loop back on itself.
     function destination(parent, label, name, value, index, update) {
         const wrap = element('label', 'd-block mb-3 flex-grow-1'); wrap.append(element('span', 'form-label', label));
         const select = element('select', 'form-select'); select.name = name;
@@ -42,12 +44,14 @@
         if (value && !sections.slice(index + 1).some(x => x.clientKey === value) && value !== 'submit') select.setCustomValidity('Choose a later section or submit form.');
         wrap.append(select); parent.append(wrap);
     }
+    // Update destination labels after the administrator renames a section.
     function refreshDestinationLabels() {
         host.querySelectorAll('select[name$="DestinationKey"] option').forEach(option => {
             const index = sections.findIndex(s => s.clientKey === option.value);
             if (index >= 0) option.textContent = `Go to section ${index + 1}: ${sections[index].title || 'Untitled'}`;
         });
     }
+    // Rebuild the form after adding, removing or reordering sections/questions.
     function render() {
         host.replaceChildren();
         sections.forEach((s, si) => {

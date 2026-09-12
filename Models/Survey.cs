@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Online_Tuition_Systems.Models;
 
+// Survey settings; a null CourseId means the survey is general.
 public class Survey
 {
     public int Id { get; set; }
