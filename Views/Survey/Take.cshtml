@@ -1,0 +1,47 @@
+@model Online_Tuition_Systems.ViewModels.SurveySubmissionViewModel
+@using Online_Tuition_Systems.Models
+@{ViewData["Title"]="Take Survey";}
+<h2>@Model.SurveyTitle</h2><p>@Model.SurveyDescription</p>
+<div class="progress mb-3" style="height:8px"><div class="progress-bar" id="survey-progress"></div></div>
+<form method="post" enctype="multipart/form-data" id="section-survey-form"><input type="hidden" asp-for="SurveyId"/><div id="visited-sections"></div><div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+@for(var s=0;s<Model.Sections.Count;s++)
+{
+var surveySection=Model.Sections[s];
+<section class="survey-section" data-section-id="@surveySection.Id" data-order="@surveySection.DisplayOrder" data-action="@((int)surveySection.AfterSectionAction)" data-destination="@surveySection.NextSectionId" hidden>
+<div class="mb-3"><div class="text-muted">Section @(s+1) of @Model.Sections.Count</div><h3>@surveySection.Title</h3><p>@surveySection.Description</p></div>
+@foreach(var questionId in surveySection.QuestionIds)
+{
+var i=Model.Answers.FindIndex(x=>x.QuestionId==questionId);var answer=Model.Answers[i];
+<div class="card mb-3 survey-question" data-required="@answer.IsRequired.ToString().ToLowerInvariant()"><div class="card-body"><input type="hidden" asp-for="Answers[i].QuestionId"/><label class="form-label fw-bold">@answer.QuestionText @if(answer.IsRequired){<span class="text-danger">*</span>}</label>
+@if(answer.Type==SurveyQuestionType.Text){<textarea asp-for="Answers[i].Value" class="form-control answer-control" rows="4" maxlength="2000"></textarea>}
+else if(answer.Type==SurveyQuestionType.FileUpload){<input asp-for="Answers[i].Files" type="file" multiple accept=".jpg,.jpeg,.png,.webp,.pdf,.txt" class="form-control answer-control"/><div class="form-text">Up to 5 files, 5 MB each. JPG, PNG, WebP, PDF, or TXT. Total uploads: 25 MB per submission.</div>}
+else if(answer.Type==SurveyQuestionType.Rating){<select asp-for="Answers[i].Value" class="form-select answer-control"><option value="">Select rating</option>@for(var rating=1;rating<=5;rating++){<option value="@rating">@rating</option>}</select>}
+else if(answer.Type==SurveyQuestionType.YesNo){<select asp-for="Answers[i].Value" class="form-select answer-control"><option value="">Select answer</option><option value="Yes">Yes</option><option value="No">No</option></select>}
+else if(answer.Type==SurveyQuestionType.Dropdown){<select asp-for="Answers[i].Value" class="form-select answer-control routing-answer"><option value="">Select option</option>@foreach(var option in answer.Options){<option value="@option.Id" data-action="@((int)option.BranchAction)" data-destination="@option.DestinationSectionId">@option.Text</option>}</select>}
+else if(answer.Type==SurveyQuestionType.MultipleChoice){<div class="routing-answer">@foreach(var option in answer.Options){var optionId=$"answer_{i}_{option.Id}";<div class="form-check"><input class="form-check-input answer-control" type="radio" name="Answers[@i].Value" value="@option.Id" id="@optionId" checked="@(answer.Value==option.Id.ToString())" data-action="@((int)option.BranchAction)" data-destination="@option.DestinationSectionId"/><label class="form-check-label" for="@optionId">@option.Text</label></div>}</div>}
+else{<div class="checkbox-answer">@foreach(var option in answer.Options){var optionId=$"answer_{i}_{option.Id}";<div class="form-check"><input class="form-check-input answer-control" type="checkbox" name="Answers[@i].SelectedValues" value="@option.Id" id="@optionId" checked="@answer.SelectedValues.Contains(option.Id.ToString())"/><label class="form-check-label" for="@optionId">@option.Text</label></div>}</div>}
+</div></div>
+}
+<div class="d-flex justify-content-between"><button type="button" class="btn btn-outline-secondary back-section">Back</button><button type="button" class="btn btn-primary next-section">Next</button><button type="submit" class="btn btn-success submit-survey">Submit</button></div>
+</section>
+}
+</form>
+@section Scripts{
+<partial name="_ValidationScriptsPartial"/>
+<script>
+(()=>{
+const form=document.getElementById('section-survey-form'),sections=[...form.querySelectorAll('.survey-section')],byId=new Map(sections.map(x=>[x.dataset.sectionId,x])),history=[];let current=sections[0];
+function setRequirements(section,enabled){section.querySelectorAll('.survey-question').forEach(q=>{const required=enabled&&q.dataset.required==='true';const controls=[...q.querySelectorAll('.answer-control')];controls.forEach(x=>{x.required=false;x.setCustomValidity('');});if(!required)return;const checks=controls.filter(x=>x.type==='checkbox');if(checks.length){if(!checks.some(x=>x.checked))checks[0].setCustomValidity('Select at least one option.');return;}const radios=controls.filter(x=>x.type==='radio');if(radios.length){radios[0].required=true;return;}if(controls[0])controls[0].required=true;});}
+function updateNavigation(){current.querySelector('.back-section').disabled=history.length<=1;const normalNext=sections.find(x=>Number(x.dataset.order)>Number(current.dataset.order));const route=selectedRoute();const ends=route?.action==='3'||(!normalNext&&route?.action!=='2');current.querySelector('.next-section').hidden=ends;current.querySelector('.submit-survey').hidden=!ends;}
+function show(section,push=true){sections.forEach(x=>{x.hidden=x!==section;setRequirements(x,x===section);});current=section;if(push&&history.at(-1)!==section)history.push(section);updateNavigation();document.getElementById('survey-progress').style.width=`${Math.round((history.length/sections.length)*100)}%`;renderVisited();window.scrollTo({top:0,behavior:'smooth'});}
+function selectedRoute(){
+    const selected=[...current.querySelectorAll('select.routing-answer')].map(x=>x.selectedOptions[0]).concat([...current.querySelectorAll('.routing-answer input[type="radio"]:checked')]);
+    const option=selected.find(x=>x?.value&&['2','3'].includes(x.dataset.action));
+    return option?{action:option.dataset.action,destination:option.dataset.destination}:{action:current.dataset.action,destination:current.dataset.destination};
+}
+function validate(){setRequirements(current,true);return [...current.querySelectorAll('input,select,textarea')].every(x=>x.reportValidity());}
+function next(){if(!validate())return;const route=selectedRoute();if(route?.action==='3'){form.requestSubmit();return;}let destination=route?.action==='2'?byId.get(route.destination):sections.find(x=>Number(x.dataset.order)>Number(current.dataset.order));if(destination)show(destination);else form.requestSubmit();}
+function renderVisited(){const host=document.getElementById('visited-sections');host.innerHTML='';history.forEach((section,index)=>{const input=document.createElement('input');input.type='hidden';input.name=`VisitedSectionIds[${index}]`;input.value=section.dataset.sectionId;host.append(input);});}
+form.addEventListener('change',()=>{setRequirements(current,true);updateNavigation();});form.addEventListener('submit',event=>{if(!validate())event.preventDefault();});form.querySelectorAll('.next-section').forEach(x=>x.addEventListener('click',next));form.querySelectorAll('.back-section').forEach(x=>x.addEventListener('click',()=>{if(history.length>1){history.pop();show(history.at(-1),false);}}));show(current);
+})();
+</script>}

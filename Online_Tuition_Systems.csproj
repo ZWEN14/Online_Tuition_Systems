@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
+    <DefaultItemExcludes>$(DefaultItemExcludes);.build-check/**</DefaultItemExcludes>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>73ad0ec3-8e26-49ec-92ed-1602b14fe5a6</UserSecretsId>
   </PropertyGroup>

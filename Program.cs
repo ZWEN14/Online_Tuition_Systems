@@ -64,6 +64,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
             maxRetryDelay: TimeSpan.FromSeconds(5),
             errorNumbersToAdd: null)));
 
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddScoped<SurveyBuilderService>();
+builder.Services.AddScoped<SubmissionUploadService>();
 builder.Services.AddScoped<Helper>();
 builder.Services.AddScoped<AnywhereEdureach.NotificationService>();
 builder.Services.AddScoped<INotificationService, Online_Tuition_Systems.Services.NotificationService>();
@@ -89,6 +92,15 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+
+// A fresh checkout does not include the local database file. Create it and
+// apply the schema before development requests can query the database.
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var database = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    await database.Database.MigrateAsync();
+}
 
 if (!app.Environment.IsDevelopment())
 {
