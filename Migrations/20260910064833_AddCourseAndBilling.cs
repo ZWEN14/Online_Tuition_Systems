@@ -11,6 +11,36 @@ namespace Online_Tuition_Systems.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            // Some existing development databases contain the two empty prototype
+            // tables used by the survey module before the Course module was merged.
+            // Replace only that known schema, and refuse to discard any records.
+            migrationBuilder.Sql("""
+                IF OBJECT_ID(N'dbo.Courses', N'U') IS NOT NULL
+                BEGIN
+                    IF COL_LENGTH(N'dbo.Courses', N'CourseId') IS NOT NULL
+                        THROW 51000, 'Courses already has the integrated schema; check migration history before continuing.', 1;
+                    IF OBJECT_ID(N'dbo.Enrollments', N'U') IS NOT NULL
+                    BEGIN
+                        IF COL_LENGTH(N'dbo.Enrollments', N'EnrollmentId') IS NOT NULL
+                            THROW 51001, 'Enrollments already has the integrated schema; check migration history before continuing.', 1;
+                        EXEC(N'IF EXISTS (SELECT 1 FROM dbo.Enrollments) THROW 51002, ''Legacy Enrollments contains data; migration stopped without deleting it.'', 1;');
+                    END;
+                    EXEC(N'IF EXISTS (SELECT 1 FROM dbo.Courses) THROW 51003, ''Legacy Courses contains data; migration stopped without deleting it.'', 1;');
+                    IF OBJECT_ID(N'dbo.Surveys', N'U') IS NOT NULL
+                    BEGIN
+                        EXEC(N'IF EXISTS (SELECT 1 FROM dbo.Surveys WHERE CourseId IS NOT NULL) THROW 51004, ''Surveys references legacy Courses; migration stopped without deleting it.'', 1;');
+                        IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = N'FK_Surveys_Courses_CourseId' AND parent_object_id = OBJECT_ID(N'dbo.Surveys'))
+                            ALTER TABLE dbo.Surveys DROP CONSTRAINT FK_Surveys_Courses_CourseId;
+                    END;
+                    IF EXISTS (SELECT 1 FROM sys.foreign_keys
+                               WHERE referenced_object_id IN (OBJECT_ID(N'dbo.Courses'), OBJECT_ID(N'dbo.Enrollments'))
+                                 AND parent_object_id <> OBJECT_ID(N'dbo.Enrollments'))
+                        THROW 51005, 'Another table references legacy Courses or Enrollments; migration stopped.', 1;
+                    DROP TABLE IF EXISTS dbo.Enrollments;
+                    DROP TABLE dbo.Courses;
+                END;
+                """);
+
             migrationBuilder.CreateTable(
                 name: "CourseCategories",
                 columns: table => new
@@ -278,6 +308,19 @@ namespace Online_Tuition_Systems.Migrations
                 name: "IX_Payments_UserId",
                 table: "Payments",
                 column: "UserId");
+
+            // Fresh databases create Surveys in the later survey migration.
+            // Existing databases already applied it, so restore its foreign key.
+            migrationBuilder.Sql("""
+                IF OBJECT_ID(N'dbo.Surveys', N'U') IS NOT NULL
+                   AND NOT EXISTS (SELECT 1 FROM sys.foreign_keys
+                                   WHERE name = N'FK_Surveys_Courses_CourseId'
+                                     AND parent_object_id = OBJECT_ID(N'dbo.Surveys'))
+                BEGIN
+                    ALTER TABLE dbo.Surveys WITH CHECK ADD CONSTRAINT FK_Surveys_Courses_CourseId
+                        FOREIGN KEY (CourseId) REFERENCES dbo.Courses(CourseId);
+                END;
+                """);
         }
 
         /// <inheritdoc />

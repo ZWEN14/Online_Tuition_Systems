@@ -1,28 +1,38 @@
 @{
-    ViewBag.Title = "Anywhere Edureach | Welcome";
+    ViewData["Title"] = "Anywhere Edureach | Welcome";
 }
 
 <div class="welcome-page">
-    <section class="welcome-hero">
+    <section class="welcome-hero" aria-labelledby="welcome-heading">
         <div class="welcome-copy">
             <span class="welcome-kicker"><span class="brand-mark">A</span> Anywhere Edureach</span>
-            <h1>Learn without limits.</h1>
-            <p class="welcome-lead">Book tuition sessions with qualified tutors, anytime, anywhere.</p>
-            <p class="welcome-description">Find the right support for your goals, choose a time that works for you, and learn with confidence.</p>
+            <h1 id="welcome-heading">Learning, all in one place.</h1>
+            <p class="welcome-lead">Find tutors, explore courses and make every lesson count.</p>
+            <p class="welcome-description">Anywhere Edureach brings together tutoring, course enrollment, events, updates and support for the whole learning community.</p>
             <div class="welcome-actions">
-                <a class="btn btn-primary btn-lg" asp-controller="Account" asp-action="Register">Get started <span aria-hidden="true">→</span></a>
-                <a class="btn btn-outline-secondary btn-lg" asp-controller="Account" asp-action="Login">Log in</a>
+                <a class="btn btn-primary btn-lg" asp-controller="Courses" asp-action="Index">Explore courses <span aria-hidden="true">&rarr;</span></a>
+                <a class="btn btn-outline-secondary btn-lg" asp-controller="Account" asp-action="Register">Create an account</a>
+                <a class="btn btn-link btn-lg" asp-controller="Account" asp-action="Login">Log in</a>
             </div>
             <div class="welcome-benefits">
-                <span>✓ Qualified tutors</span>
-                <span>✓ Flexible scheduling</span>
-                <span>✓ Learning made personal</span>
+                <span>&#10003; Personal tutoring</span>
+                <span>&#10003; Flexible courses</span>
+                <span>&#10003; Connected community</span>
             </div>
         </div>
         <div class="welcome-visual" aria-hidden="true">
             <div class="welcome-orbit orbit-one"></div>
             <div class="welcome-orbit orbit-two"></div>
-            <div class="welcome-visual-card"><span class="fs-1">✦</span><strong>Your next lesson starts here.</strong><small>Learn at your pace</small></div>
+            <div class="welcome-visual-card"><span class="fs-1">A</span><strong>More ways to learn and grow.</strong><small>One connected platform</small></div>
         </div>
+    </section>
+    <section class="welcome-overview" aria-label="What you can do on Anywhere Edureach">
+        <div class="row g-3">
+            <div class="col-md-6 col-xl-3"><div class="welcome-overview-card"><strong>Personal tutoring</strong><p>Find a subject, choose a tutor and book a lesson at a convenient time.</p></div></div>
+            <div class="col-md-6 col-xl-3"><div class="welcome-overview-card"><strong>Courses & enrollment</strong><p>Explore courses, enroll and keep track of learning and payments.</p></div></div>
+            <div class="col-md-6 col-xl-3"><div class="welcome-overview-card"><strong>Events & updates</strong><p>Join learning events and stay informed through announcements.</p></div></div>
+            <div class="col-md-6 col-xl-3"><div class="welcome-overview-card"><strong>Feedback & support</strong><p>Respond to surveys and raise concerns when you need help.</p></div></div>
+        </div>
+        <p class="welcome-overview-note">Dedicated Tutor and Administrator workspaces help manage teaching, reviews and the wider platform.</p>
     </section>
 </div>

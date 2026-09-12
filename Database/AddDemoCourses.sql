@@ -1,9 +1,8 @@
 -- Creates 11 Course categories and 30 varied demonstration Courses.
 -- Safe to rerun: named categories are reused and DEMO courses are refreshed.
--- Prerequisite: run Database/AddDemoUsers.sql first.
+-- Uses the existing verified Tutor and Admin from the combined User module.
 -- CourseStatus values: Draft = 1, PendingReview = 2, Published = 4.
-USE [OnlineTuitionDb];
-GO
+-- Connect to the intended database before running this script; it does not switch databases.
 
 SET NOCOUNT ON;
 SET XACT_ABORT ON;
@@ -12,24 +11,26 @@ DECLARE @TutorId int =
 (
     SELECT TOP (1) Id
     FROM dbo.Users
-    WHERE Email = N'tutor@test.com' AND Role = 1 AND IsBlocked = 0
+    WHERE Role = 1 AND IsBlocked = 0 AND EmailVerified = 1
+    ORDER BY Id
 );
 
 DECLARE @AdminId int =
 (
     SELECT TOP (1) Id
     FROM dbo.Users
-    WHERE Email = N'admin@test.com' AND Role = 2 AND IsBlocked = 0
+    WHERE Role = 2 AND IsBlocked = 0 AND EmailVerified = 1
+    ORDER BY Id
 );
 
 IF @TutorId IS NULL
 BEGIN
-    THROW 50001, 'Run Database/AddDemoUsers.sql to create tutor@test.com first.', 1;
+    THROW 50001, 'Create or verify a Tutor account before seeding demo courses.', 1;
 END;
 
 IF @AdminId IS NULL
 BEGIN
-    THROW 50002, 'Run Database/AddDemoUsers.sql to create admin@test.com first.', 1;
+    THROW 50002, 'Create or verify an Admin account before seeding demo courses.', 1;
 END;
 
 DECLARE @NowUtc datetime2 = SYSUTCDATETIME();

@@ -275,6 +275,15 @@ public sealed partial class CourseService(
         course.ReviewedAtUtc = null;
         course.UpdatedAtUtc = DateTime.UtcNow;
 
+        var administratorIds = await dbContext.Users
+            .Where(user => user.Role == UserRole.Admin && !user.IsBlocked && user.EmailVerified)
+            .Select(user => user.Id).ToListAsync(cancellationToken);
+        dbContext.Notifications.AddRange(administratorIds.Select(userId => new UserNotification
+        {
+            UserId = userId, Type = UserNotificationType.CourseSubmitted,
+            Title = "Course awaiting review", Message = $"'{course.Title}' was submitted for review.",
+            TargetUrl = "/AdminCourses/Index"
+        }));
         await dbContext.SaveChangesAsync(cancellationToken);
         return new CourseActionResult(true);
     }
@@ -418,6 +427,15 @@ public sealed partial class CourseService(
 
         course.Status = CourseStatus.Archived;
         course.UpdatedAtUtc = DateTime.UtcNow;
+        var studentIds = await dbContext.Enrollments
+            .Where(enrollment => enrollment.CourseId == course.CourseId && enrollment.Status == EnrollmentStatus.Active)
+            .Select(enrollment => enrollment.StudentId).ToListAsync(cancellationToken);
+        dbContext.Notifications.AddRange(studentIds.Select(userId => new UserNotification
+        {
+            UserId = userId, Type = UserNotificationType.CourseArchived,
+            Title = "Course archived", Message = $"'{course.Title}' has been archived. Your existing access remains available.",
+            TargetUrl = "/StudentCourses/Index"
+        }));
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return new CourseActionResult(true);

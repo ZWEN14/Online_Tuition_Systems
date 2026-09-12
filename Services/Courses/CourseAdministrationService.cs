@@ -137,6 +137,21 @@ public sealed class CourseAdministrationService(ApplicationDbContext dbContext)
         course.RejectionReason = null;
         course.UpdatedAtUtc = now;
 
+        dbContext.Notifications.Add(new UserNotification
+        {
+            UserId = course.TutorId, Type = UserNotificationType.CoursePublished,
+            Title = "Course approved", Message = $"'{course.Title}' was approved and published.",
+            TargetUrl = "/TutorCourses/Index"
+        });
+        var studentIds = await dbContext.Users
+            .Where(user => user.Role == UserRole.Student && !user.IsBlocked && user.EmailVerified)
+            .Select(user => user.Id).ToListAsync(cancellationToken);
+        dbContext.Notifications.AddRange(studentIds.Select(userId => new UserNotification
+        {
+            UserId = userId, Type = UserNotificationType.CoursePublished,
+            Title = "New course available", Message = $"'{course.Title}' is now available for enrollment.",
+            TargetUrl = $"/Courses/Details/{course.CourseId}"
+        }));
         await dbContext.SaveChangesAsync(cancellationToken);
         return new CourseActionResult(true);
     }
@@ -165,6 +180,12 @@ public sealed class CourseAdministrationService(ApplicationDbContext dbContext)
         course.RejectionReason = reason.Trim();
         course.UpdatedAtUtc = now;
 
+        dbContext.Notifications.Add(new UserNotification
+        {
+            UserId = course.TutorId, Type = UserNotificationType.CourseRejected,
+            Title = "Course needs changes", Message = $"'{course.Title}' was returned for changes.",
+            Details = course.RejectionReason, TargetUrl = "/TutorCourses/Index"
+        });
         await dbContext.SaveChangesAsync(cancellationToken);
         return new CourseActionResult(true);
     }
@@ -238,6 +259,8 @@ public sealed class CourseAdministrationService(ApplicationDbContext dbContext)
         course.ReviewedAtUtc = DateTime.UtcNow;
         course.UpdatedAtUtc = DateTime.UtcNow;
 
+        await QueueCourseStatusNotificationsAsync(course, UserNotificationType.CourseSuspended,
+            "Course suspended", $"'{course.Title}' has been suspended.", course.SuspensionReason, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
         return new CourseActionResult(true);
     }
@@ -270,8 +293,30 @@ public sealed class CourseAdministrationService(ApplicationDbContext dbContext)
         course.ReviewedAtUtc = DateTime.UtcNow;
         course.UpdatedAtUtc = DateTime.UtcNow;
 
+        await QueueCourseStatusNotificationsAsync(course, UserNotificationType.CourseRestored,
+            "Course restored", $"'{course.Title}' is available again.", null, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
         return new CourseActionResult(true);
+    }
+
+    private async Task QueueCourseStatusNotificationsAsync(
+        Course course, UserNotificationType type, string title, string message,
+        string? details, CancellationToken cancellationToken)
+    {
+        dbContext.Notifications.Add(new UserNotification
+        {
+            UserId = course.TutorId, Type = type, Title = title, Message = message,
+            Details = details, TargetUrl = "/TutorCourses/Index"
+        });
+        var studentIds = await dbContext.Enrollments
+            .Where(enrollment => enrollment.CourseId == course.CourseId
+                && enrollment.Status != EnrollmentStatus.Cancelled)
+            .Select(enrollment => enrollment.StudentId).ToListAsync(cancellationToken);
+        dbContext.Notifications.AddRange(studentIds.Select(userId => new UserNotification
+        {
+            UserId = userId, Type = type, Title = title, Message = message,
+            Details = details, TargetUrl = "/StudentCourses/Index"
+        }));
     }
 
     private IQueryable<Course> PendingReviewQuery()

@@ -20,7 +20,7 @@ builder.Services.AddControllersWithViews();
 // connection string portable across different team members' computers.
 var databaseDirectory = Path.Combine(builder.Environment.ContentRootPath, "App_Data");
 Directory.CreateDirectory(databaseDirectory);
-var databaseFile = Path.Combine(databaseDirectory, "OnlineTuitionSystems.mdf");
+var databaseFile = Path.Combine(databaseDirectory, "OnlineTuitionDb.mdf");
 
 var baseConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("The DefaultConnection connection string was not found.");

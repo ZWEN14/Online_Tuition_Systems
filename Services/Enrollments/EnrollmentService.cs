@@ -40,6 +40,7 @@ public sealed class EnrollmentService(ApplicationDbContext dbContext) : IEnrollm
             .Select(candidate => new
             {
                 candidate.CourseId,
+                candidate.TutorId,
                 candidate.Title,
                 candidate.Price,
                 candidate.Status,
@@ -77,6 +78,19 @@ public sealed class EnrollmentService(ApplicationDbContext dbContext) : IEnrollm
                 : EnrollmentStatus.PendingPayment,
             EnrolledAtUtc = now,
             ActivatedAtUtc = isFree ? now : null
+        });
+        dbContext.Notifications.Add(new UserNotification
+        {
+            UserId = studentId, Type = UserNotificationType.EnrollmentCreated,
+            Title = isFree ? "Course enrollment active" : "Course enrollment pending payment",
+            Message = isFree ? $"You are enrolled in '{course.Title}'." : $"Complete payment to access '{course.Title}'.",
+            TargetUrl = "/StudentCourses/Index"
+        });
+        dbContext.Notifications.Add(new UserNotification
+        {
+            UserId = course.TutorId, Type = UserNotificationType.EnrollmentCreated,
+            Title = "New course enrollment", Message = $"A student enrolled in '{course.Title}'.",
+            TargetUrl = "/TutorCourses/Index"
         });
 
         try

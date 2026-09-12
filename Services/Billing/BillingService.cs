@@ -169,6 +169,18 @@ public sealed class BillingService(
         enrollment.Status = EnrollmentStatus.Active;
         enrollment.ActivatedAtUtc = now;
         dbContext.Payments.Add(payment);
+        dbContext.Notifications.Add(new UserNotification
+        {
+            UserId = studentId, Type = UserNotificationType.EnrollmentActivated,
+            Title = "Course access activated", Message = $"Payment completed for '{enrollment.Course.Title}'. Your course access is active.",
+            TargetUrl = "/StudentCourses/Index"
+        });
+        dbContext.Notifications.Add(new UserNotification
+        {
+            UserId = enrollment.Course.TutorId, Type = UserNotificationType.EnrollmentActivated,
+            Title = "Course enrollment activated", Message = $"A student's access to '{enrollment.Course.Title}' is now active.",
+            TargetUrl = "/TutorCourses/Index"
+        });
 
         try
         {

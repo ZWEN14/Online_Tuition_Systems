@@ -78,6 +78,12 @@ public class NotificationFeedService(ApplicationDbContext context)
                 or UserNotificationType.ComplaintStatusChanged => "Complaint",
             UserNotificationType.SurveyPublished or UserNotificationType.SurveyResponseSubmitted
                 => "Survey",
+            UserNotificationType.CourseSubmitted or UserNotificationType.CoursePublished
+                or UserNotificationType.CourseRejected or UserNotificationType.CourseArchived
+                or UserNotificationType.CourseSuspended or UserNotificationType.CourseRestored
+                => "Course",
+            UserNotificationType.EnrollmentCreated or UserNotificationType.EnrollmentActivated
+                => "Enrollment",
             _ => "Registration"
         };
 
@@ -93,6 +99,11 @@ public class NotificationFeedService(ApplicationDbContext context)
             IsUpdate = item.Type is UserNotificationType.AnnouncementUpdated
                 or UserNotificationType.EventUpdated
                 or UserNotificationType.ComplaintStatusChanged
+                or UserNotificationType.CourseRejected
+                or UserNotificationType.CourseArchived
+                or UserNotificationType.CourseSuspended
+                or UserNotificationType.CourseRestored
+                or UserNotificationType.EnrollmentActivated
         };
     }
 

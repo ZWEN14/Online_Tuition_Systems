@@ -261,7 +261,7 @@ public class SurveyAdminController(ApplicationDbContext db, ICurrentUserService 
         var recipientIds = await db.Users
             .Where(user => (user.Role == UserRole.Student || user.Role == UserRole.Tutor)
                 && !user.IsBlocked && user.EmailVerified
-                && (!courseId.HasValue || db.Enrollments.Any(enrollment => enrollment.StudentId == user.Id && enrollment.CourseId == courseId.Value)))
+                && (!courseId.HasValue || db.Enrollments.Any(enrollment => enrollment.StudentId == user.Id && enrollment.CourseId == courseId.Value && enrollment.Status == EnrollmentStatus.Active)))
             .Select(user => user.Id).ToListAsync();
         db.Notifications.AddRange(recipientIds.Select(userId => new UserNotification
         {

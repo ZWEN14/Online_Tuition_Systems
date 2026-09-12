@@ -335,6 +335,20 @@ public sealed class StripeCheckoutService(
         payment.PaidAtUtc = now;
         payment.Enrollment.Status = EnrollmentStatus.Active;
         payment.Enrollment.ActivatedAtUtc = now;
+        var tutorId = await dbContext.Courses.Where(course => course.CourseId == payment.Enrollment.CourseId)
+            .Select(course => course.TutorId).SingleAsync(cancellationToken);
+        dbContext.Notifications.Add(new UserNotification
+        {
+            UserId = studentId, Type = UserNotificationType.EnrollmentActivated,
+            Title = "Course access activated", Message = $"Payment completed for '{payment.CourseTitleSnapshot}'. Your course access is active.",
+            TargetUrl = "/StudentCourses/Index"
+        });
+        dbContext.Notifications.Add(new UserNotification
+        {
+            UserId = tutorId, Type = UserNotificationType.EnrollmentActivated,
+            Title = "Course enrollment activated", Message = $"A student's access to '{payment.CourseTitleSnapshot}' is now active.",
+            TargetUrl = "/TutorCourses/Index"
+        });
         payment.Invoice = new Online_Tuition_Systems.Models.Invoice
         {
             InvoiceNumber = BuildReference("INV", session.Id),
