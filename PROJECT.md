@@ -1043,6 +1043,13 @@ Course/Billing scope and the other team module areas are now recorded. Shared Us
 - Combined the Course/Billing and Survey/Complaint models in `ApplicationDbContext` and its model snapshot.
 - No database command, Git staging action, merge commit, or system change was performed by Codex. The merged source still requires user-run staging and runtime verification.
 
+### 2026-09-12 — Latest Final_OTS notification merge repaired; awaiting verification
+
+- Retained the newly merged Survey publication and response notification behavior.
+- Removed a duplicated `NotifySurveyPublishedAsync` method introduced by the semantic merge, which otherwise prevented compilation.
+- Adapted the notification recipient query to the canonical `Enrollment.StudentId` property used by Course Management.
+- No other teammate notification, Survey, layout, or module behavior was changed. Runtime verification remains outstanding.
+
 ### 2026-09-12 — Idempotent Course demonstration data script added
 
 - Added `Database/AddDemoCourses.sql` to insert ten realistic Course records only; it does not create or change Enrollments, Payments, Invoices, Users, or CourseCategories.

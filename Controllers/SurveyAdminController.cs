@@ -261,27 +261,7 @@ public class SurveyAdminController(ApplicationDbContext db, ICurrentUserService 
         var recipientIds = await db.Users
             .Where(user => (user.Role == UserRole.Student || user.Role == UserRole.Tutor)
                 && !user.IsBlocked && user.EmailVerified
-                && (!courseId.HasValue || db.Enrollments.Any(enrollment => enrollment.UserId == user.Id && enrollment.CourseId == courseId.Value)))
-            .Select(user => user.Id).ToListAsync();
-        db.Notifications.AddRange(recipientIds.Select(userId => new UserNotification
-        {
-            UserId = userId, Type = UserNotificationType.SurveyPublished,
-            Title = "New survey available", Message = $"'{survey.Title}' is ready for your response.",
-            TargetUrl = $"/Survey/Take/{survey.Id}"
-        }));
-        await db.SaveChangesAsync();
-    }
-
-    private async Task NotifySurveyPublishedAsync(int surveyId)
-    {
-        var survey = await db.Surveys.AsNoTracking().FirstAsync(x => x.Id == surveyId);
-        if (!survey.IsActive || survey.ExpiresAt <= DateTime.UtcNow) return;
-
-        var courseId = survey.CourseId;
-        var recipientIds = await db.Users
-            .Where(user => (user.Role == UserRole.Student || user.Role == UserRole.Tutor)
-                && !user.IsBlocked && user.EmailVerified
-                && (!courseId.HasValue || db.Enrollments.Any(enrollment => enrollment.UserId == user.Id && enrollment.CourseId == courseId.Value)))
+                && (!courseId.HasValue || db.Enrollments.Any(enrollment => enrollment.StudentId == user.Id && enrollment.CourseId == courseId.Value)))
             .Select(user => user.Id).ToListAsync();
         db.Notifications.AddRange(recipientIds.Select(userId => new UserNotification
         {
