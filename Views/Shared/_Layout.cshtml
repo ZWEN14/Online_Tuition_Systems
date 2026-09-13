@@ -322,6 +322,19 @@
                     <div class="sidebar-section">
                         <div class="sidebar-section-title">Communication</div>
 
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <a class="sidebar-link" asp-controller="SurveyAdmin" asp-action="Index">
+                                <span class="shell-nav-icon">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d="M5 5h14v11H9l-4 3z"></path>
+                                        <path d="M8 9h8M8 12h5"></path>
+                                    </svg>
+                                </span>
+                                <span class="sidebar-link-label">Survey Management</span>
+                            </a>
+                        }
+
                         @if (User.IsInRole("Student") || User.IsInRole("Tutor"))
                         {
                             <a class="sidebar-link" asp-controller="Survey" asp-action="Index">
