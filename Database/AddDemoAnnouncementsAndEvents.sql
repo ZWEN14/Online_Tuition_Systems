@@ -35,17 +35,20 @@ DECLARE @AdminId int =
 
 IF @StudentId IS NULL
 BEGIN
-    THROW 50001, 'Create or verify student@test.com before seeding announcement and event demo data.', 1;
+    RAISERROR ('Create or verify student@test.com before seeding announcement and event demo data.', 16, 1);
+    RETURN;
 END;
 
 IF @TutorId IS NULL
 BEGIN
-    THROW 50002, 'Create or verify tutor@test.com before seeding announcement and event demo data.', 1;
+    RAISERROR ('Create or verify tutor@test.com before seeding announcement and event demo data.', 16, 1);
+    RETURN;
 END;
 
 IF @AdminId IS NULL
 BEGIN
-    THROW 50003, 'Create or verify admin@test.com before seeding announcement and event demo data.', 1;
+    RAISERROR ('Create or verify admin@test.com before seeding announcement and event demo data.', 16, 1);
+    RETURN;
 END;
 
 DECLARE @TutorRef nvarchar(450) = CONVERT(nvarchar(450), @TutorId);
@@ -90,7 +93,8 @@ DECLARE @CourseEfCore int =
 
 IF @CourseCSharp IS NULL OR @CourseMvc IS NULL OR @CoursePython IS NULL OR @CourseAjax IS NULL OR @CourseEfCore IS NULL
 BEGIN
-    THROW 50004, 'Run Database/AddDemoCourses.sql first so the required DEMO courses exist.', 1;
+    RAISERROR ('Run Database/AddDemoCourses.sql first so the required DEMO courses exist.', 16, 1);
+    RETURN;
 END;
 
 DECLARE @InsertedAnnouncements int = 0;
@@ -374,7 +378,8 @@ DECLARE @EventDraftClinicId int = (SELECT Id FROM dbo.Events WHERE Title = N'DEM
 IF @EventMvcWorkshopId IS NULL OR @EventPythonLabId IS NULL OR @EventAjaxClinicId IS NULL
     OR @EventEfCoreSeminarId IS NULL OR @EventCancelledWebinarId IS NULL OR @EventDraftClinicId IS NULL
 BEGIN
-    THROW 50005, 'Demo event seed failed while resolving event identifiers.', 1;
+    RAISERROR ('Demo event seed failed while resolving event identifiers.', 16, 1);
+    RETURN;
 END;
 
 IF NOT EXISTS
