@@ -17,7 +17,18 @@
                     <tbody>
                     @foreach (var category in Model.Categories)
                     {
-                        <tr><td>@category.Name</td><td>@(category.IsActive ? "Active" : "Inactive")</td><td><a asp-controller="ComplaintCategories" asp-action="Edit" asp-route-id="@category.Id">Edit</a></td></tr>
+                        <tr>
+                            <td>@category.Name</td>
+                            <td>@(category.IsActive ? "Active" : "Inactive")</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <a asp-controller="ComplaintCategories" asp-action="Edit" asp-route-id="@category.Id">Edit</a>
+                                    <form asp-controller="ComplaintCategories" asp-action="Delete" asp-route-id="@category.Id" method="post" onsubmit="return confirm('Delete this category? Categories used by complaints cannot be deleted.');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
                     }
                     @if (Model.Categories.Count == 0)
                     {

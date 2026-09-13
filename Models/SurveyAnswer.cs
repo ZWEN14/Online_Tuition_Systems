@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Online_Tuition_Systems.Models;
 
+// One answer within a response, optionally with uploaded files.
 public class SurveyAnswer
 {
     public ICollection<SubmissionAttachment> Attachments { get; set; } = new List<SubmissionAttachment>();
