@@ -439,7 +439,9 @@
             </aside>
 
             <main class="container app-main pb-5">
-                @if (!(ViewContext.RouteData.Values["action"]?.ToString() == "Index" && ViewContext.RouteData.Values["controller"]?.ToString() is ("Home" or "SurveyAdmin" or "Complaints")))
+                @if (!((ViewContext.RouteData.Values["action"]?.ToString() == "Index" && ViewContext.RouteData.Values["controller"]?.ToString() is ("Home" or "SurveyAdmin" or "Complaints"))
+                    || (ViewContext.RouteData.Values["controller"]?.ToString() == "Account" && ViewContext.RouteData.Values["action"]?.ToString() == "AccessDenied")
+                    || (ViewContext.RouteData.Values["controller"]?.ToString() == "Home" && ViewContext.RouteData.Values["action"]?.ToString() == "Error")))
                 {
                     @if (ViewContext.RouteData.Values["controller"]?.ToString() is "SurveyAdmin" or "Survey" or "Complaints" or "ComplaintCategories")
                     {
