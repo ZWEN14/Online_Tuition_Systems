@@ -6,6 +6,14 @@
 USE [OnlineTuitionDb];
 GO
 
+SET ANSI_NULLS ON;
+SET ANSI_PADDING ON;
+SET ANSI_WARNINGS ON;
+SET ARITHABORT ON;
+SET CONCAT_NULL_YIELDS_NULL ON;
+SET QUOTED_IDENTIFIER ON;
+SET NUMERIC_ROUNDABORT OFF;
+
 SET NOCOUNT ON;
 SET XACT_ABORT ON;
 
@@ -380,7 +388,7 @@ IF @EventMvcWorkshopId IS NULL OR @EventPythonLabId IS NULL OR @EventAjaxClinicI
 BEGIN
     RAISERROR ('Demo event seed failed while resolving event identifiers.', 16, 1);
     RETURN;
-END;
+END;    
 
 IF NOT EXISTS
 (
@@ -558,13 +566,14 @@ WHERE NOT EXISTS
 
 SET @InsertedProposals = @@ROWCOUNT;
 
+-- EventRegistrationStatus values: Pending = 0, Approved = 1, Rejected = 2, Cancelled = 3.
 DECLARE @DemoRegistrations TABLE
 (
     SeedKey nvarchar(80) NOT NULL PRIMARY KEY,
     EventId int NOT NULL,
     UserId int NOT NULL,
     Message nvarchar(1000) NULL,
-    Status nvarchar(20) NOT NULL,
+    Status int NOT NULL,
     ReviewedByUserId int NULL,
     ReviewedAt datetimeoffset NULL,
     ReviewNote nvarchar(1000) NULL,
@@ -576,16 +585,16 @@ INSERT INTO @DemoRegistrations
 VALUES
     (N'mvc-approved', @EventMvcWorkshopId, @StudentId,
      N'I would like to join the live coding session and review controller patterns.',
-     N'Approved', @TutorId, DATEADD(day, -1, @NowUtc), N'Approved. Please join five minutes early for setup.', DATEADD(day, -2, @NowUtc)),
+     1, @TutorId, DATEADD(day, -1, @NowUtc), N'Approved. Please join five minutes early for setup.', DATEADD(day, -2, @NowUtc)),
     (N'python-pending', @EventPythonLabId, @StudentId,
      N'I want help practising Python loops and functions before the lab.',
-     N'Pending', NULL, NULL, NULL, DATEADD(day, -1, @NowUtc)),
+     0, NULL, NULL, NULL, DATEADD(day, -1, @NowUtc)),
     (N'ajax-rejected', @EventAjaxClinicId, @StudentId,
      N'I need help debugging fetch requests in my project.',
-     N'Rejected', @TutorId, DATEADD(day, -1, @NowUtc), N'The clinic is reserved for enrolled AJAX course Students this round.', DATEADD(day, -2, @NowUtc)),
+     2, @TutorId, DATEADD(day, -1, @NowUtc), N'The clinic is reserved for enrolled AJAX course Students this round.', DATEADD(day, -2, @NowUtc)),
     (N'cancelled-approved', @EventCancelledWebinarId, @StudentId,
      N'Please reserve a seat for the JavaScript webinar.',
-     N'Approved', @TutorId, DATEADD(day, -4, @NowUtc), N'Approved before the event was cancelled.', DATEADD(day, -5, @NowUtc));
+     1, @TutorId, DATEADD(day, -4, @NowUtc), N'Approved before the event was cancelled.', DATEADD(day, -5, @NowUtc));
 
 UPDATE existing
 SET existing.Message = source.Message,
