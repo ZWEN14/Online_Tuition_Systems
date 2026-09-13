@@ -10,10 +10,10 @@
         <h1 class="h2 mb-1">Manage event registrations</h1>
         <p class="text-muted mb-0">Review applications for events that you organise.</p>
     </div>
-    @if (selectedEventId.HasValue)
+    @* @if (selectedEventId.HasValue)
     {
         <a asp-controller="Events" asp-action="Details" asp-route-id="@selectedEventId.Value" class="btn btn-outline-secondary">Back to event</a>
-    }
+    } *@
 </div>
 
 @if (TempData["SuccessMessage"] is string successMessage)
