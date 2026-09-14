@@ -413,6 +413,129 @@
     color: #78d8ce;
 }
 
+/* Custom module surfaces that do not use Bootstrap's standard card background. */
+.course-theme-dark .app-main .module-header,
+.course-theme-dark .app-main .module-detail-header,
+.course-theme-dark .app-main .notification-hero,
+.course-theme-pre-dark .course-module-page .app-main .module-header,
+.course-theme-pre-dark .course-module-page .app-main .module-detail-header,
+.course-theme-pre-dark .course-module-page .app-main .notification-hero {
+    color: #e7edf6;
+    border-color: #465874;
+    background: linear-gradient(135deg, #242640, #1c3040);
+}
+
+.course-theme-dark .app-main .module-header h1,
+.course-theme-dark .app-main .module-header p,
+.course-theme-dark .app-main .module-detail-header h1,
+.course-theme-dark .app-main .notification-hero h1,
+.course-theme-dark .app-main .notification-hero p {
+    color: #e7edf6;
+}
+
+.course-theme-dark .app-main .home-dashboard-hero,
+.course-theme-dark .app-main .home-dashboard-section-soft,
+.course-theme-dark .app-main .home-section,
+.course-theme-dark .app-main .home-hero,
+.course-theme-pre-dark .course-module-page .app-main .home-dashboard-hero,
+.course-theme-pre-dark .course-module-page .app-main .home-dashboard-section-soft,
+.course-theme-pre-dark .course-module-page .app-main .home-section,
+.course-theme-pre-dark .course-module-page .app-main .home-hero {
+    color: #e7edf6;
+    border-color: #3d4d67;
+    background: linear-gradient(135deg, #172235, #23213d 62%, #153330);
+}
+
+.course-theme-dark .app-main .home-feature-card,
+.course-theme-dark .app-main .home-summary-item,
+.course-theme-dark .app-main .home-latest-panel,
+.course-theme-pre-dark .course-module-page .app-main .home-feature-card,
+.course-theme-pre-dark .course-module-page .app-main .home-summary-item,
+.course-theme-pre-dark .course-module-page .app-main .home-latest-panel {
+    color: #e7edf6;
+    border-color: #3b4d68;
+    background: rgba(29, 42, 63, .94);
+}
+
+.course-theme-dark .app-main .home-latest-panel-head,
+.course-theme-dark .app-main .home-latest-item,
+.course-theme-dark .app-main .home-latest-empty {
+    border-color: #34445d;
+}
+
+.course-theme-dark .app-main .notification-filters,
+.course-theme-pre-dark .course-module-page .app-main .notification-filters {
+    border-color: #465874;
+    background: #172235;
+}
+
+.course-theme-dark .app-main .notification-filter,
+.course-theme-pre-dark .course-module-page .app-main .notification-filter {
+    color: #b8c5d6;
+}
+
+.course-theme-dark .app-main .notification-filter:hover,
+.course-theme-dark .app-main .notification-filter.active,
+.course-theme-pre-dark .course-module-page .app-main .notification-filter:hover,
+.course-theme-pre-dark .course-module-page .app-main .notification-filter.active {
+    color: #eee9ff;
+    background: #2b2948;
+}
+
+.course-theme-dark .app-main .notification-card,
+.course-theme-pre-dark .course-module-page .app-main .notification-card {
+    color: #e7edf6;
+    border-color: #3b4d68;
+    background: #1b293e;
+    box-shadow: 0 .4rem 1.2rem rgba(0, 0, 0, .16);
+}
+
+.course-theme-dark .app-main .notification-card-unread,
+.course-theme-pre-dark .course-module-page .app-main .notification-card-unread {
+    border-left-color: #65b9ff;
+    background: linear-gradient(90deg, #193750 0, #1b293e 45%);
+}
+
+.course-theme-dark .app-main .notification-card-body strong,
+.course-theme-dark .app-main .notification-message,
+.course-theme-dark .app-main .notification-details,
+.course-theme-dark .app-main .notification-card time {
+    color: #dce5f1;
+}
+
+.course-theme-dark .app-main .notification-empty,
+.course-theme-pre-dark .course-module-page .app-main .notification-empty {
+    color: #dce5f1;
+    border-color: #52647e;
+    background: #1b293e;
+}
+
+.course-theme-dark .app-main .welcome-hero,
+.course-theme-pre-dark .course-module-page .app-main .welcome-hero {
+    border-color: #3d4d67;
+    background: linear-gradient(135deg, #172235, #23213d 62%, #153330);
+}
+
+.course-theme-dark .app-main .welcome-copy h1,
+.course-theme-dark .app-main .welcome-lead,
+.course-theme-dark .app-main .welcome-description,
+.course-theme-dark .app-main .welcome-benefits,
+.course-theme-dark .app-main .welcome-overview-note {
+    color: #dce5f1;
+}
+
+.course-theme-dark .app-main .welcome-overview-card,
+.course-theme-pre-dark .course-module-page .app-main .welcome-overview-card {
+    color: #dce5f1;
+    border-color: #3b4d68;
+    background: #1b293e;
+}
+
+.course-theme-dark .app-main .welcome-overview-card strong,
+.course-theme-dark .app-main .welcome-overview-card p {
+    color: #dce5f1;
+}
+
 .course-theme-dark .course-theme-toggle {
     color: #e8e2ff;
     border-color: #675c92;
