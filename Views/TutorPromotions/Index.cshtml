@@ -75,9 +75,9 @@ else
                             @(promotion.RedemptionLimit?.ToString() ?? "Unlimited")
                         </td>
                         <td>
-                            @if (promotion.IsActive && withinDates && withinLimit)
+                            @if (promotion.EndsAtMyt < nowMyt)
                             {
-                                <span class="badge text-bg-success">Available</span>
+                                <span class="badge text-bg-danger">Expired</span>
                             }
                             else if (!promotion.IsActive)
                             {
@@ -87,9 +87,17 @@ else
                             {
                                 <span class="badge text-bg-warning">Limit reached</span>
                             }
+                            else if (promotion.StartsAtMyt > nowMyt)
+                            {
+                                <span class="badge text-bg-info">Scheduled</span>
+                            }
+                            else if (withinDates)
+                            {
+                                <span class="badge text-bg-success">Available</span>
+                            }
                             else
                             {
-                                <span class="badge text-bg-light">Scheduled/expired</span>
+                                <span class="badge text-bg-secondary">Unavailable</span>
                             }
                         </td>
                         <td class="text-end">

@@ -1463,6 +1463,13 @@ h1, h2, h3, h4, h5, h6 {
   gap: 1rem;
 }
 
+.report-heading-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: .6rem;
+}
+
 .print-toolbar {
   justify-content: flex-end;
   margin-bottom: 1rem;
@@ -1493,6 +1500,11 @@ h1, h2, h3, h4, h5, h6 {
   .report-page-heading {
     flex-direction: column;
   }
+
+  .report-heading-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
 }
 
 @media print {
@@ -1510,7 +1522,6 @@ h1, h2, h3, h4, h5, h6 {
   .app-navbar,
   .app-sidebar,
   .shell-sidebar-controls,
-  .shell-sidebar-arrow,
   .page-back,
   .print-hidden,
   .notification-dropdown {

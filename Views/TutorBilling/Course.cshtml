@@ -19,9 +19,21 @@
         <h1 class="h3 mb-1">@Model.Title</h1>
         <p class="text-muted mb-0">Enrollment and payment analytics for this Course.</p>
     </div>
-    <button type="button" class="btn btn-outline-primary print-hidden" onclick="window.print()">
-        Print Course report
-    </button>
+    <div class="report-heading-actions print-hidden">
+        <button class="btn btn-outline-secondary" type="button"
+                data-bs-toggle="collapse" data-bs-target="#courseEarningsFilter"
+                aria-expanded="@(Model.Filter.HasRange ? "true" : "false")"
+                aria-controls="courseEarningsFilter">
+            Filter
+            @if (Model.Filter.HasRange)
+            {
+                <span class="badge text-bg-primary ms-1">Active</span>
+            }
+        </button>
+        <button type="button" class="btn btn-outline-primary" onclick="window.print()">
+            Print Course report
+        </button>
+    </div>
 </div>
 
 <div class="print-report-header">
@@ -29,10 +41,13 @@
     <span>@Model.Code Course report · @rangeLabel</span>
 </div>
 
-<form asp-action="Course" asp-route-id="@Model.CourseId" method="get"
-      class="card card-body report-filter print-hidden mb-4" data-billing-report-filter>
-    <partial name="_BillingReportFilter" model="Model.Filter" />
-</form>
+<div class="collapse @(Model.Filter.HasRange ? "show" : null) print-hidden"
+     id="courseEarningsFilter">
+    <form asp-action="Course" asp-route-id="@Model.CourseId" method="get"
+          class="card card-body report-filter mb-4" data-billing-report-filter>
+        <partial name="_BillingReportFilter" model="Model.Filter" />
+    </form>
+</div>
 
 <div class="row g-3 mb-4">
     <div class="col-sm-6 col-xl"><div class="card h-100"><div class="card-body">

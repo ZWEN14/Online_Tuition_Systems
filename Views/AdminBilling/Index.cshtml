@@ -11,9 +11,21 @@
         <h1 class="h3 mb-1">Billing Overview</h1>
         <p class="text-muted mb-0">System-wide course payments and commission totals.</p>
     </div>
-    <button type="button" class="btn btn-outline-primary print-hidden" onclick="window.print()">
-        Print billing report
-    </button>
+    <div class="report-heading-actions print-hidden">
+        <button class="btn btn-outline-secondary" type="button"
+                data-bs-toggle="collapse" data-bs-target="#adminBillingFilter"
+                aria-expanded="@(Model.Filter.HasRange ? "true" : "false")"
+                aria-controls="adminBillingFilter">
+            Filter
+            @if (Model.Filter.HasRange)
+            {
+                <span class="badge text-bg-primary ms-1">Active</span>
+            }
+        </button>
+        <button type="button" class="btn btn-outline-primary" onclick="window.print()">
+            Print billing report
+        </button>
+    </div>
 </div>
 
 <div class="print-report-header">
@@ -21,10 +33,13 @@
     <span>Administrator Billing Overview · @rangeLabel</span>
 </div>
 
-<form asp-action="Index" method="get" class="card card-body report-filter print-hidden mb-4"
-      data-billing-report-filter>
-    <partial name="_BillingReportFilter" model="Model.Filter" />
-</form>
+<div class="collapse @(Model.Filter.HasRange ? "show" : null) print-hidden"
+     id="adminBillingFilter">
+    <form asp-action="Index" method="get" class="card card-body report-filter mb-4"
+          data-billing-report-filter>
+        <partial name="_BillingReportFilter" model="Model.Filter" />
+    </form>
+</div>
 
 <div class="row g-3 mb-4">
     <div class="col-sm-6 col-xl">
@@ -79,7 +94,7 @@
     {
         <div class="row g-3">
             <div class="col-lg-6">
-                <div class="card h-100">
+                <div class="card">
                     <div class="card-body">
                         <h3 class="h6">Courses by status</h3>
                         <div class="course-analytics-list mt-3">
@@ -104,7 +119,7 @@
             </div>
 
             <div class="col-lg-6">
-                <div class="card h-100">
+                <div class="card">
                     <div class="card-body">
                         <h3 class="h6">Courses by category</h3>
                         <div class="course-analytics-list mt-3">

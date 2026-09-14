@@ -12,13 +12,25 @@
         <h1 class="h3 mb-1">Course Earnings</h1>
         <p class="text-muted mb-0">Enrollment and revenue from your own courses.</p>
     </div>
-    <a asp-action="Print"
-       asp-route-FromDateMyt="@Model.Filter.FromDateMyt?.ToString("yyyy-MM-dd")"
-       asp-route-ToDateMyt="@Model.Filter.ToDateMyt?.ToString("yyyy-MM-dd")"
-       target="_blank" rel="noopener"
-       class="btn btn-outline-primary print-hidden">
-        Print earnings report
-    </a>
+    <div class="report-heading-actions print-hidden">
+        <button class="btn btn-outline-secondary" type="button"
+                data-bs-toggle="collapse" data-bs-target="#tutorEarningsFilter"
+                aria-expanded="@(Model.Filter.HasRange ? "true" : "false")"
+                aria-controls="tutorEarningsFilter">
+            Filter
+            @if (Model.Filter.HasRange)
+            {
+                <span class="badge text-bg-primary ms-1">Active</span>
+            }
+        </button>
+        <a asp-action="Print"
+           asp-route-FromDateMyt="@Model.Filter.FromDateMyt?.ToString("yyyy-MM-dd")"
+           asp-route-ToDateMyt="@Model.Filter.ToDateMyt?.ToString("yyyy-MM-dd")"
+           target="_blank" rel="noopener"
+           class="btn btn-outline-primary">
+            Print earnings report
+        </a>
+    </div>
 </div>
 
 <div class="print-report-header">
@@ -28,10 +40,13 @@
 
 @if (!printMode)
 {
-    <form asp-action="Index" method="get" class="card card-body report-filter print-hidden mb-4"
-          data-billing-report-filter>
-        <partial name="_BillingReportFilter" model="Model.Filter" />
-    </form>
+    <div class="collapse @(Model.Filter.HasRange ? "show" : null) print-hidden"
+         id="tutorEarningsFilter">
+        <form asp-action="Index" method="get" class="card card-body report-filter mb-4"
+              data-billing-report-filter>
+            <partial name="_BillingReportFilter" model="Model.Filter" />
+        </form>
+    </div>
 }
 
 <div class="row g-3 mb-4">

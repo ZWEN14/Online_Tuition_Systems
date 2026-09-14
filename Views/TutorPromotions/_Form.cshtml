@@ -63,13 +63,15 @@
 
     <div class="col-md-6">
         <label asp-for="StartsAtMyt" class="form-label"></label>
-        <input asp-for="StartsAtMyt" type="datetime-local" class="form-control" />
+        <input asp-for="StartsAtMyt" asp-format="{0:yyyy-MM-ddTHH:mm}"
+               type="datetime-local" step="60" class="form-control" />
         <span asp-validation-for="StartsAtMyt" class="text-danger"></span>
     </div>
 
     <div class="col-md-6">
         <label asp-for="EndsAtMyt" class="form-label"></label>
-        <input asp-for="EndsAtMyt" type="datetime-local" class="form-control" />
+        <input asp-for="EndsAtMyt" asp-format="{0:yyyy-MM-ddTHH:mm}"
+               type="datetime-local" step="60" class="form-control" />
         <span asp-validation-for="EndsAtMyt" class="text-danger"></span>
     </div>
 

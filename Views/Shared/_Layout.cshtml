@@ -32,8 +32,18 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/app-sidebar.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/course-workspace.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/course-module-theme.css" asp-append-version="true" />
+    <script>
+        try {
+            if (window.sessionStorage.getItem("course-module-theme") === "dark") {
+                document.documentElement.classList.add("course-theme-pre-dark");
+            }
+        } catch {
+            // Use the default light theme when browser storage is unavailable.
+        }
+    </script>
 </head>
-<body>
+<body class="course-module-page">
     <nav class="navbar navbar-expand-lg navbar-dark app-navbar">
         <div class="container py-2">
             <a class="navbar-brand d-flex align-items-center gap-2" asp-controller="Home" asp-action="@(User.Identity?.IsAuthenticated == true ? "Index" : "Welcome")">
@@ -61,6 +71,19 @@
                             </a>
                         </li>
                         <li class="nav-item">@await Component.InvokeAsync("NotificationBell")</li>
+                        <li class="nav-item d-flex align-items-center">
+                            <button type="button" class="course-theme-toggle print-hidden"
+                                    data-course-theme-toggle aria-pressed="false"
+                                    aria-label="Switch to dark theme" title="Switch to dark theme">
+                                <svg class="course-theme-icon course-theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M20 15.4A8.5 8.5 0 0 1 8.6 4a8.5 8.5 0 1 0 11.4 11.4Z"></path>
+                                </svg>
+                                <svg class="course-theme-icon course-theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+                                    <circle cx="12" cy="12" r="4"></circle>
+                                    <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>
+                                </svg>
+                            </button>
+                        </li>
                         <li class="nav-item">
                             <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
                                 <button type="submit" class="app-logout-button" title="Sign out of Anywhere Edureach">
@@ -101,14 +124,6 @@
                         </svg>
                     </button>
                 </div>
-
-                <button type="button"
-                        class="shell-sidebar-toggle shell-sidebar-arrow"
-                        aria-label="Collapse Quick Access sidebar">
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="m14 6-6 6 6 6"></path>
-                    </svg>
-                </button>
 
                 <div class="sidebar-heading">Quick access</div>
 
@@ -519,6 +534,7 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/app-sidebar.js" asp-append-version="true"></script>
+    <script src="~/js/course-module-theme.js" asp-append-version="true"></script>
     @RenderSection("Scripts", required: false)
 </body>
 </html>

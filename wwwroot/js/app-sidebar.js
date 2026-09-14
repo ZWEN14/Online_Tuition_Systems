@@ -41,10 +41,9 @@
     }
 
     const controls = sidebar.querySelector(":scope > .shell-sidebar-controls");
-    const arrow = sidebar.querySelector(":scope > .shell-sidebar-arrow");
-    if (!controls || !arrow) return;
+    if (!controls) return;
 
-    const toggles = [...controls.querySelectorAll("button"), arrow];
+    const toggles = [...controls.querySelectorAll("button")];
     const storageKey = "app-sidebar-collapsed";
     let transitionTimer = null;
 
@@ -54,9 +53,6 @@
             toggle.setAttribute("aria-expanded", String(!collapsed));
             toggle.title = collapsed ? "Open Quick Access" : "Close Quick Access";
         }
-        arrow.setAttribute("aria-label", collapsed
-            ? "Expand Quick Access sidebar"
-            : "Collapse Quick Access sidebar");
     };
 
     let collapsed = document.documentElement.classList.contains("shell-sidebar-precollapsed");

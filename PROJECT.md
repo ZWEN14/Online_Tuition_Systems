@@ -8,6 +8,21 @@ Read `AGENTS.md` before using this file. `AGENTS.md` controls how Codex and othe
 
 Do not mark an implementation task complete merely because code was proposed. Mark it complete only after the user confirms that the change was manually applied and works, or after the repository already contains verified working implementation.
 
+### 2026-09-14 — System-wide visual theme ready for verification
+
+- Promotion status now distinguishes future `Scheduled` promotions from past `Expired` promotions. Expired takes precedence and uses a red badge instead of the ambiguous white `Scheduled/expired` badge.
+- Expanded the approved light/dark visual theme across every application module, including the shared header and Quick Access sidebar.
+- The default light theme uses a clearly visible CSS-generated mint/lavender background with teal and violet accents, tinted cards/forms, lavender table headings, and alternating soft-mint rows instead of a majority-white surface. Dark mode remains available but is not the current visual-design priority.
+- Moved the theme control from the floating page corner into the header beside Logout. It is now a compact moon/sun icon button, persists the system-wide choice in session storage, and no longer overlaps sidebar controls or page images. No package, database, or migration change is required; browser verification remains pending.
+- Removed the duplicate sidebar edge arrow globally; the hamburger is now the single open/close control for every role. Unequal Billing analytics cards use their natural content height, preventing large empty card areas.
+
+### 2026-09-14 — Sidebar, Billing filters, and Promotion time refinement ready for verification
+
+- Collapsed Quick Access hides all navigation sections and their icons while retaining the hamburger. The later system-wide theme refinement removed the redundant edge-arrow control.
+- Tutor Course Earnings, Administrator Billing Overview, and shared per-Course analytics now place a compact Filter control beside Print. Date fields remain hidden by default and expand on demand; an applied MYT date range keeps the panel open and shows an Active indicator.
+- Reused the existing validated Billing filter partial, clear routes, inclusive MYT date behavior, report calculations, and print parameters without changing Billing services or authorization.
+- Promotion start/end inputs now render and submit at minute precision, omitting seconds while preserving MYT-to-UTC conversion and existing date validation. No migration is required; browser verification remains pending.
+
 ### 2026-09-14 — Login reCAPTCHA enforcement correction ready for verification
 
 - Found that reCAPTCHA verification deliberately failed open in Development when its token/configuration was missing or Google verification failed, allowing Login and Registration to continue without a successful CAPTCHA assessment.
