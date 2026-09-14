@@ -91,6 +91,20 @@ h1, h2, h3, h4, h5, h6 {
   filter: drop-shadow(0 .55rem .8rem rgba(35, 65, 122, .16));
 }
 
+.welcome-kicker-logo {
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: 0 0 2.25rem;
+  object-fit: contain;
+}
+
+.welcome-visual-logo {
+  width: 4.25rem;
+  height: 4.25rem;
+  object-fit: contain;
+  filter: drop-shadow(0 .45rem .7rem rgba(7, 20, 61, .22));
+}
+
 .app-brand {
   display: inline-flex;
   align-items: center;
