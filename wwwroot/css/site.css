@@ -1442,3 +1442,131 @@ h1, h2, h3, h4, h5, h6 {
 .min-w-0 {
   min-width: 0;
 }
+.report-page-heading,
+.print-toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.print-toolbar {
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
+
+.print-report-header {
+  display: none;
+}
+
+.report-filter-grid {
+  display: grid;
+  grid-template-columns: minmax(11rem, 1fr) minmax(11rem, 1fr) auto;
+  align-items: end;
+  gap: 1rem;
+}
+
+.report-filter-actions {
+  display: flex;
+  gap: .6rem;
+}
+
+@media (max-width: 767.98px) {
+  .report-page-heading,
+  .report-filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .report-page-heading {
+    flex-direction: column;
+  }
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+
+  html,
+  body {
+    color: #000 !important;
+    background: #fff !important;
+  }
+
+  .app-navbar,
+  .app-sidebar,
+  .shell-sidebar-controls,
+  .shell-sidebar-arrow,
+  .page-back,
+  .print-hidden,
+  .notification-dropdown {
+    display: none !important;
+  }
+
+  .app-shell,
+  .app-main {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .print-report-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: .65rem;
+    border-bottom: 2px solid #1d4ed8;
+  }
+
+  .print-report-header strong {
+    font-size: 15pt;
+  }
+
+  .print-report-header span {
+    color: #475569;
+    font-size: 9pt;
+  }
+
+  .card,
+  .course-performance-card,
+  .alert {
+    color: #000 !important;
+    border-color: #b8c0ca !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+
+  .table-responsive {
+    overflow: visible !important;
+  }
+
+  .table {
+    width: 100% !important;
+    color: #000 !important;
+    font-size: 8.5pt;
+  }
+
+  .table th,
+  .table td {
+    padding: .35rem !important;
+  }
+
+  .course-analytics-fill,
+  .progress-bar,
+  .badge {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  a {
+    color: inherit !important;
+    text-decoration: none !important;
+  }
+}

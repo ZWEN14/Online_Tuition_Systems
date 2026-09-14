@@ -1,0 +1,39 @@
+@model Online_Tuition_Systems.ViewModels.Courses.CourseWorkspaceTabsViewModel
+@{
+    string TabClass(string tab) => Model.ActiveTab == tab
+        ? "course-workspace-tab active"
+        : "course-workspace-tab";
+}
+
+<nav class="course-workspace-tabs" aria-label="Course workspace">
+    <a class="@TabClass(CourseWorkspaceTabs.Overview)"
+       asp-controller="@Model.Controller" asp-action="@Model.Action"
+       asp-route-id="@Model.CourseId" asp-route-tab="@CourseWorkspaceTabs.Overview"
+       aria-current="@(Model.ActiveTab == CourseWorkspaceTabs.Overview ? "page" : null)">Overview</a>
+    <a class="@TabClass(CourseWorkspaceTabs.Stream)"
+       asp-controller="@Model.Controller" asp-action="@Model.Action"
+       asp-route-id="@Model.CourseId" asp-route-tab="@CourseWorkspaceTabs.Stream"
+       aria-current="@(Model.ActiveTab == CourseWorkspaceTabs.Stream ? "page" : null)">Stream</a>
+    <a class="@TabClass(CourseWorkspaceTabs.Lessons)"
+       asp-controller="@Model.Controller" asp-action="@Model.Action"
+       asp-route-id="@Model.CourseId" asp-route-tab="@CourseWorkspaceTabs.Lessons"
+       aria-current="@(Model.ActiveTab == CourseWorkspaceTabs.Lessons ? "page" : null)">Lessons</a>
+    <a class="@TabClass(CourseWorkspaceTabs.Coursework)"
+       asp-controller="@Model.Controller" asp-action="@Model.Action"
+       asp-route-id="@Model.CourseId" asp-route-tab="@CourseWorkspaceTabs.Coursework"
+       aria-current="@(Model.ActiveTab == CourseWorkspaceTabs.Coursework ? "page" : null)">Coursework</a>
+    @if (Model.ShowStudents)
+    {
+        <a class="@TabClass(CourseWorkspaceTabs.Students)"
+           asp-controller="@Model.Controller" asp-action="@Model.Action"
+           asp-route-id="@Model.CourseId" asp-route-tab="@CourseWorkspaceTabs.Students"
+           aria-current="@(Model.ActiveTab == CourseWorkspaceTabs.Students ? "page" : null)">Students</a>
+    }
+    @if (Model.ShowSettings)
+    {
+        <a class="@TabClass(CourseWorkspaceTabs.Settings)"
+           asp-controller="@Model.Controller" asp-action="@Model.Action"
+           asp-route-id="@Model.CourseId" asp-route-tab="@CourseWorkspaceTabs.Settings"
+           aria-current="@(Model.ActiveTab == CourseWorkspaceTabs.Settings ? "page" : null)">Settings</a>
+    }
+</nav>

@@ -1,0 +1,132 @@
+@model CourseworkSubmissionsViewModel
+@{
+    ViewData["Title"] = "Assignment submissions";
+    var submittedCount = Model.Submissions.Count;
+    var progressPercent = Model.ActiveEnrollmentCount == 0
+        ? 0
+        : Math.Min(100, submittedCount * 100d / Model.ActiveEnrollmentCount);
+    var progressWidth = progressPercent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+}
+
+<div class="coursework-submissions-page">
+    <header class="coursework-submissions-header">
+        <div>
+            <span class="coursework-student-eyebrow">Assignment submissions</span>
+            <h1>@Model.AssignmentTitle</h1>
+            <p>@(Model.IsGraded ? $"Graded · {Model.MaxMarks:0.##} marks" : "Non-graded Coursework")</p>
+        </div>
+        <div class="coursework-submission-progress" aria-label="@submittedCount of @Model.ActiveEnrollmentCount Students submitted">
+            <strong>@submittedCount <span>of @Model.ActiveEnrollmentCount</span></strong>
+            <small>Students submitted</small>
+            <div class="progress" role="progressbar" aria-valuenow="@progressPercent"
+                 aria-valuemin="0" aria-valuemax="100">
+                <div class="progress-bar" style="width: @progressWidth%"></div>
+            </div>
+        </div>
+    </header>
+
+    @if (TempData["SuccessMessage"] is string success)
+    {
+        <div class="alert alert-success">@success</div>
+    }
+
+    @if (submittedCount == 0)
+    {
+        <div class="course-workspace-empty">No Students have submitted this assignment.</div>
+    }
+    else
+    {
+        <div class="coursework-submission-list">
+            @foreach (var submission in Model.Submissions)
+            {
+                var studentInitial = string.IsNullOrWhiteSpace(submission.StudentName)
+                    ? "S"
+                    : submission.StudentName.Trim()[0].ToString().ToUpperInvariant();
+                var attachmentIsImage = submission.AttachmentFileName?.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) == true
+                    || submission.AttachmentFileName?.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase) == true
+                    || submission.AttachmentFileName?.EndsWith(".png", StringComparison.OrdinalIgnoreCase) == true;
+
+                <details class="coursework-submission-disclosure">
+                    <summary class="coursework-submission-summary">
+                        <span class="coursework-submission-avatar" aria-hidden="true">@studentInitial</span>
+                        <span class="coursework-submission-heading">
+                            <strong>@submission.StudentName</strong>
+                            <span class="coursework-submission-meta">
+                                Submitted
+                                <time datetime="@submission.SubmittedAtUtc.ToString("O")">
+                                    @submission.SubmittedAtUtc.AddHours(8).ToString("dd MMM yyyy, h:mm tt") MYT
+                                </time>
+                            </span>
+                        </span>
+                        <span class="coursework-submission-badges">
+                            @if (submission.IsLate)
+                            {
+                                <span class="badge text-bg-danger">Late</span>
+                            }
+                            @if (Model.IsGraded)
+                            {
+                                <span class="badge @(submission.Score.HasValue ? "text-bg-success" : "text-bg-secondary")">
+                                    @(submission.Score.HasValue ? $"{submission.Score:0.##} / {Model.MaxMarks:0.##}" : "Not marked")
+                                </span>
+                            }
+                        </span>
+                        <span class="course-tutor-lesson-chevron" aria-hidden="true">
+                            <svg viewBox="0 0 24 24">
+                                <path d="m6.7 9.3 5.3 5.3 5.3-5.3 1.4 1.4-6.7 6.7-6.7-6.7 1.4-1.4Z" />
+                            </svg>
+                        </span>
+                    </summary>
+
+                    <div class="coursework-submission-body">
+                        <section class="coursework-submission-answer">
+                            <h2>Student response</h2>
+                            @if (!string.IsNullOrWhiteSpace(submission.TextResponse))
+                            {
+                                <p>@submission.TextResponse</p>
+                            }
+                            else
+                            {
+                                <p class="text-body-secondary">No written response was provided.</p>
+                            }
+                        </section>
+
+                        @if (!string.IsNullOrWhiteSpace(submission.AttachmentFileName))
+                        {
+                            <a asp-action="SubmissionFile" asp-route-submissionId="@submission.CourseSubmissionId"
+                               class="course-resource-card coursework-submission-attachment">
+                                <span class="course-resource-visual course-resource-file-icon @(attachmentIsImage ? "has-image" : string.Empty)">
+                                    @if (attachmentIsImage)
+                                    {
+                                        <img src="@Url.Action("SubmissionFile", "Coursework", new { submissionId = submission.CourseSubmissionId })"
+                                             alt="Preview of @submission.AttachmentFileName" loading="lazy" />
+                                    }
+                                    else
+                                    {
+                                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                                            <path d="M6 2h8l4 4v16H6V2Zm8 2.5V8h3.5L14 4.5ZM8 10v2h8v-2H8Zm0 4v2h8v-2H8Zm0 4v2h5v-2H8Z" />
+                                        </svg>
+                                    }
+                                </span>
+                                <span class="course-resource-details">
+                                    <small>Student attachment</small>
+                                    <strong>@submission.AttachmentFileName</strong>
+                                    <span>Preview or download</span>
+                                </span>
+                                <span class="course-resource-open" aria-hidden="true">&#8595;</span>
+                            </a>
+                        }
+
+                        <div class="coursework-submission-footer">
+                            <a href="mailto:@submission.StudentEmail" class="coursework-student-email">
+                                @submission.StudentEmail
+                            </a>
+                            <a asp-action="Grade" asp-route-courseId="@Model.CourseId"
+                               asp-route-submissionId="@submission.CourseSubmissionId"
+                               class="btn btn-sm btn-outline-primary">@(Model.IsGraded ? "Mark" : "Feedback")</a>
+                        </div>
+                    </div>
+                </details>
+            }
+        </div>
+    }
+</div>

@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Online_Tuition_Systems.Authorization;
 using Online_Tuition_Systems.Data;
@@ -145,7 +146,7 @@ public class EventsController : Controller
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        return View(new EditEventViewModel
+        var model = new EditEventViewModel
         {
             Id = tuitionEvent.Id,
             CourseId = tuitionEvent.CourseId,
@@ -160,7 +161,9 @@ public class EventsController : Controller
             MeetingPlatform = tuitionEvent.MeetingPlatform,
             MeetingUrl = tuitionEvent.MeetingUrl,
             MaxParticipants = tuitionEvent.MaxParticipants
-        });
+        };
+        await PopulateCourseOptionsAsync(model, organizerUserId);
+        return View(model);
     }
 
     [HttpPost]
@@ -173,16 +176,18 @@ public class EventsController : Controller
             return NotFound();
         }
 
-        if (!ModelState.IsValid)
-        {
-            return View(model);
-        }
-
         var organizerUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         if (string.IsNullOrWhiteSpace(organizerUserId))
         {
             return Forbid();
+        }
+
+        await ValidateCourseSelectionAsync(model.CourseId, organizerUserId);
+        if (!ModelState.IsValid)
+        {
+            await PopulateCourseOptionsAsync(model, organizerUserId);
+            return View(model);
         }
 
         var tuitionEvent = await _context.Events
@@ -538,6 +543,48 @@ public class EventsController : Controller
         }
 
         return await _context.Users.AsNoTracking().SingleOrDefaultAsync(item => item.Id == userId);
+    }
+
+    private async Task PopulateCourseOptionsAsync(
+        EditEventViewModel model,
+        string tutorReference)
+    {
+        if (!int.TryParse(tutorReference, out var tutorId))
+        {
+            model.CourseOptions = [];
+            return;
+        }
+
+        var courses = await _context.Courses
+            .AsNoTracking()
+            .Where(course => course.TutorId == tutorId)
+            .OrderBy(course => course.Title)
+            .Select(course => new { course.CourseId, course.Code, course.Title })
+            .ToListAsync();
+
+        model.CourseOptions = courses.Select(course => new SelectListItem
+        {
+            Value = course.CourseId.ToString(),
+            Text = $"{course.Code} — {course.Title}"
+        }).ToList();
+    }
+
+    private async Task ValidateCourseSelectionAsync(
+        int? courseId,
+        string tutorReference)
+    {
+        if (!courseId.HasValue) return;
+
+        var ownsCourse = int.TryParse(tutorReference, out var tutorId)
+            && await _context.Courses.AnyAsync(course =>
+                course.CourseId == courseId.Value
+                && course.TutorId == tutorId);
+        if (!ownsCourse)
+        {
+            ModelState.AddModelError(
+                nameof(EditEventViewModel.CourseId),
+                "Choose one of your own Courses.");
+        }
     }
 
     private string? GetRegistrationUnavailableReason(

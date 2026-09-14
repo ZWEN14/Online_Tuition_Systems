@@ -52,25 +52,8 @@ else
                         <td>@course.UpdatedAtUtc.ToLocalTime().ToString("dd MMM yyyy")</td>
                         <td class="text-end">
                             <div class="d-flex justify-content-end gap-1">
-                                @if (course.CanEdit)
-                                {
-                                    <a asp-action="Edit" asp-route-id="@course.CourseId"
-                                       class="btn btn-sm btn-outline-secondary">Edit</a>
-                                }
-                                @if (course.CanSubmit)
-                                {
-                                    <form asp-action="Submit" asp-route-id="@course.CourseId" method="post">
-                                        <button type="submit" class="btn btn-sm btn-outline-primary">
-                                            Submit for review
-                                        </button>
-                                    </form>
-                                }
-                                @if (course.CanArchive)
-                                {
-                                    <form asp-action="Archive" asp-route-id="@course.CourseId" method="post">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">Archive</button>
-                                    </form>
-                                }
+                                <a asp-action="Workspace" asp-route-id="@course.CourseId"
+                                   class="btn btn-sm btn-outline-primary">Manage content</a>
                             </div>
                         </td>
                     </tr>

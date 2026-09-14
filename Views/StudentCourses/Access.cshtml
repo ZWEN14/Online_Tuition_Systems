@@ -1,32 +1,131 @@
 @model Online_Tuition_Systems.ViewModels.Enrollments.CourseAccessViewModel
 @{
     ViewData["Title"] = Model.Title;
+    var tabs = new CourseWorkspaceTabsViewModel
+    {
+        CourseId = Model.CourseId,
+        Controller = "StudentCourses",
+        Action = "Access",
+        ActiveTab = Model.ActiveTab
+    };
 }
 
-<div class="row g-4">
-    <div class="col-lg-8">
-        <div class="text-muted mb-2">@Model.Code · Tutor: @Model.TutorName</div>
+<header class="course-workspace-header">
+    <div>
+        <div class="course-workspace-eyebrow">@Model.Code · Tutor: @Model.TutorName</div>
         <h1>@Model.Title</h1>
-
-        @if (Model.CourseStatus == CourseStatus.Archived)
-        {
-            <div class="alert alert-secondary">
-                This course is archived, but your existing enrollment remains accessible.
-            </div>
-        }
-
-        <section class="card card-body mt-4">
-            <h2 class="h4">Course overview</h2>
-            <div style="white-space: pre-line">@Model.Description</div>
-        </section>
     </div>
     @if (!string.IsNullOrWhiteSpace(Model.ThumbnailPath))
     {
-        <aside class="col-lg-4">
-            <img src="@Model.ThumbnailPath" class="img-fluid rounded shadow-sm"
-                 alt="Thumbnail for @Model.Title" />
-        </aside>
+        <img src="@Model.ThumbnailPath" alt="Thumbnail for @Model.Title" />
+    }
+</header>
+
+@await Html.PartialAsync("_CourseWorkspaceTabs", tabs)
+
+@if (Model.CourseStatus == CourseStatus.Archived)
+{
+    <div class="alert alert-secondary mt-4">
+        This course is archived, but your existing enrollment remains accessible.
+    </div>
+}
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="alert alert-success mt-4">@successMessage</div>
+}
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="alert alert-danger mt-4">@errorMessage</div>
+}
+
+<div class="course-workspace-panel">
+    @switch (Model.ActiveTab)
+    {
+        case CourseWorkspaceTabs.Stream:
+            @if (Model.Stream is null)
+            {
+                <div class="course-workspace-empty">The Course Stream is unavailable.</div>
+            }
+            else
+            {
+                <partial name="_CourseStream" model="Model.Stream" />
+            }
+            break;
+        case CourseWorkspaceTabs.Lessons:
+            <div class="course-workspace-section-heading">
+                <div>
+                    <h2>Lessons</h2>
+                    <p>Latest lessons appear first. Earlier material remains below.</p>
+                </div>
+                <span class="badge text-bg-primary">@Model.Lessons.Count published</span>
+            </div>
+            @if (Model.Lessons.Count == 0)
+            {
+                <div class="course-workspace-empty">The Tutor has not published any lessons yet.</div>
+            }
+            else
+            {
+                <div class="accordion course-lesson-list" id="studentLessonList">
+                    @foreach (var lesson in Model.Lessons)
+                    {
+                        var headingId = $"lessonHeading{lesson.CourseLessonId}";
+                        var contentId = $"lessonContent{lesson.CourseLessonId}";
+                        <article class="accordion-item">
+                            <h3 class="accordion-header" id="@headingId">
+                                <button class="accordion-button collapsed" type="button"
+                                        data-bs-toggle="collapse" data-bs-target="#@contentId"
+                                        aria-expanded="false" aria-controls="@contentId">
+                                    <span class="course-lesson-number">@lesson.DisplayOrder</span>
+                                    <span class="course-lesson-heading-copy">
+                                        <strong>@lesson.Title</strong>
+                                        @if (!string.IsNullOrWhiteSpace(lesson.Summary))
+                                        {
+                                            <small>@lesson.Summary</small>
+                                        }
+                                        <small class="course-lesson-date">
+                                            Updated @lesson.UpdatedAtUtc.AddHours(8).ToString("dd MMM yyyy, h:mm tt") MYT
+                                        </small>
+                                    </span>
+                                </button>
+                            </h3>
+                            <div id="@contentId" class="accordion-collapse collapse"
+                                 aria-labelledby="@headingId" data-bs-parent="#studentLessonList">
+                                <div class="accordion-body">
+                                    @if (!string.IsNullOrWhiteSpace(lesson.Content))
+                                    {
+                                        <div class="course-lesson-content course-lesson-text">@lesson.Content</div>
+                                    }
+                                    <partial name="_CourseLessonResources" model="lesson" />
+                                </div>
+                            </div>
+                        </article>
+                    }
+                </div>
+            }
+            break;
+        case CourseWorkspaceTabs.Coursework:
+            @if (Model.Coursework is null)
+            {
+                <div class="course-workspace-empty">Coursework is unavailable.</div>
+            }
+            else
+            {
+                <partial name="_Coursework" model="Model.Coursework" />
+            }
+            break;
+        default:
+            <div class="row g-4 align-items-start">
+                <div class="col-lg-8">
+                    <h2 class="h4">Course overview</h2>
+                    <div class="course-lesson-content">@Model.Description</div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="course-workspace-summary">
+                        <span>Available lessons</span>
+                        <strong>@Model.Lessons.Count</strong>
+                    </div>
+                </div>
+            </div>
+            break;
     }
 </div>
-
-<a asp-action="Index" class="btn btn-link px-0 mt-4">Back to my courses</a>

@@ -2,6 +2,7 @@ using AnywhereEdureach.Models;
 using Microsoft.EntityFrameworkCore;
 using Online_Tuition_Systems.Data;
 using Online_Tuition_Systems.Models;
+using Online_Tuition_Systems.ViewModels.Courses;
 using Online_Tuition_Systems.ViewModels.Enrollments;
 
 namespace Online_Tuition_Systems.Services.Enrollments;
@@ -170,6 +171,7 @@ public sealed class EnrollmentService(ApplicationDbContext dbContext) : IEnrollm
                 Error: "Your Student account is not available.");
         }
 
+        var now = DateTime.UtcNow;
         var enrollment = await dbContext.Enrollments
             .AsNoTracking()
             .Where(candidate => candidate.StudentId == studentId
@@ -185,7 +187,28 @@ public sealed class EnrollmentService(ApplicationDbContext dbContext) : IEnrollm
                     TutorName = candidate.Course.Tutor.Name,
                     Description = candidate.Course.Description,
                     ThumbnailPath = candidate.Course.ThumbnailPath,
-                    CourseStatus = candidate.Course.Status
+                    CourseStatus = candidate.Course.Status,
+                    Lessons = candidate.Course.Lessons
+                        .Where(lesson => lesson.IsPublished
+                            && (lesson.AvailableFromUtc == null
+                                || lesson.AvailableFromUtc <= now))
+                        .OrderByDescending(lesson => lesson.DisplayOrder)
+                        .ThenByDescending(lesson => lesson.CourseLessonId)
+                        .Select(lesson => new CourseLessonItemViewModel
+                        {
+                            CourseLessonId = lesson.CourseLessonId,
+                            Title = lesson.Title,
+                            Summary = lesson.Summary,
+                            Content = lesson.Content,
+                            ExternalResourceUrl = lesson.ExternalResourceUrl,
+                            ResourceFileName = lesson.ResourceFileName,
+                            ResourceSizeBytes = lesson.ResourceSizeBytes,
+                            DisplayOrder = lesson.DisplayOrder,
+                            IsPublished = lesson.IsPublished,
+                            AvailableFromUtc = lesson.AvailableFromUtc,
+                            UpdatedAtUtc = lesson.UpdatedAtUtc
+                        })
+                        .ToList()
                 }
             })
             .SingleOrDefaultAsync(cancellationToken);

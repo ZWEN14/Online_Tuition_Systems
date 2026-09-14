@@ -1,0 +1,19 @@
+@model Online_Tuition_Systems.ViewModels.Courses.CourseLessonFormViewModel
+@{
+    ViewData["Title"] = "Edit Lesson";
+}
+<div class="page-header">
+    <h1>Edit Lesson</h1>
+    <p class="mb-0">Update the lesson content, order, or publishing status.</p>
+</div>
+<form asp-action="EditLesson" method="post" enctype="multipart/form-data" class="card card-body">
+    <partial name="_LessonForm" model="Model" />
+    <div class="d-flex gap-2 mt-4">
+        <button type="submit" class="btn btn-primary">Save changes</button>
+        <a asp-action="Workspace" asp-route-id="@Model.CourseId" asp-route-tab="lessons" class="btn btn-outline-secondary">Cancel</a>
+    </div>
+</form>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/course-lesson-form.js" asp-append-version="true"></script>
+}

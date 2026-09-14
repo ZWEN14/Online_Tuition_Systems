@@ -1,4 +1,4 @@
--- Creates or refreshes three generic development accounts.
+-- Creates or refreshes three generic development accounts and 15 named Students.
 -- All accounts use the password: password123
 -- Role values: Student = 0, Tutor = 1, Admin = 2.
 USE [OnlineTuitionDb];
@@ -20,6 +20,32 @@ DECLARE @TutorHash nvarchar(100) =
     N'AQAAAAIAAYagAAAAEMtWYRqFYuDLI7xGPLdFLfVQNAERfW+rXjeKVWZXHCMT+m4Pdyb72w0eYHOMolJWVw==';
 DECLARE @AdminHash nvarchar(100) =
     N'AQAAAAIAAYagAAAAEHEInd+zPmxrP22JYsqxZpkj0DiC0CwespxNNqlD6w4hRh9VwOegFiC8qOsPiTlKwg==';
+
+-- Fixed names keep this script reproducible while providing realistic varied data.
+DECLARE @DemoStudents TABLE
+(
+    Name nvarchar(100) NOT NULL,
+    Email nvarchar(100) NOT NULL PRIMARY KEY,
+    EducationLevel nvarchar(50) NOT NULL
+);
+
+INSERT INTO @DemoStudents (Name, Email, EducationLevel)
+VALUES
+    (N'Olivia Carter', N'olivia.carter@test.com', N'Undergraduate'),
+    (N'Liam Bennett', N'liam.bennett@test.com', N'Undergraduate'),
+    (N'Emma Collins', N'emma.collins@test.com', N'Foundation'),
+    (N'Noah Parker', N'noah.parker@test.com', N'Undergraduate'),
+    (N'Ava Mitchell', N'ava.mitchell@test.com', N'Diploma'),
+    (N'Ethan Walker', N'ethan.walker@test.com', N'Undergraduate'),
+    (N'Sophia Turner', N'sophia.turner@test.com', N'Foundation'),
+    (N'Mason Harris', N'mason.harris@test.com', N'Diploma'),
+    (N'Mia Cooper', N'mia.cooper@test.com', N'Undergraduate'),
+    (N'Lucas Morgan', N'lucas.morgan@test.com', N'Undergraduate'),
+    (N'Isabella Reed', N'isabella.reed@test.com', N'Diploma'),
+    (N'James Foster', N'james.foster@test.com', N'Foundation'),
+    (N'Charlotte Hayes', N'charlotte.hayes@test.com', N'Undergraduate'),
+    (N'Benjamin Ward', N'benjamin.ward@test.com', N'Diploma'),
+    (N'Amelia Brooks', N'amelia.brooks@test.com', N'Undergraduate');
 
 SELECT @StudentId = Id FROM dbo.Users WHERE Email = N'student@test.com';
 
@@ -81,6 +107,53 @@ BEGIN
     VALUES (0, @TutorId);
 END;
 
+UPDATE existing
+SET existing.Name = demo.Name,
+    existing.Hash = @StudentHash,
+    existing.EmailVerified = 1,
+    existing.FailedLoginAttempts = 0,
+    existing.LockoutEnd = NULL,
+    existing.IsBlocked = 0,
+    existing.Role = 0
+FROM dbo.Users AS existing
+INNER JOIN @DemoStudents AS demo ON demo.Email = existing.Email;
+
+INSERT INTO dbo.Users
+    (Name, Email, Hash, EmailVerified, FailedLoginAttempts, IsBlocked, Role, CreatedAt)
+SELECT
+    demo.Name,
+    demo.Email,
+    @StudentHash,
+    1,
+    0,
+    0,
+    0,
+    SYSUTCDATETIME()
+FROM @DemoStudents AS demo
+WHERE NOT EXISTS
+(
+    SELECT 1
+    FROM dbo.Users AS existing
+    WHERE existing.Email = demo.Email
+);
+
+UPDATE studentProfile
+SET studentProfile.EducationLevel = demo.EducationLevel
+FROM dbo.Students AS studentProfile
+INNER JOIN dbo.Users AS studentUser ON studentUser.Id = studentProfile.UserId
+INNER JOIN @DemoStudents AS demo ON demo.Email = studentUser.Email;
+
+INSERT INTO dbo.Students (EducationLevel, UserId)
+SELECT demo.EducationLevel, studentUser.Id
+FROM @DemoStudents AS demo
+INNER JOIN dbo.Users AS studentUser ON studentUser.Email = demo.Email
+WHERE NOT EXISTS
+(
+    SELECT 1
+    FROM dbo.Students AS existingProfile
+    WHERE existingProfile.UserId = studentUser.Id
+);
+
 SELECT @AdminId = Id FROM dbo.Users WHERE Email = N'admin@test.com';
 
 IF @AdminId IS NULL
@@ -120,5 +193,6 @@ SELECT
     IsBlocked
 FROM dbo.Users
 WHERE Email IN (N'student@test.com', N'tutor@test.com', N'admin@test.com')
+    OR Email IN (SELECT Email FROM @DemoStudents)
 ORDER BY Role DESC;
 GO

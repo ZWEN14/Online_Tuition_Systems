@@ -1,0 +1,139 @@
+@model CourseAssignmentFormViewModel
+@{
+    var showAttachment = !string.IsNullOrWhiteSpace(Model.ExistingAttachmentFileName)
+        || ViewData.ModelState.ContainsKey(nameof(Model.Attachment));
+    var minimumDueMyt = DateTime.UtcNow.AddHours(8).AddMinutes(1).ToString("yyyy-MM-ddTHH:mm");
+}
+
+<input asp-for="CourseId" type="hidden" />
+<input asp-for="CourseAssignmentId" type="hidden" />
+<input asp-for="ExistingAttachmentFileName" type="hidden" />
+<input asp-for="IsPublished" type="hidden" />
+<div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+<div class="lesson-form-layout" data-assignment-form>
+    <fieldset class="lesson-form-section">
+        <legend><span>1</span><span><strong>Assignment details</strong></span></legend>
+        <div class="row g-3">
+            <div class="col-12">
+                <label asp-for="Title" class="form-label"></label>
+                <input asp-for="Title" class="form-control" />
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+            <div class="col-12">
+                <label asp-for="Instructions" class="form-label"></label>
+                <textarea asp-for="Instructions" class="form-control" rows="7"
+                          placeholder="Explain the task and requirements."></textarea>
+                <span asp-validation-for="Instructions" class="text-danger"></span>
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset class="lesson-form-section">
+        <legend>
+            <span>2</span><span><strong>Deadline
+                <button type="button" class="lesson-info-button" data-bs-toggle="tooltip"
+                        title="Students can submit or replace their work until this Malaysia date and time."
+                        aria-label="Deadline guidance">i</button>
+            </strong></span>
+        </legend>
+        <div class="coursework-compact-field">
+            <label asp-for="DueAtMyt" class="form-label"></label>
+            <input asp-for="DueAtMyt" asp-format="{0:yyyy-MM-ddTHH:mm}" class="form-control"
+                   type="datetime-local" step="60" min="@minimumDueMyt" />
+            <span asp-validation-for="DueAtMyt" class="text-danger"></span>
+        </div>
+    </fieldset>
+
+    <fieldset class="lesson-form-section">
+        <legend>
+            <span>3</span><span><strong>Grading
+                <button type="button" class="lesson-info-button" data-bs-toggle="tooltip"
+                        title="Graded work receives marks. Non-graded work records completion and may still receive private feedback."
+                        aria-label="Grading guidance">i</button>
+            </strong></span>
+        </legend>
+        <div class="lesson-publishing-options" role="radiogroup" aria-label="Grading option">
+            <input asp-for="IsGraded" type="radio" class="btn-check" value="true" id="assignmentGraded" />
+            <label class="lesson-publishing-option" for="assignmentGraded">
+                <strong>Graded</strong><small>Give this work marks</small>
+            </label>
+            <input asp-for="IsGraded" type="radio" class="btn-check" value="false" id="assignmentNotGraded" />
+            <label class="lesson-publishing-option" for="assignmentNotGraded">
+                <strong>Non-graded</strong><small>Completion and feedback only</small>
+            </label>
+        </div>
+        <div class="lesson-schedule-panel coursework-marks-panel" data-marks-panel>
+            <label asp-for="MaxMarks" class="form-label"></label>
+            <input asp-for="MaxMarks" class="form-control" min="1" max="1000" step="0.5" />
+            <span asp-validation-for="MaxMarks" class="text-danger"></span>
+        </div>
+    </fieldset>
+
+    <fieldset class="lesson-form-section">
+        <legend>
+            <span>4</span><span><strong>Attachment
+                <button type="button" class="lesson-info-button" data-bs-toggle="tooltip"
+                        title="Optional. Add one file up to 20 MB. Hiding this section does not remove a saved attachment."
+                        aria-label="Attachment guidance">i</button>
+            </strong></span>
+        </legend>
+        <button type="button" class="lesson-choice-button coursework-upload-choice @(showAttachment ? "active" : string.Empty)"
+                data-attachment-toggle aria-controls="assignmentAttachmentPanel"
+                aria-expanded="@showAttachment.ToString().ToLowerInvariant()">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 7.5 7.5l1.4 1.4L11 6.8V16h2V6.8l2.1 2.1 1.4-1.4L12 3ZM5 14v6h14v-6h-2v4H7v-4H5Z" /></svg>
+            <span><strong>Upload file</strong><small>Optional assignment resource</small></span>
+        </button>
+        <div id="assignmentAttachmentPanel" class="lesson-resource-panel mt-3"
+             data-attachment-panel hidden="@(!showAttachment)">
+            <label asp-for="Attachment" class="form-label">Choose file</label>
+            <input asp-for="Attachment" class="form-control"
+                   accept=".pdf,.pptx,.docx,.xlsx,.txt,.zip,.jpg,.jpeg,.png" />
+            <span asp-validation-for="Attachment" class="text-danger"></span>
+            <div class="form-text">PDF, Office document, ZIP, text or image; maximum 20 MB.</div>
+            @if (!string.IsNullOrWhiteSpace(Model.ExistingAttachmentFileName))
+            {
+                <div class="course-existing-resource mt-3 coursework-existing-file">
+                    <span>Current attachment: <strong>@Model.ExistingAttachmentFileName</strong></span>
+                    <label class="coursework-remove-file" title="Remove this attachment">
+                        <input asp-for="RemoveAttachment" class="visually-hidden" />
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 21a2 2 0 0 1-2-2V7h14v12a2 2 0 0 1-2 2H7Zm1-4h2V10H8v7Zm6 0h2V10h-2v7ZM8 4l1-1h6l1 1h4v2H4V4h4Z" /></svg>
+                        <span>Remove</span>
+                    </label>
+                </div>
+            }
+        </div>
+    </fieldset>
+
+    <fieldset class="lesson-form-section">
+        <legend>
+            <span>5</span><span><strong>Publishing
+                <button type="button" class="lesson-info-button" data-bs-toggle="tooltip"
+                        title="Drafts stay private. Published assignments are immediately visible to enrolled Students."
+                        aria-label="Publishing guidance">i</button>
+            </strong></span>
+        </legend>
+        <div class="lesson-publishing-options" role="radiogroup" aria-label="Publishing option">
+            <input asp-for="PublishingMode" type="radio" class="btn-check"
+                   value="@AssignmentPublishingMode.Draft" id="assignmentDraft" />
+            <label class="lesson-publishing-option" for="assignmentDraft">
+                <strong>Save as draft</strong><small>Only you can see it</small>
+            </label>
+            <input asp-for="PublishingMode" type="radio" class="btn-check"
+                   value="@AssignmentPublishingMode.Publish" id="assignmentPublish" />
+            <label class="lesson-publishing-option" for="assignmentPublish">
+                <strong>Publish</strong><small>Visible immediately</small>
+            </label>
+        </div>
+        <span asp-validation-for="PublishingMode" class="text-danger"></span>
+    </fieldset>
+</div>
+
+<div class="coursework-form-actions">
+    <button type="submit" class="btn btn-primary" data-assignment-submit
+            data-editing="@Model.CourseAssignmentId.HasValue.ToString().ToLowerInvariant()">
+        @(Model.CourseAssignmentId.HasValue ? "Save changes" : "Save draft")
+    </button>
+    <a asp-controller="TutorCourses" asp-action="Workspace" asp-route-id="@Model.CourseId"
+       asp-route-tab="@CourseWorkspaceTabs.Coursework" class="btn btn-outline-secondary">Cancel</a>
+</div>

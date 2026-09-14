@@ -1,0 +1,186 @@
+@model Online_Tuition_Systems.ViewModels.Courses.CourseLessonFormViewModel
+@{
+    var showLinkPanel = !string.IsNullOrWhiteSpace(Model.ExternalResourceUrl)
+        || ViewData.ModelState.ContainsKey(nameof(Model.ExternalResourceUrl));
+    var showUploadPanel = !string.IsNullOrWhiteSpace(Model.ExistingResourceFileName)
+        || ViewData.ModelState.ContainsKey(nameof(Model.ResourceFile));
+    var showSchedulePanel = Model.PublishingMode == CourseLessonPublishingMode.Schedule;
+    var minimumScheduleMyt = DateTime.UtcNow.AddHours(8).AddMinutes(1)
+        .ToString("yyyy-MM-ddTHH:mm");
+}
+
+<input asp-for="CourseId" type="hidden" />
+<input asp-for="CourseLessonId" type="hidden" />
+<input asp-for="ExistingResourceFileName" type="hidden" />
+<div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+<div class="lesson-form-layout" data-lesson-form>
+    <fieldset class="lesson-form-section">
+        <legend>
+            <span>1</span>
+            <span>
+                <strong>
+                    Lesson details
+                    <button type="button" class="lesson-info-button" data-bs-toggle="tooltip"
+                            data-bs-placement="right"
+                            title="Name the lesson, choose its position, and add an optional short summary."
+                            aria-label="Lesson details guidance">i</button>
+                </strong>
+            </span>
+        </legend>
+        <div class="row g-3">
+            <div class="col-md-9">
+                <label asp-for="Title" class="form-label"></label>
+                <input asp-for="Title" class="form-control" placeholder="Example: Introduction to MVC" />
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+            <div class="col-md-3">
+                <div class="lesson-field-label">
+                    <label asp-for="DisplayOrder" class="form-label"></label>
+                    <button type="button" class="lesson-info-button" data-bs-toggle="tooltip"
+                            data-bs-placement="top"
+                            title="Order numbers must be unique within this course. Higher numbers appear first."
+                            aria-label="Lesson order guidance">i</button>
+                </div>
+                <input asp-for="DisplayOrder" class="form-control" min="1" max="999" />
+                <span asp-validation-for="DisplayOrder" class="text-danger"></span>
+            </div>
+            <div class="col-12">
+                <label asp-for="Summary" class="form-label"></label>
+                <input asp-for="Summary" class="form-control"
+                       placeholder="A short description shown in the lesson feed" />
+                <span asp-validation-for="Summary" class="text-danger"></span>
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset class="lesson-form-section">
+        <legend>
+            <span>2</span>
+            <span>
+                <strong>
+                    Learning content
+                    <button type="button" class="lesson-info-button" data-bs-toggle="tooltip"
+                            data-bs-placement="right"
+                            title="Add lesson notes or instructions. This can be empty when the lesson contains a link or attachment."
+                            aria-label="Learning content guidance">i</button>
+                </strong>
+            </span>
+        </legend>
+        <label asp-for="Content" class="form-label"></label>
+        <textarea asp-for="Content" class="form-control" rows="8"
+                  placeholder="Write lesson notes or instructions here..."></textarea>
+        <span asp-validation-for="Content" class="text-danger"></span>
+    </fieldset>
+
+    <fieldset class="lesson-form-section">
+        <legend>
+            <span>3</span>
+            <span>
+                <strong>
+                    Resources
+                    <button type="button" class="lesson-info-button" data-bs-toggle="tooltip"
+                            data-bs-placement="right"
+                            title="Use these buttons to show or hide each editor. Hiding it does not remove an entered or saved resource. Use external hosting for videos larger than 50 MB."
+                            aria-label="Resource guidance">i</button>
+                </strong>
+            </span>
+        </legend>
+
+        <div class="lesson-resource-picker" aria-label="Choose resources to add">
+            <button type="button" class="lesson-choice-button @(showLinkPanel ? "active" : string.Empty)"
+                    data-resource-reveal="link" aria-controls="lessonLinkPanel"
+                    aria-expanded="@showLinkPanel.ToString().ToLowerInvariant()">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M10.6 13.4a1 1 0 0 0 1.4 1.4l4.6-4.6a3 3 0 0 0-4.2-4.2l-2 2a1 1 0 1 0 1.4 1.4l2-2a1 1 0 1 1 1.4 1.4l-4.6 4.6ZM13.4 10.6A1 1 0 0 0 12 9.2l-4.6 4.6a3 3 0 0 0 4.2 4.2l2-2a1 1 0 1 0-1.4-1.4l-2 2a1 1 0 0 1-1.4-1.4l4.6-4.6Z" />
+                </svg>
+                <span><strong>Add link</strong><small>Video or website</small></span>
+            </button>
+            <button type="button" class="lesson-choice-button @(showUploadPanel ? "active" : string.Empty)"
+                    data-resource-reveal="upload" aria-controls="lessonUploadPanel"
+                    aria-expanded="@showUploadPanel.ToString().ToLowerInvariant()">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 3 7.5 7.5l1.4 1.4L11 6.8V16h2V6.8l2.1 2.1 1.4-1.4L12 3ZM5 14v6h14v-6h-2v4H7v-4H5Z" />
+                </svg>
+                <span><strong>Upload file</strong><small>Document or media</small></span>
+            </button>
+        </div>
+
+        <div class="lesson-resource-panels">
+            <div id="lessonLinkPanel" class="lesson-resource-panel" data-resource-panel="link"
+                 hidden="@(!showLinkPanel)">
+                <label asp-for="ExternalResourceUrl" class="form-label"></label>
+                <input asp-for="ExternalResourceUrl" class="form-control" type="url"
+                       placeholder="https://example.com/video-or-resource" />
+                <span asp-validation-for="ExternalResourceUrl" class="text-danger"></span>
+                <div class="form-text">YouTube links receive an automatic thumbnail preview.</div>
+            </div>
+            <div id="lessonUploadPanel" class="lesson-resource-panel" data-resource-panel="upload"
+                 hidden="@(!showUploadPanel)"
+                 data-has-existing="@(!string.IsNullOrWhiteSpace(Model.ExistingResourceFileName) ? "true" : "false")">
+                <label asp-for="ResourceFile" class="form-label"></label>
+                <input asp-for="ResourceFile" class="form-control"
+                       accept=".pdf,.pptx,.docx,.xlsx,.txt,.jpg,.jpeg,.png,.mp4" />
+                <span asp-validation-for="ResourceFile" class="text-danger"></span>
+                <div class="form-text">PDF, Office, text, image, or MP4; maximum 50 MB.</div>
+                @if (!string.IsNullOrWhiteSpace(Model.ExistingResourceFileName))
+                {
+                    <div class="course-existing-resource mt-3">
+                        <span>Current attachment: <strong>@Model.ExistingResourceFileName</strong></span>
+                        <div class="form-check mt-2">
+                            <input asp-for="RemoveResourceFile" class="form-check-input" />
+                            <label asp-for="RemoveResourceFile" class="form-check-label"></label>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset class="lesson-form-section">
+        <legend>
+            <span>4</span>
+            <span>
+                <strong>
+                    Publishing
+                    <button type="button" class="lesson-info-button" data-bs-toggle="tooltip"
+                            data-bs-placement="right"
+                            title="Drafts stay private. Publish now makes the lesson available immediately. Schedule keeps it hidden until the selected MYT time."
+                            aria-label="Publishing guidance">i</button>
+                </strong>
+            </span>
+        </legend>
+
+        <div class="lesson-publishing-options" role="radiogroup" aria-label="Publishing option">
+            <input asp-for="PublishingMode" type="radio" class="btn-check"
+                   value="@CourseLessonPublishingMode.Draft" id="publishDraft" />
+            <label class="lesson-publishing-option" for="publishDraft">
+                <strong>Save as draft</strong>
+                <small>Only you can see it</small>
+            </label>
+
+            <input asp-for="PublishingMode" type="radio" class="btn-check"
+                   value="@CourseLessonPublishingMode.PublishNow" id="publishNow" />
+            <label class="lesson-publishing-option" for="publishNow">
+                <strong>Publish now</strong>
+                <small>Available immediately</small>
+            </label>
+
+            <input asp-for="PublishingMode" type="radio" class="btn-check"
+                   value="@CourseLessonPublishingMode.Schedule" id="publishSchedule" />
+            <label class="lesson-publishing-option" for="publishSchedule">
+                <strong>Schedule publishing</strong>
+                <small>Choose a MYT time</small>
+            </label>
+        </div>
+        <span asp-validation-for="PublishingMode" class="text-danger"></span>
+
+        <div class="lesson-schedule-panel" data-schedule-panel hidden="@(!showSchedulePanel)">
+            <label asp-for="AvailableFromMyt" class="form-label"></label>
+            <input asp-for="AvailableFromMyt" class="form-control" type="datetime-local"
+                   min="@minimumScheduleMyt" />
+            <span asp-validation-for="AvailableFromMyt" class="text-danger"></span>
+            <div class="form-text">Students will see the lesson after this Malaysia time.</div>
+        </div>
+    </fieldset>
+</div>

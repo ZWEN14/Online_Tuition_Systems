@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Online_Tuition_Systems.Authorization;
 using Online_Tuition_Systems.Data;
@@ -50,9 +51,20 @@ public class EventProposalsController : Controller
 
     [HttpGet]
     [Authorize(Roles = AppRoles.Tutor)]
-    public IActionResult Create()
+    public async Task<IActionResult> Create(int? courseId)
     {
-        return View(new EventProposalFormViewModel());
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId)) return Forbid();
+
+        var model = new EventProposalFormViewModel { CourseId = courseId };
+        await PopulateCourseOptionsAsync(model, userId);
+        if (courseId.HasValue
+            && !model.CourseOptions.Any(option => option.Value == courseId.Value.ToString()))
+        {
+            return NotFound();
+        }
+
+        return View(model);
     }
 
     [HttpPost]
@@ -60,16 +72,18 @@ public class EventProposalsController : Controller
     [Authorize(Roles = AppRoles.Tutor)]
     public async Task<IActionResult> Create(EventProposalFormViewModel model)
     {
-        if (!ModelState.IsValid)
-        {
-            return View(model);
-        }
-
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         if (string.IsNullOrWhiteSpace(userId))
         {
             return Forbid();
+        }
+
+        await ValidateCourseSelectionAsync(model.CourseId, userId);
+        if (!ModelState.IsValid)
+        {
+            await PopulateCourseOptionsAsync(model, userId);
+            return View(model);
         }
 
         var currentTime = DateTimeOffset.UtcNow;
@@ -103,7 +117,9 @@ public class EventProposalsController : Controller
             return NotFound();
         }
 
-        return View(ToFormViewModel(proposal));
+        var model = ToFormViewModel(proposal);
+        await PopulateCourseOptionsAsync(model, proposal.ProposedByUserId);
+        return View(model);
     }
 
     [HttpPost]
@@ -116,16 +132,18 @@ public class EventProposalsController : Controller
             return NotFound();
         }
 
-        if (!ModelState.IsValid)
-        {
-            return View(model);
-        }
-
         var proposal = await FindOwnedEditableProposal(id, asNoTracking: false);
 
         if (proposal is null)
         {
             return NotFound();
+        }
+
+        await ValidateCourseSelectionAsync(model.CourseId, proposal.ProposedByUserId);
+        if (!ModelState.IsValid)
+        {
+            await PopulateCourseOptionsAsync(model, proposal.ProposedByUserId);
+            return View(model);
         }
 
         var wasChangesRequested = proposal.Status == EventProposalStatus.ChangesRequested;
@@ -490,6 +508,48 @@ public class EventProposalsController : Controller
     private static string? CleanOptionalText(string? value)
     {
         return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    }
+
+    private async Task PopulateCourseOptionsAsync(
+        EventProposalFormViewModel model,
+        string tutorReference)
+    {
+        if (!int.TryParse(tutorReference, out var tutorId))
+        {
+            model.CourseOptions = [];
+            return;
+        }
+
+        var courses = await _context.Courses
+            .AsNoTracking()
+            .Where(course => course.TutorId == tutorId)
+            .OrderBy(course => course.Title)
+            .Select(course => new { course.CourseId, course.Code, course.Title })
+            .ToListAsync();
+
+        model.CourseOptions = courses.Select(course => new SelectListItem
+        {
+            Value = course.CourseId.ToString(),
+            Text = $"{course.Code} — {course.Title}"
+        }).ToList();
+    }
+
+    private async Task ValidateCourseSelectionAsync(
+        int? courseId,
+        string tutorReference)
+    {
+        if (!courseId.HasValue) return;
+
+        var ownsCourse = int.TryParse(tutorReference, out var tutorId)
+            && await _context.Courses.AnyAsync(course =>
+                course.CourseId == courseId.Value
+                && course.TutorId == tutorId);
+        if (!ownsCourse)
+        {
+            ModelState.AddModelError(
+                nameof(EventProposalFormViewModel.CourseId),
+                "Choose one of your own Courses.");
+        }
     }
 
     private static string? GetProposalCompletenessError(EventProposal proposal)

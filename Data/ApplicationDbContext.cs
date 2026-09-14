@@ -33,6 +33,10 @@ public class ApplicationDbContext : DbContext
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
     public DbSet<Promotion> Promotions => Set<Promotion>();
+    public DbSet<CourseLesson> CourseLessons => Set<CourseLesson>();
+    public DbSet<CourseStreamComment> CourseStreamComments => Set<CourseStreamComment>();
+    public DbSet<CourseAssignment> CourseAssignments => Set<CourseAssignment>();
+    public DbSet<CourseSubmission> CourseSubmissions => Set<CourseSubmission>();
 
     // Survey and Complaint modules.
     public DbSet<SubmissionAttachment> SubmissionAttachments => Set<SubmissionAttachment>();
@@ -238,6 +242,22 @@ public class ApplicationDbContext : DbContext
             .HasOne(promotion => promotion.Course)
             .WithMany(course => course.Promotions)
             .HasForeignKey(promotion => promotion.CourseId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CourseAssignment>()
+            .HasOne(assignment => assignment.Course)
+            .WithMany(course => course.Assignments)
+            .HasForeignKey(assignment => assignment.CourseId)
+            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<CourseSubmission>()
+            .HasOne(submission => submission.Assignment)
+            .WithMany(assignment => assignment.Submissions)
+            .HasForeignKey(submission => submission.CourseAssignmentId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<CourseSubmission>()
+            .HasOne(submission => submission.Student)
+            .WithMany()
+            .HasForeignKey(submission => submission.StudentId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

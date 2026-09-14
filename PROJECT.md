@@ -8,6 +8,93 @@ Read `AGENTS.md` before using this file. `AGENTS.md` controls how Codex and othe
 
 Do not mark an implementation task complete merely because code was proposed. Mark it complete only after the user confirms that the change was manually applied and works, or after the repository already contains verified working implementation.
 
+### 2026-09-14 — Student assignment presentation refinement started
+
+- Show the Student assignment state only once inside `Your work`, where it describes the Student's submission outcome.
+- Tighten the status badge and reorganize the assignment title, due date, type, instructions, and submission form into a cleaner focused layout.
+- Keep this as a Coursework presentation-only change with no database, workflow, or teammate-module changes.
+
+### 2026-09-14 — Student assignment presentation refinement ready for verification
+
+- Removed the duplicate state badge above the assignment title; `Assigned`, `Submitted`, `Submitted late`, or `Missing` now appears only in the `Your work` card.
+- Prevented the `Your work` badge from stretching with its flex row and restyled it as a compact status pill.
+- Added a focused maximum content width, a subtle assignment header, and separate due-date and Coursework-type metadata blocks for clearer visual hierarchy.
+- Tightened the Instructions card while retaining all existing submission, attachment, grading, authorization, and late-submission behavior. No migration is required.
+
+### 2026-09-14 — Tutor submission-list refinement started
+
+- Remove the redundant Course return link from the Tutor assignment-submissions page and improve its assignment summary hierarchy.
+- Report submission progress as submitted Students out of all active Students enrolled in the Course.
+- Convert the flat submission rows into compact disclosure cards, keeping Student identity, submission time, late state, and grading state visible while placing the response, attachment preview, and action inside the expanded card.
+- Preserve Mark for graded Coursework and Feedback for non-graded Coursework, but remove the unnecessary standalone `Feedback` summary word.
+
+### 2026-09-14 — Tutor submission-list refinement ready for verification
+
+- Removed the redundant Course-title return link below the shared Back control and replaced the flat heading with a compact assignment summary.
+- Added an EF-projected active-enrollment total so the page reports submissions as `submitted of enrolled`, with a small progress bar. This uses existing Course Enrollment data and requires no migration.
+- Replaced flat submission rows with lesson-style disclosure cards. Collapsed cards show Student identity, MYT submission time, late state, and graded marking state; expanded cards contain the written response, protected attachment preview/download card, email link, and action.
+- Image submissions receive a thumbnail preview; other supported files use the established resource-file presentation.
+- Graded Coursework retains a `Mark` action and score summary. Non-graded Coursework retains only the `Feedback` action without the confusing standalone `Feedback` summary label.
+- No submission, grading, authorization, database-schema, global-layout, or teammate-module behavior was changed.
+
+### 2026-09-14 — Course Event integration refinement started
+
+- Keep the teammate-owned Event, Event Proposal, approval, publication, registration, cancellation, and Event details workflows as the single source of Event behavior.
+- Build additively on the existing nullable `Event.CourseId` and `EventProposal.CourseId` fields; do not create a duplicate Course Event entity or registration system.
+- Always present an Upcoming events section in Course Stream. The owning Tutor can enter the existing Event Proposal workflow with the Course preselected; published future Events for that Course continue to appear automatically.
+- Replace raw Course-ID entry in Tutor Event Proposal and Event edit forms with an optional dropdown restricted to Courses owned by the current Tutor, and validate ownership server-side to prevent linking Events to another Tutor's Course.
+- Preserve platform-wide Events through an empty Course selection and preserve the existing global Event pages and Event Registration behavior.
+- Exclude achievement and streak systems from scope because they do not fit the confirmed Online Tuition workflow.
+
+### 2026-09-14 — Course Event integration refinement ready for verification
+
+- Preserved the teammate-owned Event Proposal, Admin approval, draft Event creation, Tutor publication, Event details, Event Registration, update, cancellation, and archive workflows.
+- Course Stream now always displays `Upcoming events`. It shows linked published future Events or a clear empty state instead of hiding the entire section.
+- Added `Propose course event` for the owning Tutor on writable Course Streams. It opens the existing Event Proposal form with that Course preselected.
+- Replaced raw Course-ID fields in the proposal and Event editors with an optional owned-Course dropdown. An empty choice continues to represent a platform-wide Event, preserving existing usage.
+- Added server-side Course ownership validation to both proposal creation/editing and approved Event editing, preventing a Tutor from linking an Event to another Tutor's Course through a changed request value.
+- Published future Events continue to reach Stream through the existing `Event.CourseId` query and open the existing Event details/registration page. No duplicate Event or registration logic was introduced.
+- No entity or database-schema change was required, so no migration is needed. Browser verification of the proposal-to-Stream lifecycle remains pending.
+- Achievement and streak systems are explicitly excluded from current project scope.
+
+### 2026-09-14 — Student Course Reviews removed from scope
+
+- Remove the unused Student/Tutor Ratings and Reviews workspace placeholder and do not build a Student Course-rating entity or workflow.
+- Preserve Administrator `Course Reviews`, which is the separate required Course approval and publication workflow rather than a rating feature.
+- Retain Survey and Complaint as teammate-owned modules without repurposing them for Course ratings.
+
+### 2026-09-14 — Billing printing and role navigation refinement started
+
+- Add dependency-free browser printing to the Student invoice, Tutor Course Earnings, and Administrator Billing Overview pages, supporting physical printing and Save as PDF.
+- Add print-only styling that removes application navigation and interactive controls while preserving financial summaries, analytics, and transaction/course tables.
+- Keep public Course browsing in Student Quick Access. Remove that duplicated link for Tutors and Administrators; rename the Tutor-owned `My courses` destination to `Course management`.
+- Preserve Student `My courses`, Administrator Course Categories/Course Reviews, all routes, and all Billing authorization and calculation logic.
+
+### 2026-09-14 — Billing printing and role navigation refinement ready for verification
+
+- Added native browser Print actions to the Student invoice, Tutor Course Earnings, and Administrator Billing Overview pages. The browser print dialog supports a physical printer or Save as PDF without another package.
+- Added shared A4 print styling that hides the application header, sidebar, navigation/actions, and pagination while retaining report headings, financial summary cards, analytics, invoices, and visible table content.
+- Limited the public `Courses` Quick Access link to Students. Tutors now use `Course management`, and Administrators continue using Course Categories and Course Reviews without the redundant public Course link.
+- Preserved Student `My courses`, Administrator Course approval navigation, existing Billing calculations, data access, role authorization, and routes. No migration or package change is required.
+
+### 2026-09-14 — Category and Billing reporting completion started
+
+- Complete Administrator Course Category maintenance with an Edit workflow that reuses the existing validated category form rules and prevents duplicate names.
+- Add an optional MYT date range to Tutor Course Earnings and Administrator Billing Overview. Apply the range to enrollment/payment activity while retaining the complete current Course portfolio context.
+- Add an owner-protected Tutor per-Course analytics report with enrollment, payment, discount, commission, and Student transaction details.
+- Replace current-page printing for Tutor earnings with a dedicated full filtered report containing every owned Course row.
+- Keep these changes within Course/Billing, preserve all existing role and ownership rules, and introduce no database-schema or package change.
+
+### 2026-09-14 — Category and Billing reporting completion ready for verification
+
+- Added Administrator Course Category editing using the existing validated form model. The service trims values, prevents duplicate names while excluding the current record, updates the timestamp, and returns Not Found for an invalid category ID.
+- Added reusable optional From/To MYT date filtering to Tutor Course Earnings, Administrator Billing Overview, and Course-level reports. A custom ViewModel rule and browser validation prevent an ending date before the starting date.
+- MYT calendar dates are converted to inclusive UTC start and exclusive UTC end boundaries. Successful financial activity uses the recorded payment completion time; enrollment/pending activity uses its recorded creation time.
+- Added Tutor and Administrator per-Course Billing analytics with active/pending enrollment totals, paid sales, gross sales, promotion discounts, platform fees, Tutor net earnings, and detailed Student payment rows.
+- Tutor Course detail access remains constrained by the authenticated Tutor ID. Another Tutor receives Not Found even if the Course ID is changed; Administrators use a separate Admin-authorized action.
+- Replaced Tutor current-page printing with a dedicated full-report action that loads every owned Course row for the selected date range and opens the browser print dialog. Course-level reports can also be printed.
+- Added focused responsive filter styling and retained existing report calculations, payment records, authorization, and Course lifecycle behavior. No migration or package change is required; watcher/browser verification remains pending.
+
 ## 2. Project Summary
 
 - Course: BMIT2023 Web and Mobile Systems
@@ -1156,6 +1243,336 @@ Course/Billing scope and the other team module areas are now recorded. Shared Us
 - Shortened the width transition to 140 ms and temporarily hides navigation content during the 150 ms transition window, preventing labels from compressing while the sidebar expands.
 - JavaScript now handles only state, accessibility labels, route highlighting, and interaction; it no longer creates controls or replaces icons after page load.
 - Normal MVC navigation and the focused Course catalogue AJAX/partial-view implementation remain unchanged. Browser verification remains outstanding.
+
+### 2026-09-12 — Course Workspace and Lessons implementation started
+
+- Separate the public Course catalogue/details flow from the protected learning workspace opened through Student or Tutor `My Courses`.
+- Add a shared horizontal Course workspace navigation for Overview, Lessons, Coursework, and Reviews while keeping the appropriate global `Courses` or `My Courses` sidebar item highlighted.
+- Implement Lessons first: the owning Tutor can create, edit, publish/unpublish, order, and remove lessons; actively enrolled Students can read only published lessons while Published or Archived Course access remains valid.
+- Reserve Coursework as the next Course-owned section and Reviews as an integration point for the teammate module that is not present in the currently merged source. Do not introduce a duplicate Course Review entity.
+- Use EF Core code-first, data annotations, ViewModels, server/client validation, antiforgery protection, Tutor ownership checks, active-enrollment checks, and a shared Razor partial for workspace tabs.
+- A new additive migration will be required after the entity and context changes, but Codex will not create or apply it through a database-changing command.
+
+### 2026-09-12 — Course Workspace and Lessons implemented; migration and verification pending
+
+- Added the data-annotated `CourseLesson` entity and Course relationship for ordered draft/published lesson content, plus the corresponding `CourseLessons` DbSet.
+- Added `CourseWorkspaceService` with active-Tutor validation, strict Course ownership checks, suspended-Course write protection, lesson projection, and create/edit/remove operations.
+- Added a Tutor workspace reachable from `My Courses`, with Overview, Lessons, Coursework, and Reviews tabs; Tutors can create, edit, publish/unpublish, order, and remove their own lessons.
+- Redesigned enrolled Student Course access as the matching workspace. It preserves the established Published/Archived access rules and shows only published lessons in order.
+- Added reusable `_CourseWorkspaceTabs` and `_LessonForm` partial views, responsive workspace styling, client/server validation, antiforgery-protected mutations, MYT display, accessible tab state, and responsive lesson presentation.
+- Coursework currently communicates the next owned implementation stage. Reviews is an explicit integration point because no teammate Course Review entity/controller exists in the currently fetched branches; no duplicate review implementation was added.
+- Improved global sidebar selection to prefer MVC section/controller context, keeping `Courses` selected on public Course details and `My Courses` selected throughout Student/Tutor workspaces even if generated URL shapes differ.
+- The additive EF Core migration has not been generated or applied, and browser verification remains pending.
+
+### 2026-09-12 — Tutor Course Settings and lesson resources planned
+
+- Add a Tutor-only Settings workspace tab and move Edit, Submit for review, and Archive actions out of the Tutor `My Courses` list, leaving one clear `Manage content` entry point.
+- Preserve the approval workflow: only Draft/Rejected Course details can be edited/submitted, only Published Courses can be archived, and suspended Courses remain read-only.
+- Extend lessons with an optional MYT availability date/time, optional external resource/video URL, and one optional protected attachment.
+- Limit lesson attachments to 50 MB. Allow common documents, slides, spreadsheets, text, images, and small MP4 files; recommend external links for larger video to avoid LocalDB/project-storage, timeout, backup, and repository overhead.
+- Store attachments outside `wwwroot` under ignored application data and serve them through an authorized Course endpoint. Students require an active enrollment and accessible Course plus a published/available lesson; Tutors require ownership.
+- Permit text-only, link-only, or attachment-based lessons while requiring at least one content source through custom server validation.
+- These entity changes require another additive migration after implementation; do not rewrite the generated `AddCourseLessons` migration.
+
+### 2026-09-12 — Tutor Course Settings and lesson resources implemented; verification pending
+
+- Added the Tutor-only Settings workspace tab and moved Edit course details, Submit for review, and Archive course into it. Tutor `My Courses` now keeps one focused `Manage content` action.
+- Kept lifecycle rules intact: Draft/Rejected Courses can be edited and submitted, Published Courses can be archived, and suspended Courses remain read-only.
+- Extended lessons with optional text, an HTTP/HTTPS external resource URL, a protected attachment, a numeric lesson order, and an optional MYT availability date/time stored as UTC.
+- Lesson attachments are restricted to PDF, PPTX, DOCX, XLSX, TXT, JPG/JPEG, PNG, and MP4 files up to 50 MB. Files are stored outside `wwwroot` in ignored `App_Data/CourseLessonFiles` and use randomized stored names.
+- Added an authorized download endpoint: owning Tutors can retrieve their Course files; Students require an active enrollment plus a Published/Archived Course and a published lesson whose availability time has arrived.
+- Student and Tutor lesson views now expose available external links and protected downloads. Larger videos should use an external link instead of a local upload.
+- The generated `AddCourseLessons` migration remains unchanged. A second additive migration is required for the new resource and availability columns, followed by browser verification.
+
+### 2026-09-13 — Lesson feed and resource-preview refinement started
+
+- Reverse Tutor and Student lesson presentation so the highest lesson order—the latest item—appears first and earlier items remain below it.
+- Replace plain external-resource buttons with compact preview cards. YouTube URLs may derive a safe thumbnail from the video ID; other HTTP/HTTPS links use a project-owned domain preview without server-side fetching of untrusted page metadata.
+- Improve the enrolled Student lesson feed with clearer content spacing, resource separation, and less button-like visual noise.
+- Reorganize the shared Tutor lesson form into clear Lesson details, Learning content, Resources, and Publishing sections without changing the established validation or database structure.
+
+### 2026-09-13 — Lesson feed and resource-preview refinement implemented; verification pending
+
+- Tutor and Student workspaces now show lessons by descending lesson order, so the highest/latest item appears first and earlier material remains below.
+- Added a reusable Course lesson resource partial that presents external links and protected attachments as compact preview cards instead of plain action buttons.
+- YouTube watch, short, and embed URLs derive a thumbnail from a validated video ID. Other links show the lesson title and destination domain with a project-owned visual, avoiding unsafe server-side metadata fetching and another external library.
+- Student lesson cards now separate the lesson text from resources and show the MYT update date in the collapsed heading for easier scanning.
+- Reorganized the shared Tutor lesson form into four numbered sections: Lesson details, Learning content, Resources, and Publishing. Lesson-order behavior and resource guidance are now explicit.
+- This refinement adds no entity fields and requires no new migration beyond the previously pending lesson-resource migration. Browser verification remains pending.
+
+### 2026-09-13 — Tutor lesson-form progressive disclosure planned
+
+- Replace the always-visible publishing date and switch with three explicit choices: Save as draft, Publish now, and Schedule publishing. Show the MYT date/time field only for the scheduled choice.
+- Use concise information tooltips for secondary explanations while retaining visible guidance where Tutors need it to complete a field correctly.
+- Let Tutors independently reveal an external-link input or attachment input so a lesson may contain either resource type or both without presenting every control initially.
+- Keep one external link and one attachment per lesson for the core implementation. Multiple ordered videos/resources would require a separate one-to-many entity, migration, and management workflow and is deferred until the core Coursework section is complete.
+- Preserve server-side validation and normalize the selected publishing choice in the Course service. This is a ViewModel/UI refinement and requires no database migration.
+
+### 2026-09-13 — Tutor lesson-form progressive disclosure implemented; verification pending
+
+- Replaced the publishing switch and permanently visible date field with three explicit choices: Save as draft, Publish now, and Schedule publishing. Draft is the default for newly created lessons.
+- The MYT date/time picker now appears only when Schedule publishing is selected. Server validation requires the date for that choice, and the Course service converts each choice into the existing `IsPublished` and `AvailableFromUtc` fields.
+- Added independent Add link and Upload file selectors. Either panel can be revealed, allowing one link, one attachment, or both without initially displaying unused controls.
+- Added accessible information tooltips for secondary Resources and Publishing guidance while keeping short completion-critical hints visible beside their fields.
+- Added focused project JavaScript for progressive disclosure and Bootstrap tooltip initialization, plus responsive selected-state styling for the new controls.
+- Multiple lesson resources remain deliberately deferred until after core Coursework because they require a separate ordered child entity and management workflow. No migration is required for this form refinement; browser verification remains pending.
+
+### 2026-09-13 — Lesson resource toggles and scheduled-state validation planned
+
+- Make the Add link and Upload file selectors reversible visibility toggles. Collapsing a resource editor must preserve its entered value, selected upload, or existing stored resource; removal remains an explicit separate action.
+- Present a future published lesson as Scheduled in the Tutor workspace rather than Published. Once its MYT availability time arrives, present it normally as Published.
+- Require scheduled publishing to use a future MYT date/time through server validation and the browser date/time minimum.
+- Keep the existing entity fields and migration chain unchanged.
+
+### 2026-09-13 — Lesson resource toggles and scheduled-state validation implemented; verification pending
+
+- Add link and Upload file now toggle their editor panels open and closed. Collapsing a panel does not clear or disable its value, so entered links, newly selected files, and existing stored attachments remain intact.
+- Existing resource removal remains explicit through clearing/replacing a link, selecting Remove existing attachment, or deleting the lesson; panel visibility alone never changes stored data.
+- Future scheduled lessons now display a distinct Scheduled badge in the Tutor workspace. They display as Published after their UTC availability time corresponds to the current MYT time.
+- Scheduled publishing now requires a future MYT date/time through server-side custom validation and an HTML date/time minimum. The inactive schedule field is disabled client-side so hidden past values cannot block Publish now or Draft submissions.
+- No entity, migration, global layout, or teammate-module changes were required. Browser verification remains pending.
+
+### 2026-09-13 — Collapsible Tutor lesson list and lesson-order validation planned
+
+- Replace the always-expanded Tutor lesson cards with accessible disclosure cards. A closed card will show only lesson order, title, Draft/Published/Scheduled state, last-edit time, optional availability time, and one down chevron; an open card will use an up chevron.
+- Move lesson summary, learning content, resource previews, Edit, and Remove actions into the expanded area so Tutors can scan a large lesson list without reading every lesson body.
+- Keep `AvailableFromUtc` as the relevant publishing timestamp and do not add a separate published-date field. This keeps the core workflow and schema simple while still communicating scheduled availability.
+- Reject duplicate lesson-order numbers within the same Course during both create and edit, and associate the error with the Lesson order field. This validation uses the existing model and requires no migration.
+
+### 2026-09-13 — Collapsible Tutor lesson list and lesson-order validation implemented; verification pending
+
+- Tutor lesson cards now start collapsed and use the browser's accessible disclosure behavior. The compact row contains only order, title, publishing state, last-edit time, optional availability time, and a down/up chevron.
+- Lesson summary, full learning content, resource previews, Edit lesson, and Remove lesson are now contained in the expanded area. Responsive styling keeps metadata and actions readable on smaller screens.
+- Create and edit operations now check for another lesson with the same order number in the same Course before storing a file or saving changes. Edit correctly excludes the lesson currently being changed.
+- Duplicate-order failures are attached to the `DisplayOrder` field so the message appears beside Lesson order. No entity field, migration, global layout, or teammate-module change was introduced.
+- A separate published timestamp remains intentionally omitted: the existing publishing state and optional availability timestamp cover the current Course workflow. Tutor browser verification remains pending.
+
+### 2026-09-13 — Course communication, roster, and lesson-form UX decision
+
+- Keep Course communication separate from the teammate-owned system-wide Announcement module. A future Course `Stream` tab should reuse or formally integrate with that module rather than introducing a competing announcement model without coordination.
+- A Tutor-only `Students` tab is a suitable next Course feature because it is a Course enrollment roster, not a replacement for the teammate-owned User or Mentor–Mentee modules. Students should not see the full roster by default.
+- Defer student comments until the Stream ownership and moderation rules are agreed. If added, restrict them to actively enrolled Students, allow Tutor moderation, and keep posts scoped to one Course.
+- Tighten the Tutor lesson form by reducing section padding and heading-to-content spacing. Move secondary section and lesson-order explanations into accessible information tooltips while retaining essential field labels and completion guidance.
+
+### 2026-09-13 — Lesson-form spacing refinement implemented; verification pending
+
+- Reduced the space between the four numbered section headings and their controls, slightly reduced card padding, and tightened the gap between form sections.
+- Replaced the visible Lesson details and Learning content helper subtitles with accessible information tooltips using the existing Course form tooltip behavior.
+- Moved lesson-order guidance into a tooltip beside its label. It now explains both descending display order and the unique-per-Course validation without occupying another line below the input.
+- No controller, entity, migration, global layout, or teammate-module code was changed for this visual refinement.
+
+### 2026-09-13 — Tutor Course roster implementation started
+
+- Add a Tutor-only `Students` workspace tab backed by existing active Course Enrollments and shared User records; do not expose the roster in the Student workspace.
+- Present each Student with profile photo or initials, name, visible secondary email, and MYT enrollment date. Provide a small `mailto:` action without implementing automatic or Gmail-specific sending.
+- Display the active Student total and support server-side Name A–Z, newest enrollment, and oldest enrollment sorting. Keep the initial roster focused without filters or pagination.
+- Remove redundant `Back to my courses` links beneath the Tutor and Student workspace panels because the global sidebar already provides My Courses navigation.
+- Replace the Tutor Lessons subtitle with an information tooltip while keeping the Lessons heading and Add lesson action visible.
+
+### 2026-09-13 — Tutor Course roster implemented; verification pending
+
+- Added a Tutor-only Students workspace tab. The shared tab parser explicitly rejects the Students tab in the Student workspace, and Course ownership remains enforced by the existing Tutor workspace query.
+- The roster reads existing active Enrollments and shared User records, showing the active total, profile photo or initials, Student name, visible email, and MYT enrollment date.
+- Added Name A–Z, newest enrollment, and oldest enrollment sorting through the Tutor workspace GET route. Enrollment dates use activation time with enrollment time as a fallback.
+- Added visible email links and a compact envelope `mailto:` action; the application does not send an email automatically and is not coupled specifically to Gmail.
+- Removed the redundant bottom `Back to my courses` links from both Tutor and Student Course workspaces. Converted the Tutor Lessons guidance line to a compact information tooltip.
+- No entity, migration, global layout, teammate User, or teammate Announcement change was required. Tutor and Student browser verification remains pending.
+
+### 2026-09-13 — Course roster demonstration data and tooltip consistency planned
+
+- Reuse the lesson form's Bootstrap tooltip initialization and `lesson-info-button` presentation for the Tutor workspace Lessons helper rather than relying on a differently styled native browser tooltip.
+- Extend `Database/AddDemoUsers.sql` with 15 deterministic, realistic Western-name Student accounts in addition to the existing generic Student/Tutor/Admin accounts. Each generated email uses the student's name at `test.com`, and all demo Students use the documented `password123` credential.
+- Populate `Database/SeedEnrollment.sql` with an idempotent seed for those exact 15 Students and the `DEMO-CSHARP-ADV` / `Advanced C# Development` Course. Fail before changing data if the Course or any expected Student is missing.
+- Create varied active enrollment dates so the Tutor roster's Name, newest, and oldest sort choices can be demonstrated. Do not execute either database script through Codex.
+
+### 2026-09-13 — Course roster demonstration data and tooltip consistency implemented; execution pending
+
+- The Tutor Lessons helper now uses the same `lesson-info-button`, Bootstrap tooltip markup, placement behavior, and initialization script as the add/edit lesson form.
+- `Database/AddDemoUsers.sql` now idempotently creates or refreshes 15 additional named Student accounts and their Student profiles while preserving the generic Student, Tutor, and Admin accounts. All documented demo credentials use `password123`.
+- `Database/SeedEnrollment.sql` now validates the exact published `DEMO-CSHARP-ADV` Course and all 15 verified, unblocked Student accounts before making changes. It then inserts or refreshes exactly those active Enrollments with varied UTC dates for roster sorting.
+- The enrollment seed clearly remains roster/access demonstration data and does not fabricate Payment or Invoice records for the paid Course; it must not be used to validate Billing totals.
+- Neither SQL script was executed by Codex. No migration, entity, package, system, or teammate-module change was introduced.
+
+### 2026-09-13 — Tutor roster header refinement planned
+
+- Keep the workspace tab label as the short `Students`, but use `Enrolled students` as the page heading.
+- Do not add row numbers because they change meaning when the Tutor changes the sort order and provide no Student identity or business value.
+- Do not add pagination for the current 16-record demonstration roster; introduce it only when real list size makes scrolling inefficient.
+- Replace the visible roster explanation with the established information tooltip and present the count as one number with `Total active` beneath it. Pending-payment and cancelled Enrollments remain excluded.
+
+### 2026-09-13 — Tutor roster header refinement implemented; verification pending
+
+- Kept the tab label as Students and changed the page heading to Enrolled students.
+- Added the same Bootstrap information-tooltip control used by the lesson form to explain which Enrollment states are included.
+- Replaced `student(s)` with a compact numeric count and `Total active` label. No row number or pagination was added at the current demonstration size.
+- No controller, query, entity, migration, global layout, or teammate-module change was required.
+
+### 2026-09-13 — Tutor roster total wording refined
+
+- Changed the Student roster count caption from `Total active` to the clearer `In total`; the count still includes active Course Enrollments only, as explained by the adjacent tooltip.
+
+### 2026-09-13 — Course Stream integration review
+
+- The teammate-owned `Announcement` entity already contains nullable `CourseId`, making it the intended integration point for Course-specific Tutor posts rather than introducing a duplicate `CoursePost` entity.
+- The existing global `AnnouncementsController.VisibleAnnouncements()` query does not currently exclude Course-linked announcements. Creating Course Stream posts without adjusting that query would expose them to users who are not enrolled in the Course.
+- The recommended integration is to keep global Admin announcements where `CourseId` is null, use Course-owned workspace actions/services for Course-linked posts, and enforce Tutor ownership or active Student enrollment for every Stream read/write operation.
+- Student comments require a new Course-owned comment entity related to the Course-linked Announcement and shared User. Tutor post management, Student comment ownership, Tutor moderation, antiforgery validation, and suspended/archived Course behavior must be defined before implementation.
+- Because safely separating global and Course announcements requires a focused change to the teammate-owned Announcement query, implementation is awaiting explicit approval under the agreed module-boundary rule.
+
+### 2026-09-13 — Recommended Course Stream architecture refined
+
+- Treat Event, Announcement/post, Comment, and Stream as separate concepts: an Event is scheduled activity, an Announcement/post is Tutor-authored information, a Comment is a reply, and Stream is the chronological Course UI that can present multiple item types.
+- Use one Course `Stream` tab for both Tutor Course posts and compact cards for Events whose existing `Event.CourseId` matches the Course. Keep Event creation, approval, registration, and detailed management in the teammate-owned Events module.
+- Do not add a separate Course Event tab initially; it would duplicate global Event navigation and make the Course workspace unnecessarily crowded. Stream event cards should link to the existing Event details/registration flow.
+- Use the existing nullable `Announcement.CourseId` integration point for Course posts. Make the minimal teammate adjustment that global Announcements list/detail queries exclude Course-linked posts, preventing disclosure outside the enrolled Course workspace.
+- Allow comments on ordinary Course posts only in the first version. Event cards retain their existing View event/registration action and do not gain a second discussion workflow.
+- Keep the initial Stream simple: show a compact Upcoming events area ordered by start time, followed by Course posts ordered newest first. The Tutor creates/edits/removes Course posts; active enrolled Students read and comment; Students may remove only their own comments; the owning Tutor may moderate comments. Collapse comment lists when useful.
+- Published Courses allow new posts/comments, Archived Courses are read-only while existing enrolled Students retain access, and Suspended Courses remain inaccessible to Students and read-only to the Tutor.
+- This is a recommended design decision pending implementation. It reuses teammate entities and routes with a focused visibility adjustment rather than rewriting Event or Announcement logic.
+
+### 2026-09-13 — Course Stream implementation started
+
+- Implement the agreed shared Stream tab for Tutor and actively enrolled Student Course workspaces.
+- Reuse Course-linked Announcements as Tutor posts, present upcoming published Course Events through their existing details route, and add a Course-owned comment entity with strict author/owner authorization.
+- Apply the minimal teammate adjustment that global Announcement pages query only records without a Course link. Keep Event creation, approval, registration, and management unchanged.
+- Published Courses allow Tutor posts and Student/Tutor comments; Archived Courses remain readable but become read-only; Suspended Course access follows the existing workspace restrictions.
+- A new additive EF Core migration will be required for Stream comments. Codex will prepare source changes but will not generate or apply the migration.
+
+### 2026-09-13 — Course Stream source implemented; migration and verification pending
+
+- Added a shared Stream tab to the Tutor and enrolled-Student Course workspaces. It presents up to five upcoming published Course Events first, followed by Tutor-authored Course updates newest first.
+- Reused the existing Course-linked Announcement design for Stream posts instead of duplicating the teammate Announcement entity. The owning Tutor can publish, edit, and remove posts while the Course is Published.
+- Added the data-annotated `CourseStreamComment` entity, Course Stream service, form/view models, controller actions, shared Razor partial, and responsive Stream styling. Active enrolled Students and the owning Tutor can comment; Students may remove only their own comments, while the owning Tutor may moderate all comments.
+- Enforced Published, Archived, and Suspended behavior: Published permits contributions, Archived remains readable to existing enrolled Students but read-only, and existing Suspended Course access restrictions remain in force.
+- Tightened the teammate-owned global Announcement boundary with focused query conditions: Course-linked posts are excluded from global lists/details and from direct global edit, publish, or archive URLs. The Event management and registration implementation was not changed.
+- Added dependency injection and DbContext registration for the Course Stream service and comments. An additive EF Core migration still must be generated and applied manually before opening the Stream, and Tutor/Student authorization and browser behavior remain pending verification.
+
+### 2026-09-13 — Course Stream compile correction started
+
+- The watcher identified one missing `Online_Tuition_Systems.Services.Courses` import in `StudentCoursesController`; add only that namespace import so its injected `ICourseStreamService` resolves at compile time.
+
+### 2026-09-13 — Course Stream compile correction applied; verification pending
+
+- Added the missing Course services namespace import to `StudentCoursesController`. No controller behavior, database schema, migration, global layout, or teammate-owned feature logic was changed.
+- The user still needs to rerun migration generation after the watcher confirms compilation.
+
+### 2026-09-13 — Course Stream comment controls and sorting started
+
+- Add Latest/Oldest server-side sorting for Course Stream posts.
+- Allow Students and Tutors to edit only their own comments during the first ten minutes, with the time limit enforced again by the service rather than only hidden in the UI.
+- Remove Student comment deletion entirely. Retain deletion for the owning Tutor as a moderation function while the Course permits contributions.
+- Change the Tutor Stream heading from `Class updates` to `Post something`; keep the Student-facing heading as `Class updates`.
+- Reuse the existing comment entity's `UpdatedAtUtc`; no additional schema change or migration is required for this refinement.
+
+### 2026-09-13 — Course Stream comment controls and sorting implemented; verification pending
+
+- Added server-side Latest/Oldest sorting for Course Stream posts and a compact sorting selector shared by Tutor and Student workspaces.
+- Added an owner-only comment edit page and pencil action for both Tutor and Student comments. The service checks Course access, comment ownership, the parent Course post's published state, and the ten-minute window during both form loading and saving, preventing URL or stale-page bypasses.
+- Removed Student comment deletion from both the UI and controller authorization. The owning Tutor retains deletion while the published Course permits moderation.
+- Edited comments display a small edited indicator. The Tutor heading now reads `Post something`, while Students continue to see `Class updates`.
+- Reused the existing `UpdatedAtUtc` column from the generated Course Stream migration; no new migration or database operation was introduced by this refinement. Watcher/browser verification remains pending.
+
+### 2026-09-13 — Course Stream moderation history refinement started
+
+- Keep top-level Course Stream posts Tutor-only; Students participate through comments so official Course updates remain clear and controlled.
+- Rename the Tutor composer action from `Post update` to `Post`, and show an edited MYT timestamp when a Tutor changes an existing Course post.
+- Replace Tutor comment hard deletion with a soft moderation record. Preserve the Student identity and original posting time, hide the original content from the rendered Stream, and show a red moderation notice instead.
+- Replace the browser `confirm()` prompt with a Bootstrap confirmation dialog and a red trash icon.
+- Add moderation metadata to `CourseStreamComment`; this requires one additive EF Core migration after the source change.
+
+### 2026-09-13 — Course Stream moderation history refinement implemented; migration and verification pending
+
+- Kept top-level Stream posting Tutor-only and renamed the composer action to `Post`.
+- Course posts now carry their existing Announcement update time into the Stream and display `Edited on` with MYT date/time after a Tutor edit.
+- Replaced hard deletion of comments with Tutor moderation metadata: removal time and a Tutor-name snapshot are stored, the original content is retained internally for audit but excluded from the rendered view model, and the author name plus original posting time remain visible.
+- Added a red moderated-comment presentation, a red trash icon, and a Bootstrap confirmation dialog explaining the result before the Tutor confirms removal.
+- Removed comments cannot be edited or moderated twice. Student deletion remains blocked by Tutor-only controller authorization, while the existing ten-minute owner edit rule remains unchanged.
+- The new moderation fields require a separate additive EF Core migration. Codex did not generate or apply it; watcher/browser verification remains pending.
+
+### 2026-09-13 — Discussion scope and Coursework direction
+
+- Do not add a separate Discussion tab in the current scope. Tutor Stream posts and enrolled-Student comments already provide sufficient two-way Course communication without duplicating another forum workflow.
+- Coursework is the next Course Management section. Keep its core flow focused: a Tutor creates a draft assignment, publishes it with a MYT due date and maximum mark, active enrolled Students submit their own work before the deadline, and the Tutor records a mark and private feedback.
+- Use one optional Tutor attachment and one optional Student submission attachment plus a text response. Restrict file types and size; do not add multiple-file management, plagiarism checking, rubrics, peer review, or group assignments initially.
+- Permit one submission record per Student and assignment, with replacement before the deadline. After the deadline, the submission becomes read-only; Tutors may extend the deadline when necessary.
+- Draft assignments are Tutor-only. Published assignments are visible only to active enrolled Students. Archived Courses retain read-only history, while Suspended Courses remain inaccessible under existing rules.
+- Protect Tutor ownership and Student enrollment in every read/write action. Store timestamps in UTC and display them in MYT. Coursework source implementation has not started.
+
+### 2026-09-13 — Course Stream moderation confirmed
+
+- The user confirmed the Course Stream moderation and posting changes are working. The Stream section is treated as functionally verified; a separate Discussion feature remains intentionally excluded.
+
+### 2026-09-13 — Coursework implementation started
+
+- Implement the confirmed focused Coursework flow inside the existing Course workspace: Tutor assignment draft/publish management, active-Student submission before the deadline, Tutor marking, and private Student feedback.
+- Add protected assignment/submission attachments using project-local storage and authorization checks. Keep one optional attachment per assignment and submission.
+- Enforce Tutor ownership, active Student enrollment, one submission per Student and assignment, MYT input with UTC storage, score limits, and Course lifecycle restrictions on the server.
+- Do not add a Discussion tab or alter teammate-owned modules. The new Coursework entities will require an additive EF Core migration prepared manually by the user after source implementation.
+
+### 2026-09-13 — Coursework source implementation ready for migration and verification
+
+- Added Course assignment and one-per-Student submission entities, relationships, validation, service registration, and protected project-local attachment storage with a 20 MB limit and restricted file types.
+- Added Tutor Coursework management for draft creation, editing, publishing, draft removal, submission review, marks, and private feedback. Tutor ownership and Course lifecycle rules are checked server-side.
+- Added enrolled-Student Coursework pages for viewing published assignments, downloading protected assignment resources, submitting or replacing one text/file response before the deadline, and viewing marks/private feedback.
+- Integrated Coursework into the existing Tutor and Student Course workspace tabs without changing teammate-owned module behavior. Archived Courses remain read-only for Students and Suspended Courses remain unavailable.
+- Source implementation is ready, but it is not marked functionally complete until the user creates/applies the additive EF Core migration and confirms the Tutor/Student browser workflow.
+- Fixed the initial Coursework compilation issue by exposing and mapping the submission's last-updated timestamp required by the Student assignment view. Existing warnings in the teammate-owned Admin controller were left unchanged because they do not block compilation.
+
+### 2026-09-13 — Coursework editor refinement started
+
+- Align the Tutor assignment editor with the established Lesson editor: compact numbered sections, Draft/Publish choices, optional attachment reveal/preservation/removal controls, and minute-precision MYT date input.
+- Support graded and non-graded Coursework. Only graded assignments require and display an assignment mark value; non-graded submissions may still receive private Tutor feedback.
+- Keep assignment deletion limited to drafts without submissions. Because `AddCoursework` already exists, this model refinement requires a second additive migration after the source changes.
+
+### 2026-09-13 — Coursework editor refinement ready for verification
+
+- Redesigned the create/edit assignment form using the Course Lesson form language: numbered sections, compact minute-precision MYT deadline, concise instructions, consistent tooltips, and one primary action whose label follows the selected Draft or Publish option.
+- Added Graded and Non-graded choices. The Marks input appears and is required only for graded Coursework; Student and Tutor pages now label non-graded work clearly, while Tutors can still provide private feedback.
+- Reworked the optional attachment UI with an Upload file toggle, one-file limit, preservation across edits, and an explicit red trash control for removing the stored attachment.
+- Added Delete draft to the edit page. Server rules continue to prevent deleting published assignments or assignments with submissions, returning published work to draft after submissions, or lowering marks below an existing Student result.
+- The existing `AddCoursework` migration predates the new grading fields, so source remains awaiting a second additive migration and browser verification.
+
+### 2026-09-13 — Coursework cards, late submissions, and notifications started
+
+- Redesign the Course workspace assignment list as collapsible cards. Keep publishing state (`Draft` or `Published`) separate from deadline state (`Open` or `Past due`); the deadline becomes past due at the stated time.
+- Allow enrolled Students to submit or replace work after the deadline and permanently snapshot whether that submission was late.
+- Queue an in-application notification to the owning Tutor whenever a Student submits or replaces Coursework, using the existing notification table and feed infrastructure with a dedicated Coursework notification type.
+- Improve protected assignment attachments from a plain link to an expandable resource preview. Keep all changes within Course Management except the minimal notification enum/feed integration required for the requested notification.
+
+### 2026-09-13 — Coursework cards, late submissions, and notifications ready for verification
+
+- Replaced the flat assignment list with compact Bootstrap accordion cards. Collapsed cards show title, MYT deadline, publishing status, and deadline status; expanded cards show instructions, grading details, submission totals/actions, and a protected attachment preview.
+- Publishing and deadline are intentionally separate: `Draft`/`Published` describes visibility, while `Open`/`Past due` describes the deadline. At or after the exact due minute, the assignment is `Past due`.
+- Changed the previous deadline rule: active enrolled Students may now submit or replace published Coursework after the deadline. The submission permanently records `IsLate`, and both Student and Tutor views show a red Late badge.
+- Added a Tutor notification for each new or replaced Student submission. This minimally extends the teammate notification enum/feed categorization while reusing the existing notification table, feed, and target-link behavior.
+- Simplified Edit Assignment navigation to `Back`, and its primary action now remains `Save changes` instead of changing to `Publish assignment`. Draft deletion rules remain unchanged.
+- The new `CourseSubmission.IsLate` field requires another additive migration. Browser verification is still pending.
+
+### 2026-09-13 — Manual submission control started
+
+- Add an independent `Accept submissions` setting for published assignments. Turning it off must retain all existing submissions while blocking new submissions and replacements.
+- Display no submission-state badge for drafts. Published assignments show `Closed` when manually stopped, otherwise `Open` before the deadline or `Past due` at/after the deadline while late submission remains enabled.
+
+### 2026-09-13 — Manual submission control ready for verification
+
+- Added an `Accept submissions` switch under assignment Publishing. Closing submissions records the UTC closure time, preserves all existing submissions, and blocks both new submissions and replacements on the server.
+- Draft cards now show only `Draft`. Published cards show `Published` plus exactly one submission state: `Closed` when manually stopped, `Open` before the due time, or `Past due` at/after the due time when late submissions are still accepted.
+- Student assignment pages explain when the Tutor has stopped accepting work. The nullable closure timestamp keeps existing assignments open when the migration is applied and provides clearer audit history than a simple boolean.
+- This refinement requires one additional additive migration for `CourseAssignment.SubmissionsClosedAtUtc`; browser verification remains pending.
+
+### 2026-09-13 — Student Coursework simplification started
+
+- Remove manual submission closing and its `Closed` state. Continue accepting late work and use the deadline as the only submission timing rule.
+- Replace Student-facing publication/deadline badges with one outcome-oriented state: `Assigned`, `Submitted`, `Submitted late`, or `Missing`.
+- Simplify the Student assignment page and add explicit preview/download, replacement, and removal controls for the Student's single saved attachment.
+
+### 2026-09-13 — Student Coursework simplification ready for verification
+
+- Removed manual submission closing, the `Closed` state, and the planned closure database field. Published assignments continue accepting on-time or late work without another Tutor control.
+- Student Course cards now show exactly one progress state: `Assigned` before submission, `Submitted` for on-time work, `Submitted late` for late work, or `Missing` after the deadline when no work exists. Students no longer see internal Draft/Published or Open/Past-due badges.
+- Removed the top return link from the Student assignment page and reorganized the page around assignment instructions and a cleaner `Your work` card.
+- A saved Student attachment now appears as a preview/download resource with a red removal control. Students can replace it through the file picker or remove it when a written response remains, then Submit/Update or Cancel back to Coursework.
+- `AddCourseworkSubmissionControl` was subsequently found in the migration chain. Do not rewrite or delete it because it may already be applied on another database; generate a compensating `RemoveCourseworkSubmissionControl` migration to safely remove its column. The existing `AddLateCourseworkSubmissions` migration remains required for permanent late tagging; browser verification is pending.
 
 ### 2026-09-12 — Idempotent Course demonstration data script added
 

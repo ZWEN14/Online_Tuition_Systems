@@ -10,20 +10,29 @@
 
     const normalizePath = (value) => value.replace(/\/+$/, "").toLowerCase() || "/";
     const currentPath = normalizePath(window.location.pathname);
+    const sidebarSection = (shell.dataset.sidebarSection
+        || shell.dataset.currentController
+        || "").toLowerCase();
     const sidebarLinks = [...sidebar.querySelectorAll("a.sidebar-link")];
     let currentLink = null;
-    let currentLinkPathLength = -1;
+    let currentLinkScore = -1;
 
     for (const link of sidebarLinks) {
         const path = normalizePath(new URL(link.href, window.location.origin).pathname);
+        const linkController = path.split("/").filter(Boolean)[0] || "";
+        let matchScore = linkController === sidebarSection ? 1000 : -1;
 
-        const matchesCurrentRoute = currentPath === path
-            || (path !== "/" && currentPath.startsWith(`${path}/`));
-        if (matchesCurrentRoute && path.length > currentLinkPathLength) {
-            currentLink = link;
-            currentLinkPathLength = path.length;
+        if (path !== "/" && currentPath.startsWith(`${path}/`)) {
+            matchScore = 2000 + path.length;
+        }
+        if (currentPath === path) {
+            matchScore = 3000 + path.length;
         }
 
+        if (matchScore > currentLinkScore) {
+            currentLink = link;
+            currentLinkScore = matchScore;
+        }
     }
 
     if (currentLink) {

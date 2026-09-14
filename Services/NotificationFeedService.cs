@@ -84,6 +84,7 @@ public class NotificationFeedService(ApplicationDbContext context)
                 => "Course",
             UserNotificationType.EnrollmentCreated or UserNotificationType.EnrollmentActivated
                 => "Enrollment",
+            UserNotificationType.CourseworkSubmitted => "Coursework",
             _ => "Registration"
         };
 

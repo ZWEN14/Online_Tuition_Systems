@@ -1,0 +1,37 @@
+@model Online_Tuition_Systems.ViewModels.Courses.CourseStreamCommentEditViewModel
+@{
+    ViewData["Title"] = "Edit comment";
+}
+
+<div class="page-header">
+    <h1>Edit comment</h1>
+    <p class="mb-0">Comments can be edited during the first 10 minutes after posting.</p>
+</div>
+
+<form asp-action="EditComment" method="post" class="card card-body">
+    <input asp-for="CourseId" type="hidden" />
+    <input asp-for="CourseStreamCommentId" type="hidden" />
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+    <div class="mb-3">
+        <label asp-for="Content" class="form-label"></label>
+        <textarea asp-for="Content" class="form-control" rows="5"></textarea>
+        <span asp-validation-for="Content" class="text-danger"></span>
+    </div>
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Save comment</button>
+        @if (User.IsInRole(AppRoles.Tutor))
+        {
+            <a asp-controller="TutorCourses" asp-action="Workspace" asp-route-id="@Model.CourseId"
+               asp-route-tab="stream" class="btn btn-outline-secondary">Cancel</a>
+        }
+        else
+        {
+            <a asp-controller="StudentCourses" asp-action="Access" asp-route-id="@Model.CourseId"
+               asp-route-tab="stream" class="btn btn-outline-secondary">Cancel</a>
+        }
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

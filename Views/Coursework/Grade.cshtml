@@ -1,0 +1,37 @@
+@model CourseworkGradeViewModel
+@{
+    ViewData["Title"] = "Mark submission";
+}
+
+<div class="coursework-page-header">
+    <a asp-action="Submissions" asp-route-courseId="@Model.CourseId"
+       asp-route-assignmentId="@Model.CourseAssignmentId">&larr; Submissions</a>
+    <h1>Mark @Model.StudentName</h1>
+    <p>@Model.AssignmentTitle</p>
+</div>
+<form asp-action="Grade" method="post" class="coursework-form-card coursework-grade-form">
+    <input asp-for="CourseId" type="hidden" />
+    <input asp-for="CourseAssignmentId" type="hidden" />
+    <input asp-for="CourseSubmissionId" type="hidden" />
+    <input asp-for="AssignmentTitle" type="hidden" />
+    <input asp-for="StudentName" type="hidden" />
+    <input asp-for="IsGraded" type="hidden" />
+    <input asp-for="MaxMarks" type="hidden" />
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    @if (Model.IsGraded)
+    {
+        <div>
+            <label asp-for="Score" class="form-label">Mark (out of @Model.MaxMarks?.ToString("0.##"))</label>
+            <input asp-for="Score" class="form-control" min="0" max="@Model.MaxMarks" step="0.5" />
+            <span asp-validation-for="Score" class="text-danger"></span>
+        </div>
+    }
+    <div>
+        <label asp-for="TutorFeedback" class="form-label"></label>
+        <textarea asp-for="TutorFeedback" class="form-control" rows="7"></textarea>
+        <span asp-validation-for="TutorFeedback" class="text-danger"></span>
+    </div>
+    <button type="submit" class="btn btn-primary">Save result</button>
+</form>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

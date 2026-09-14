@@ -11,6 +11,15 @@ public interface ICourseAdministrationService
         CourseCategoryFormViewModel model,
         CancellationToken cancellationToken);
 
+    Task<CourseCategoryFormViewModel?> GetCategoryEditModelAsync(
+        int categoryId,
+        CancellationToken cancellationToken);
+
+    Task<CourseActionResult> UpdateCategoryAsync(
+        int categoryId,
+        CourseCategoryFormViewModel model,
+        CancellationToken cancellationToken);
+
     Task<CourseActionResult> ToggleCategoryAsync(
         int categoryId,
         CancellationToken cancellationToken);

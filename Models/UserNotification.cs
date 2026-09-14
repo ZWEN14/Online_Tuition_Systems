@@ -33,7 +33,8 @@ public enum UserNotificationType
     CourseSuspended,
     CourseRestored,
     EnrollmentCreated,
-    EnrollmentActivated
+    EnrollmentActivated,
+    CourseworkSubmitted
 }
 
 [Index(nameof(UserId), nameof(ReadAt), nameof(CreatedAt))]

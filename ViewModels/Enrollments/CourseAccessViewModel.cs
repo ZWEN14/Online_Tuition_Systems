@@ -1,4 +1,5 @@
 using Online_Tuition_Systems.Models;
+using Online_Tuition_Systems.ViewModels.Courses;
 
 namespace Online_Tuition_Systems.ViewModels.Enrollments;
 
@@ -17,4 +18,12 @@ public sealed class CourseAccessViewModel
     public string? ThumbnailPath { get; init; }
 
     public CourseStatus CourseStatus { get; init; }
+
+    public string ActiveTab { get; set; } = CourseWorkspaceTabs.Overview;
+
+    public IReadOnlyList<CourseLessonItemViewModel> Lessons { get; init; } = [];
+
+    public CourseStreamViewModel? Stream { get; set; }
+
+    public CourseworkWorkspaceViewModel? Coursework { get; set; }
 }

@@ -88,6 +88,11 @@ builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 // Course Management services.
 builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<ICourseAdministrationService, CourseAdministrationService>();
+builder.Services.AddScoped<ICourseWorkspaceService, CourseWorkspaceService>();
+builder.Services.AddScoped<ICourseStreamService, CourseStreamService>();
+builder.Services.AddScoped<ICourseworkService, CourseworkService>();
+builder.Services.AddScoped<ICourseworkFileStorage, CourseworkFileStorage>();
+builder.Services.AddScoped<ICourseLessonFileStorage, CourseLessonFileStorage>();
 builder.Services.AddScoped<ILocalCourseImageStorage, LocalCourseImageStorage>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<IBillingService, BillingService>();

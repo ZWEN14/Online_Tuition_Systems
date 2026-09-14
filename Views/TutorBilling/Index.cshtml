@@ -1,12 +1,38 @@
 @model Online_Tuition_Systems.ViewModels.Billing.TutorBillingReportViewModel
 @{
     ViewData["Title"] = "Course Earnings";
+    var printMode = ViewData["PrintMode"] as bool? == true;
+    var rangeLabel = Model.Filter.HasRange
+        ? $"{(Model.Filter.FromDateMyt?.ToString("dd MMM yyyy") ?? "Beginning")} to {(Model.Filter.ToDateMyt?.ToString("dd MMM yyyy") ?? "Today")} MYT"
+        : "All dates";
 }
 
-<div class="mb-4">
-    <h1 class="h3 mb-1">Course Earnings</h1>
-    <p class="text-muted mb-0">Enrollment and revenue from your own courses.</p>
+<div class="report-page-heading mb-4">
+    <div>
+        <h1 class="h3 mb-1">Course Earnings</h1>
+        <p class="text-muted mb-0">Enrollment and revenue from your own courses.</p>
+    </div>
+    <a asp-action="Print"
+       asp-route-FromDateMyt="@Model.Filter.FromDateMyt?.ToString("yyyy-MM-dd")"
+       asp-route-ToDateMyt="@Model.Filter.ToDateMyt?.ToString("yyyy-MM-dd")"
+       target="_blank" rel="noopener"
+       class="btn btn-outline-primary print-hidden">
+        Print earnings report
+    </a>
 </div>
+
+<div class="print-report-header">
+    <strong>Anywhere Edureach</strong>
+    <span>Tutor Course Earnings report · @rangeLabel</span>
+</div>
+
+@if (!printMode)
+{
+    <form asp-action="Index" method="get" class="card card-body report-filter print-hidden mb-4"
+          data-billing-report-filter>
+        <partial name="_BillingReportFilter" model="Model.Filter" />
+    </form>
+}
 
 <div class="row g-3 mb-4">
     <div class="col-sm-6 col-xl">
@@ -128,9 +154,12 @@ else
 {
     <div class="d-flex justify-content-between align-items-end gap-3 mb-2">
         <h2 class="h4 mb-0">Course breakdown</h2>
-        <span class="small text-muted">
-            Page @Model.CoursePage of @Model.TotalCoursePages
-        </span>
+        @if (!Model.IsFullReport)
+        {
+            <span class="small text-muted">
+                Page @Model.CoursePage of @Model.TotalCoursePages
+            </span>
+        }
     </div>
     <div class="table-responsive">
         <table class="table table-hover align-middle">
@@ -151,7 +180,12 @@ else
                 {
                     <tr>
                         <td>
-                            <div>@course.Title</div>
+                            <div>
+                                <a asp-action="Course" asp-route-id="@course.CourseId"
+                                   asp-route-FromDateMyt="@Model.Filter.FromDateMyt?.ToString("yyyy-MM-dd")"
+                                   asp-route-ToDateMyt="@Model.Filter.ToDateMyt?.ToString("yyyy-MM-dd")"
+                                   class="fw-semibold">@course.Title</a>
+                            </div>
                             <small class="text-muted">@course.Code</small>
                         </td>
                         <td><span class="badge text-bg-secondary">@course.Status</span></td>
@@ -169,12 +203,14 @@ else
 
     @if (Model.TotalCoursePages > 1)
     {
-        <nav class="mt-3" aria-label="Course earnings pages">
+        <nav class="mt-3 print-hidden" aria-label="Course earnings pages">
             <ul class="pagination pagination-sm justify-content-center">
                 @for (var pageNumber = 1; pageNumber <= Model.TotalCoursePages; pageNumber++)
                 {
                     <li class="page-item @(pageNumber == Model.CoursePage ? "active" : null)">
                         <a asp-action="Index" asp-route-coursePage="@pageNumber"
+                           asp-route-FromDateMyt="@Model.Filter.FromDateMyt?.ToString("yyyy-MM-dd")"
+                           asp-route-ToDateMyt="@Model.Filter.ToDateMyt?.ToString("yyyy-MM-dd")"
                            class="page-link"
                            aria-current="@(pageNumber == Model.CoursePage ? "page" : null)">
                             @pageNumber
@@ -187,9 +223,15 @@ else
 }
 
 @section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/billing-report-filter.js" asp-append-version="true"></script>
     <script>
         document.querySelectorAll('.analytics-info-button').forEach(element => {
             bootstrap.Tooltip.getOrCreateInstance(element);
         });
+        @if (printMode)
+        {
+            <text>window.addEventListener('load', () => window.print());</text>
+        }
     </script>
 }

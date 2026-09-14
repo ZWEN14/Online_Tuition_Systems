@@ -1,0 +1,294 @@
+@model Online_Tuition_Systems.ViewModels.Courses.TutorCourseWorkspaceViewModel
+@{
+    ViewData["Title"] = $"{Model.Title} Workspace";
+    var tabs = new CourseWorkspaceTabsViewModel
+    {
+        CourseId = Model.CourseId,
+        Controller = "TutorCourses",
+        Action = "Workspace",
+        ActiveTab = Model.ActiveTab,
+        ShowStudents = true,
+        ShowSettings = true
+    };
+}
+
+<header class="course-workspace-header">
+    <div>
+        <div class="course-workspace-eyebrow">Tutor workspace · @Model.Code · @Model.CourseStatus</div>
+        <h1>@Model.Title</h1>
+    </div>
+    @if (!string.IsNullOrWhiteSpace(Model.ThumbnailPath))
+    {
+        <img src="@Model.ThumbnailPath" alt="Thumbnail for @Model.Title" />
+    }
+</header>
+
+@await Html.PartialAsync("_CourseWorkspaceTabs", tabs)
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="alert alert-success mt-4">@successMessage</div>
+}
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="alert alert-danger mt-4">@errorMessage</div>
+}
+@if (Model.CourseStatus == CourseStatus.Suspended)
+{
+    <div class="alert alert-danger mt-4">
+        This course is suspended. You can review its workspace, but content changes are disabled.
+    </div>
+}
+
+<div class="course-workspace-panel">
+    @switch (Model.ActiveTab)
+    {
+        case CourseWorkspaceTabs.Stream:
+            @if (Model.Stream is null)
+            {
+                <div class="course-workspace-empty">The Course Stream is unavailable.</div>
+            }
+            else
+            {
+                <partial name="_CourseStream" model="Model.Stream" />
+            }
+            break;
+        case CourseWorkspaceTabs.Lessons:
+            <div class="course-workspace-section-heading">
+                <div>
+                    <h2>
+                        Lessons
+                        <button type="button" class="lesson-info-button" data-bs-toggle="tooltip"
+                                data-bs-placement="right"
+                                title="Create ordered learning material. Higher lesson numbers appear first."
+                                aria-label="Lesson ordering guidance">i</button>
+                    </h2>
+                </div>
+                @if (Model.CourseStatus != CourseStatus.Suspended)
+                {
+                    <a asp-action="CreateLesson" asp-route-id="@Model.CourseId"
+                       class="btn btn-primary">Add lesson</a>
+                }
+            </div>
+            @if (Model.Lessons.Count == 0)
+            {
+                <div class="course-workspace-empty">No lessons have been created.</div>
+            }
+            else
+            {
+                <div class="course-tutor-lessons">
+                    @foreach (var lesson in Model.Lessons)
+                    {
+                        var publishingLabel = lesson.IsScheduled
+                            ? "Scheduled"
+                            : lesson.IsPublished ? "Published" : "Draft";
+                        var publishingBadgeClass = lesson.IsScheduled
+                            ? "text-bg-warning"
+                            : lesson.IsPublished ? "text-bg-success" : "text-bg-secondary";
+                        <details class="course-tutor-lesson">
+                            <summary class="course-tutor-lesson-summary">
+                                <span class="course-lesson-number">@lesson.DisplayOrder</span>
+                                <span class="course-tutor-lesson-heading">
+                                    <span class="course-tutor-lesson-title-row">
+                                        <strong>@lesson.Title</strong>
+                                        <span class="badge @publishingBadgeClass">@publishingLabel</span>
+                                    </span>
+                                    <span class="course-lesson-metadata">
+                                        <span>
+                                            <small>Last edited</small>
+                                            <time datetime="@lesson.UpdatedAtUtc.ToString("O")">
+                                                @lesson.UpdatedAtUtc.AddHours(8).ToString("dd MMM yyyy, h:mm tt") MYT
+                                            </time>
+                                        </span>
+                                        @if (lesson.AvailableFromUtc.HasValue)
+                                        {
+                                            <span>
+                                                <small>Available on</small>
+                                                <time datetime="@lesson.AvailableFromUtc.Value.ToString("O")">
+                                                    @lesson.AvailableFromUtc.Value.AddHours(8).ToString("dd MMM yyyy, h:mm tt") MYT
+                                                </time>
+                                            </span>
+                                        }
+                                    </span>
+                                </span>
+                                <span class="course-tutor-lesson-chevron" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24">
+                                        <path d="m6.7 9.3 5.3 5.3 5.3-5.3 1.4 1.4-6.7 6.7-6.7-6.7 1.4-1.4Z" />
+                                    </svg>
+                                </span>
+                            </summary>
+                            <div class="course-tutor-lesson-body">
+                                @if (!string.IsNullOrWhiteSpace(lesson.Summary))
+                                {
+                                    <section class="course-tutor-lesson-copy">
+                                        <h4>Summary</h4>
+                                        <p>@lesson.Summary</p>
+                                    </section>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(lesson.Content))
+                                {
+                                    <section class="course-tutor-lesson-copy">
+                                        <h4>Learning content</h4>
+                                        <div class="course-lesson-content">@lesson.Content</div>
+                                    </section>
+                                }
+                                <partial name="_CourseLessonResources" model="lesson" />
+                                @if (Model.CourseStatus != CourseStatus.Suspended)
+                                {
+                                    <div class="course-lesson-actions">
+                                        <a asp-action="EditLesson" asp-route-id="@Model.CourseId"
+                                           asp-route-lessonId="@lesson.CourseLessonId"
+                                           class="btn btn-sm btn-outline-primary">Edit lesson</a>
+                                        <form asp-action="DeleteLesson" asp-route-id="@Model.CourseId"
+                                              asp-route-lessonId="@lesson.CourseLessonId" method="post"
+                                              onsubmit="return confirm('Remove this lesson?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Remove lesson</button>
+                                        </form>
+                                    </div>
+                                }
+                            </div>
+                        </details>
+                    }
+                </div>
+            }
+            break;
+        case CourseWorkspaceTabs.Students:
+            <div class="course-workspace-section-heading course-student-heading">
+                <div>
+                    <h2>
+                        Enrolled students
+                        <button type="button" class="lesson-info-button" data-bs-toggle="tooltip"
+                                data-bs-placement="right"
+                                title="Only active enrollments are shown. Pending-payment and cancelled enrollments are not included."
+                                aria-label="Enrolled student count guidance">i</button>
+                    </h2>
+                </div>
+                <div class="course-student-total">
+                    <strong>@Model.Students.Count</strong>
+                    <small>In total</small>
+                </div>
+            </div>
+            @if (Model.Students.Count == 0)
+            {
+                <div class="course-workspace-empty">No active students are enrolled in this course.</div>
+            }
+            else
+            {
+                <form asp-action="Workspace" method="get" class="course-student-sort">
+                    <input type="hidden" name="id" value="@Model.CourseId" />
+                    <input type="hidden" name="tab" value="@CourseWorkspaceTabs.Students" />
+                    <label for="studentSort">Sort by</label>
+                    <select id="studentSort" name="studentSort" class="form-select"
+                            onchange="this.form.submit()">
+                        <option value="@CourseStudentSortOptions.Name"
+                                selected="@(Model.StudentSort == CourseStudentSortOptions.Name)">Name A–Z</option>
+                        <option value="@CourseStudentSortOptions.Newest"
+                                selected="@(Model.StudentSort == CourseStudentSortOptions.Newest)">Newest enrollment</option>
+                        <option value="@CourseStudentSortOptions.Oldest"
+                                selected="@(Model.StudentSort == CourseStudentSortOptions.Oldest)">Oldest enrollment</option>
+                    </select>
+                    <noscript><button type="submit" class="btn btn-outline-primary">Sort</button></noscript>
+                </form>
+                <div class="course-student-list">
+                    @foreach (var student in Model.Students)
+                    {
+                        <article class="course-student-row">
+                            @if (!string.IsNullOrWhiteSpace(student.PhotoPath))
+                            {
+                                <img class="course-student-avatar" src="@student.PhotoPath"
+                                     alt="@student.Name profile photo" />
+                            }
+                            else
+                            {
+                                <span class="course-student-avatar course-student-initials"
+                                      aria-hidden="true">@student.Initials</span>
+                            }
+                            <div class="course-student-identity">
+                                <strong>@student.Name</strong>
+                                <a href="@($"mailto:{student.Email}")">@student.Email</a>
+                            </div>
+                            <div class="course-student-enrollment">
+                                <small>Enrolled</small>
+                                <time datetime="@student.EnrolledAtUtc.ToString("O")">
+                                    @student.EnrolledAtUtc.AddHours(8).ToString("dd MMM yyyy")
+                                </time>
+                            </div>
+                            <a href="@($"mailto:{student.Email}")" class="course-student-email"
+                               title="Email @student.Name" aria-label="Email @student.Name">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M3 5h18v14H3V5Zm2 2v.5l7 4.9 7-4.9V7H5Zm14 10V9.9l-7 4.9-7-4.9V17h14Z" />
+                                </svg>
+                            </a>
+                        </article>
+                    }
+                </div>
+            }
+            break;
+        case CourseWorkspaceTabs.Coursework:
+            @if (Model.Coursework is null)
+            {
+                <div class="course-workspace-empty">Coursework is unavailable.</div>
+            }
+            else
+            {
+                <partial name="_Coursework" model="Model.Coursework" />
+            }
+            break;
+        case CourseWorkspaceTabs.Settings:
+            <div class="course-workspace-section-heading">
+                <div>
+                    <h2>Course settings</h2>
+                    <p>Manage the Course listing and lifecycle without cluttering My Courses.</p>
+                </div>
+                <span class="badge text-bg-secondary">@Model.CourseStatus</span>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(Model.RejectionReason))
+            {
+                <div class="alert alert-warning"><strong>Administrator feedback:</strong> @Model.RejectionReason</div>
+            }
+            <div class="course-settings-actions">
+                @if (Model.CanEditSettings)
+                {
+                    <a asp-action="Edit" asp-route-id="@Model.CourseId" class="btn btn-outline-primary">
+                        Edit course details
+                    </a>
+                }
+                @if (Model.CanSubmit)
+                {
+                    <form asp-action="Submit" asp-route-id="@Model.CourseId" method="post">
+                        <button type="submit" class="btn btn-primary">Submit for review</button>
+                    </form>
+                }
+                @if (Model.CanArchive)
+                {
+                    <form asp-action="Archive" asp-route-id="@Model.CourseId" method="post"
+                          onsubmit="return confirm('Archive this course? Existing Students will keep access.');">
+                        <button type="submit" class="btn btn-outline-danger">Archive course</button>
+                    </form>
+                }
+                @if (!Model.CanEditSettings && !Model.CanSubmit && !Model.CanArchive)
+                {
+                    <p class="text-muted mb-0">No Course setting actions are available for the current status.</p>
+                }
+            </div>
+            break;
+        default:
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <h2 class="h4">Course overview</h2>
+                    <div class="course-lesson-content">@Model.Description</div>
+                </div>
+                <div class="col-sm-6 col-lg-2">
+                    <div class="course-workspace-summary"><span>Lessons</span><strong>@Model.Lessons.Count</strong></div>
+                </div>
+                <div class="col-sm-6 col-lg-2">
+                    <div class="course-workspace-summary"><span>Students</span><strong>@Model.ActiveEnrollmentCount</strong></div>
+                </div>
+            </div>
+            break;
+    }
+</div>
+
+@section Scripts {
+    <script src="~/js/course-lesson-form.js" asp-append-version="true"></script>
+}

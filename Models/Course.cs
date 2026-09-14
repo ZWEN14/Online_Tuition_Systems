@@ -81,4 +81,8 @@ public class Course
     public ICollection<Enrollment> Enrollments { get; set; } = [];
 
     public ICollection<Promotion> Promotions { get; set; } = [];
+
+    public ICollection<CourseLesson> Lessons { get; set; } = [];
+
+    public ICollection<CourseAssignment> Assignments { get; set; } = [];
 }

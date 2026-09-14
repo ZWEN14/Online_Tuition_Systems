@@ -1,0 +1,19 @@
+@model Online_Tuition_Systems.ViewModels.Courses.CourseLessonFormViewModel
+@{
+    ViewData["Title"] = "Add Lesson";
+}
+<div class="page-header">
+    <h1>Add Lesson</h1>
+    <p class="mb-0">Create learning material for @(ViewData["CourseTitle"] ?? "this course").</p>
+</div>
+<form asp-action="CreateLesson" method="post" enctype="multipart/form-data" class="card card-body">
+    <partial name="_LessonForm" model="Model" />
+    <div class="d-flex gap-2 mt-4">
+        <button type="submit" class="btn btn-primary">Create lesson</button>
+        <a asp-action="Workspace" asp-route-id="@Model.CourseId" asp-route-tab="lessons" class="btn btn-outline-secondary">Cancel</a>
+    </div>
+</form>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/course-lesson-form.js" asp-append-version="true"></script>
+}

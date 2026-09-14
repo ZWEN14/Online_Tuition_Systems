@@ -1,0 +1,283 @@
+@model Online_Tuition_Systems.ViewModels.Courses.CourseStreamViewModel
+@functions {
+    private static string Initials(string name)
+    {
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length == 0
+            ? "?"
+            : string.Concat(parts.Take(2).Select(part => char.ToUpperInvariant(part[0])));
+    }
+}
+
+<section class="course-stream-section">
+    <div class="course-stream-section-title">
+        <div class="course-stream-title-copy">
+            <h2>Upcoming events</h2>
+            @if (Model.UpcomingEvents.Count > 0)
+            {
+                <span>@Model.UpcomingEvents.Count upcoming</span>
+            }
+        </div>
+        @if (Model.IsTutor && Model.CanContribute)
+        {
+            <a asp-controller="EventProposals" asp-action="Create" asp-route-courseId="@Model.CourseId"
+               class="btn btn-sm btn-outline-primary">Propose course event</a>
+        }
+    </div>
+    @if (Model.UpcomingEvents.Count > 0)
+    {
+        <div class="course-stream-events">
+            @foreach (var courseEvent in Model.UpcomingEvents)
+            {
+                var mytStart = courseEvent.StartsAt.ToOffset(TimeSpan.FromHours(8));
+                <a asp-controller="Events" asp-action="Details" asp-route-id="@courseEvent.EventId"
+                   class="course-stream-event">
+                    <span class="course-stream-event-date">
+                        <strong>@mytStart.ToString("dd")</strong>
+                        <small>@mytStart.ToString("MMM")</small>
+                    </span>
+                    <span>
+                        <strong>@courseEvent.Title</strong>
+                        <small>@mytStart.ToString("ddd, h:mm tt") MYT · @courseEvent.Mode</small>
+                    </span>
+                    <span class="course-stream-open" aria-hidden="true">›</span>
+                </a>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="course-workspace-empty course-stream-event-empty">
+            No upcoming events are scheduled for this Course.
+        </div>
+    }
+</section>
+
+<section class="course-stream-section">
+    <div class="course-stream-section-title">
+        <h2>@(Model.IsTutor ? "Post something" : "Class updates")</h2>
+        <form method="get"
+              asp-controller="@(Model.IsTutor ? "TutorCourses" : "StudentCourses")"
+              asp-action="@(Model.IsTutor ? "Workspace" : "Access")"
+              class="course-stream-sort">
+            <input type="hidden" name="id" value="@Model.CourseId" />
+            <input type="hidden" name="tab" value="@CourseWorkspaceTabs.Stream" />
+            <label for="streamSort">Sort by</label>
+            <select id="streamSort" name="streamSort" class="form-select form-select-sm"
+                    onchange="this.form.submit()">
+                <option value="@CourseStreamSortOptions.Latest"
+                        selected="@(Model.Sort == CourseStreamSortOptions.Latest)">Latest</option>
+                <option value="@CourseStreamSortOptions.Oldest"
+                        selected="@(Model.Sort == CourseStreamSortOptions.Oldest)">Oldest</option>
+            </select>
+        </form>
+    </div>
+
+    @if (Model.IsTutor && Model.CanContribute)
+    {
+        <form asp-controller="CourseStream" asp-action="CreatePost" method="post"
+              class="course-stream-composer">
+            <input type="hidden" name="CourseId" value="@Model.CourseId" />
+            <div>
+                <label for="streamPostTitle">Title</label>
+                <input id="streamPostTitle" name="Title" class="form-control"
+                       maxlength="150" required placeholder="What is this update about?" />
+            </div>
+            <div>
+                <label for="streamPostContent">Message</label>
+                <textarea id="streamPostContent" name="Content" class="form-control"
+                          maxlength="10000" rows="3" required
+                          placeholder="Share an update with your students..."></textarea>
+            </div>
+            <div class="text-end">
+                <button type="submit" class="btn btn-primary">Post</button>
+            </div>
+        </form>
+    }
+    else if (!Model.CanContribute)
+    {
+        <div class="alert alert-secondary py-2">This Stream is read-only for the current Course status.</div>
+    }
+
+    @if (Model.Posts.Count == 0)
+    {
+        <div class="course-workspace-empty">No Course updates have been posted.</div>
+    }
+    else
+    {
+        <div class="course-stream-posts">
+            @foreach (var post in Model.Posts)
+            {
+                var publishedMyt = post.PublishedAt.ToOffset(TimeSpan.FromHours(8));
+                var updatedMyt = post.UpdatedAt.ToOffset(TimeSpan.FromHours(8));
+                <article class="course-stream-post">
+                    <header class="course-stream-post-header">
+                        @if (!string.IsNullOrWhiteSpace(post.TutorPhotoPath))
+                        {
+                            <img src="@post.TutorPhotoPath" alt="@post.TutorName profile photo" />
+                        }
+                        else
+                        {
+                            <span class="course-stream-avatar" aria-hidden="true">@Initials(post.TutorName)</span>
+                        }
+                        <div>
+                            <strong>@post.TutorName</strong>
+                            <time datetime="@post.PublishedAt.ToString("O")">
+                                @publishedMyt.ToString("dd MMM yyyy, h:mm tt") MYT
+                            </time>
+                            @if (post.WasEdited)
+                            {
+                                <time datetime="@post.UpdatedAt.ToString("O")">
+                                    Edited on @updatedMyt.ToString("dd MMM yyyy, h:mm tt") MYT
+                                </time>
+                            }
+                        </div>
+                        @if (Model.IsTutor && Model.CanContribute)
+                        {
+                            <div class="course-stream-post-actions">
+                                <a asp-controller="CourseStream" asp-action="EditPost"
+                                   asp-route-courseId="@Model.CourseId" asp-route-id="@post.AnnouncementId"
+                                   class="btn btn-sm btn-outline-primary">Edit</a>
+                                <form asp-controller="CourseStream" asp-action="DeletePost" method="post"
+                                      onsubmit="return confirm('Remove this Course update and its comments?');">
+                                    <input type="hidden" name="courseId" value="@Model.CourseId" />
+                                    <input type="hidden" name="id" value="@post.AnnouncementId" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                                </form>
+                            </div>
+                        }
+                    </header>
+                    <div class="course-stream-post-body">
+                        <h3>@post.Title</h3>
+                        <div>@post.Content</div>
+                    </div>
+                    <details class="course-stream-comments" open="@(post.Comments.Count <= 3)">
+                        <summary>@post.Comments.Count comment(s)</summary>
+                        <div class="course-stream-comment-list">
+                            @foreach (var comment in post.Comments)
+                            {
+                                <div class="course-stream-comment">
+                                    @if (!string.IsNullOrWhiteSpace(comment.UserPhotoPath))
+                                    {
+                                        <img src="@comment.UserPhotoPath" alt="" />
+                                    }
+                                    else
+                                    {
+                                        <span class="course-stream-avatar" aria-hidden="true">@Initials(comment.UserName)</span>
+                                    }
+                                    <div>
+                                        <div class="course-stream-comment-heading">
+                                            <strong>@comment.UserName</strong>
+                                            <time datetime="@comment.CreatedAtUtc.ToString("O")">
+                                                @comment.CreatedAtUtc.AddHours(8).ToString("dd MMM, h:mm tt")
+                                                @if (comment.WasEdited && !comment.IsRemovedByTutor)
+                                                {
+                                                    <span>· edited</span>
+                                                }
+                                            </time>
+                                        </div>
+                                        @if (comment.IsRemovedByTutor)
+                                        {
+                                            <div class="course-stream-comment-moderated">
+                                                This comment was removed by @(comment.RemovedByTutorName ?? "the Tutor") for moderation.
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <p>@comment.Content</p>
+                                        }
+                                    </div>
+                                    @if (!comment.IsRemovedByTutor
+                                        && (comment.CanEdit || (Model.IsTutor && Model.CanContribute)))
+                                    {
+                                        <div class="course-stream-comment-actions">
+                                            @if (comment.CanEdit)
+                                            {
+                                                <a asp-controller="CourseStream" asp-action="EditComment"
+                                                   asp-route-courseId="@Model.CourseId"
+                                                   asp-route-id="@comment.CourseStreamCommentId"
+                                                   class="course-stream-comment-edit"
+                                                   aria-label="Edit comment" title="Edit comment">
+                                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25Zm17.71-10.04a1 1 0 0 0 0-1.42l-2.5-2.5a1 1 0 0 0-1.42 0l-1.96 1.96 3.75 3.75 2.13-1.79Z" />
+                                                    </svg>
+                                                </a>
+                                            }
+                                            @if (Model.IsTutor && Model.CanContribute)
+                                            {
+                                                <button type="button" class="course-stream-comment-remove"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#moderateCommentDialog"
+                                                        data-comment-id="@comment.CourseStreamCommentId"
+                                                        data-comment-author="@comment.UserName"
+                                                        aria-label="Remove comment for moderation"
+                                                        title="Remove comment for moderation">
+                                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                                        <path d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12Zm3.46-8.88 1.42-1.42L12 9.83l1.12-1.13 1.42 1.42L13.41 11.25l1.13 1.13-1.42 1.42L12 12.67l-1.12 1.13-1.42-1.42 1.13-1.13-1.13-1.13ZM15.5 4l-1-1h-5l-1 1H5v2h14V4h-3.5Z" />
+                                                    </svg>
+                                                </button>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                        @if (Model.CanContribute)
+                        {
+                            <form asp-controller="CourseStream" asp-action="AddComment" method="post"
+                                  class="course-stream-comment-form">
+                                <input type="hidden" name="CourseId" value="@Model.CourseId" />
+                                <input type="hidden" name="AnnouncementId" value="@post.AnnouncementId" />
+                                <label for="comment-@post.AnnouncementId" class="visually-hidden">Write a comment</label>
+                                <input id="comment-@post.AnnouncementId" name="Content" class="form-control"
+                                       maxlength="2000" required placeholder="Write a comment..." />
+                                <button type="submit" class="btn btn-outline-primary">Comment</button>
+                            </form>
+                        }
+                    </details>
+                </article>
+            }
+        </div>
+    }
+</section>
+
+@if (Model.IsTutor && Model.CanContribute)
+{
+    <div class="modal fade" id="moderateCommentDialog" tabindex="-1"
+         aria-labelledby="moderateCommentDialogTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title fs-5" id="moderateCommentDialogTitle">Remove comment?</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="moderateCommentMessage" class="mb-2"></p>
+                    <p class="text-muted mb-0">
+                        The original message will be hidden, but the author name, posting time,
+                        and a moderation notice will remain visible.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form asp-controller="CourseStream" asp-action="DeleteComment" method="post">
+                        <input type="hidden" name="courseId" value="@Model.CourseId" />
+                        <input type="hidden" name="id" id="moderateCommentId" />
+                        <button type="submit" class="btn btn-danger">Remove for moderation</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('moderateCommentDialog')?.addEventListener('show.bs.modal', event => {
+            const trigger = event.relatedTarget;
+            const commentId = trigger?.getAttribute('data-comment-id') ?? '';
+            const author = trigger?.getAttribute('data-comment-author') ?? 'this Student';
+            document.getElementById('moderateCommentId').value = commentId;
+            document.getElementById('moderateCommentMessage').textContent =
+                `Remove ${author}'s comment from the Course Stream?`;
+        });
+    </script>
+}

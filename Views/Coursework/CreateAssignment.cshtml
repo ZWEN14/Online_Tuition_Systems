@@ -1,0 +1,19 @@
+@model CourseAssignmentFormViewModel
+@{
+    ViewData["Title"] = "Create assignment";
+}
+
+<div class="coursework-page-header">
+    <a asp-controller="TutorCourses" asp-action="Workspace" asp-route-id="@Model.CourseId"
+       asp-route-tab="@CourseWorkspaceTabs.Coursework">&larr; Coursework</a>
+    <h1>Create assignment</h1>
+    <p>Create Coursework for your enrolled Students.</p>
+</div>
+<form asp-action="CreateAssignment" method="post" enctype="multipart/form-data" class="coursework-form-card">
+    <partial name="_AssignmentForm" model="Model" />
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/coursework-assignment-form.js" asp-append-version="true"></script>
+}

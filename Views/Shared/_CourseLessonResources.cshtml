@@ -1,0 +1,54 @@
+@model Online_Tuition_Systems.ViewModels.Courses.CourseLessonItemViewModel
+
+@if (!string.IsNullOrWhiteSpace(Model.ExternalResourceUrl)
+    || !string.IsNullOrWhiteSpace(Model.ResourceFileName))
+{
+    <div class="course-resource-list">
+        @if (!string.IsNullOrWhiteSpace(Model.ExternalResourceUrl))
+        {
+            <a href="@Model.ExternalResourceUrl" target="_blank" rel="noopener noreferrer"
+               class="course-resource-card">
+                <span class="course-resource-visual @(Model.IsYouTubeResource ? "has-image" : string.Empty)">
+                    @if (!string.IsNullOrWhiteSpace(Model.ExternalResourcePreviewImageUrl))
+                    {
+                        <img src="@Model.ExternalResourcePreviewImageUrl" alt="" loading="lazy"
+                             referrerpolicy="no-referrer" />
+                    }
+                    else
+                    {
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M10.6 13.4a1 1 0 0 0 1.4 1.4l4.6-4.6a3 3 0 0 0-4.2-4.2l-2 2a1 1 0 1 0 1.4 1.4l2-2a1 1 0 1 1 1.4 1.4l-4.6 4.6ZM13.4 10.6A1 1 0 0 0 12 9.2l-4.6 4.6a3 3 0 0 0 4.2 4.2l2-2a1 1 0 1 0-1.4-1.4l-2 2a1 1 0 0 1-1.4-1.4l4.6-4.6Z" />
+                        </svg>
+                    }
+                </span>
+                <span class="course-resource-details">
+                    <small>@(Model.IsYouTubeResource ? "YouTube video" : "External resource")</small>
+                    <strong>@Model.Title</strong>
+                    <span>@(Model.ExternalResourceHost ?? "Open resource")</span>
+                </span>
+                <span class="course-resource-open" aria-hidden="true">↗</span>
+            </a>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Model.ResourceFileName))
+        {
+            <a asp-controller="CourseLessonResources" asp-action="Download"
+               asp-route-id="@Model.CourseLessonId" class="course-resource-card">
+                <span class="course-resource-visual course-resource-file-icon">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M6 2h8l4 4v16H6V2Zm8 2.5V8h3.5L14 4.5ZM8 10v2h8v-2H8Zm0 4v2h8v-2H8Zm0 4v2h5v-2H8Z" />
+                    </svg>
+                </span>
+                <span class="course-resource-details">
+                    <small>Lesson attachment</small>
+                    <strong>@Model.ResourceFileName</strong>
+                    @if (Model.ResourceSizeBytes.HasValue)
+                    {
+                        <span>@((Model.ResourceSizeBytes.Value / 1024d / 1024d).ToString("0.##")) MB</span>
+                    }
+                </span>
+                <span class="course-resource-open" aria-hidden="true">↓</span>
+            </a>
+        }
+    </div>
+}

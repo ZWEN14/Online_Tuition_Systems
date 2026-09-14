@@ -28,10 +28,25 @@ public interface IBillingService
     Task<TutorBillingReportViewModel?> GetTutorReportAsync(
         int tutorId,
         int coursePage,
+        BillingReportFilterViewModel filter,
+        bool includeAllCourses,
+        CancellationToken cancellationToken);
+
+    Task<CourseBillingDetailViewModel?> GetTutorCourseReportAsync(
+        int tutorId,
+        int courseId,
+        BillingReportFilterViewModel filter,
+        CancellationToken cancellationToken);
+
+    Task<CourseBillingDetailViewModel?> GetAdminCourseReportAsync(
+        int administratorId,
+        int courseId,
+        BillingReportFilterViewModel filter,
         CancellationToken cancellationToken);
 
     Task<AdminBillingReportViewModel?> GetAdminReportAsync(
         int administratorId,
+        BillingReportFilterViewModel filter,
         CancellationToken cancellationToken);
 }
 

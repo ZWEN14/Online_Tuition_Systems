@@ -50,11 +50,15 @@ else
                             </span>
                         </td>
                         <td class="text-end">
-                            <form asp-action="Toggle" asp-route-id="@category.CourseCategoryId" method="post">
-                                <button type="submit" class="btn btn-sm btn-outline-secondary">
-                                    @(category.IsActive ? "Deactivate" : "Activate")
-                                </button>
-                            </form>
+                            <div class="d-inline-flex gap-2">
+                                <a asp-action="Edit" asp-route-id="@category.CourseCategoryId"
+                                   class="btn btn-sm btn-outline-primary">Edit</a>
+                                <form asp-action="Toggle" asp-route-id="@category.CourseCategoryId" method="post">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                        @(category.IsActive ? "Deactivate" : "Activate")
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                 }

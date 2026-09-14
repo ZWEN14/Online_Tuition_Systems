@@ -1,0 +1,145 @@
+@model StudentAssignmentViewModel
+@{
+    ViewData["Title"] = Model.Title;
+    var submissionState = Model.Submission.SubmittedAtUtc.HasValue
+        ? Model.Submission.IsLate ? "Submitted late" : "Submitted"
+        : Model.IsPastDue ? "Missing" : "Assigned";
+    var submissionStateClass = Model.Submission.SubmittedAtUtc.HasValue
+        ? Model.Submission.IsLate ? "text-bg-danger" : "text-bg-success"
+        : Model.IsPastDue ? "text-bg-danger" : "text-bg-primary";
+    var assignmentFileIsImage = Model.AssignmentAttachmentFileName?.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) == true
+        || Model.AssignmentAttachmentFileName?.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase) == true
+        || Model.AssignmentAttachmentFileName?.EndsWith(".png", StringComparison.OrdinalIgnoreCase) == true;
+}
+
+<div class="coursework-student-page">
+    <header class="coursework-student-header">
+        <div>
+            <span class="coursework-student-eyebrow">Assignment</span>
+            <h1>@Model.Title</h1>
+            <div class="coursework-assignment-meta">
+                <div>
+                    <small>Due date</small>
+                    <strong>@Model.DueAtUtc.AddHours(8).ToString("dd MMM yyyy, h:mm tt") MYT</strong>
+                </div>
+                <div>
+                    <small>Coursework type</small>
+                    <strong>@(Model.IsGraded ? $"Graded - {Model.MaxMarks:0.##} marks" : "Non-graded")</strong>
+                </div>
+            </div>
+        </div>
+    </header>
+
+@if (TempData["SuccessMessage"] is string success)
+{
+    <div class="alert alert-success">@success</div>
+}
+
+<section class="coursework-detail-card coursework-instructions-card">
+    <h2>Instructions</h2>
+    <div class="coursework-instructions">@Model.Instructions</div>
+    @if (!string.IsNullOrWhiteSpace(Model.AssignmentAttachmentFileName))
+    {
+        <a asp-action="AssignmentFile" asp-route-assignmentId="@Model.CourseAssignmentId"
+           class="coursework-attachment-preview mt-3">
+            @if (assignmentFileIsImage)
+            {
+                <img src="@Url.Action("AssignmentFile", "Coursework", new { assignmentId = Model.CourseAssignmentId })"
+                     alt="Preview of @Model.AssignmentAttachmentFileName" />
+            }
+            else
+            {
+                <span class="coursework-file-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M6 2h8l4 4v16H6V2Zm8 1.5V7h3.5L14 3.5ZM8 11v2h8v-2H8Zm0 4v2h8v-2H8Z" /></svg>
+                </span>
+            }
+            <span><strong>@Model.AssignmentAttachmentFileName</strong><small>Preview or download</small></span>
+        </a>
+    }
+</section>
+
+<section class="coursework-detail-card coursework-student-work">
+    <div class="coursework-work-heading">
+        <div>
+            <h2>Your work</h2>
+            @if (Model.Submission.SubmittedAtUtc.HasValue)
+            {
+                <small>Last submitted @Model.Submission.UpdatedAtUtc!.Value.AddHours(8).ToString("dd MMM yyyy, h:mm tt") MYT</small>
+            }
+        </div>
+        <span class="badge @submissionStateClass">@submissionState</span>
+    </div>
+
+    @if (Model.Submission.Score.HasValue || !string.IsNullOrWhiteSpace(Model.Submission.TutorFeedback))
+    {
+        <div class="coursework-grade-result">
+            <strong>
+                @(Model.IsGraded
+                    ? $"{Model.Submission.Score?.ToString("0.##") ?? "Not scored"} / {Model.MaxMarks:0.##}"
+                    : "Tutor feedback")
+            </strong>
+            @if (!string.IsNullOrWhiteSpace(Model.Submission.TutorFeedback))
+            {
+                <p>@Model.Submission.TutorFeedback</p>
+            }
+        </div>
+    }
+
+    @if (Model.CanSubmit)
+    {
+        <form asp-action="Submit" method="post" enctype="multipart/form-data" class="coursework-submission-form">
+            <input asp-for="Submission.CourseId" name="CourseId" type="hidden" />
+            <input asp-for="Submission.CourseAssignmentId" name="CourseAssignmentId" type="hidden" />
+            <input asp-for="Submission.ExistingAttachmentFileName" name="ExistingAttachmentFileName" type="hidden" />
+            <div asp-validation-summary="All" class="text-danger"></div>
+            <div>
+                <label asp-for="Submission.TextResponse" class="form-label"></label>
+                <textarea asp-for="Submission.TextResponse" name="TextResponse" class="form-control" rows="7"
+                          placeholder="Write your response here..."></textarea>
+                <span asp-validation-for="Submission.TextResponse" class="text-danger"></span>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(Model.Submission.ExistingAttachmentFileName))
+            {
+                <div class="coursework-saved-submission">
+                    <a asp-action="SubmissionFile" asp-route-submissionId="@Model.Submission.CourseSubmissionId">
+                        <span class="coursework-file-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M6 2h8l4 4v16H6V2Zm8 1.5V7h3.5L14 3.5ZM8 11v2h8v-2H8Zm0 4v2h8v-2H8Z" /></svg>
+                        </span>
+                        <span><strong>@Model.Submission.ExistingAttachmentFileName</strong><small>Preview or download</small></span>
+                    </a>
+                    <label class="coursework-remove-file" title="Remove saved attachment">
+                        <input asp-for="Submission.RemoveAttachment" name="RemoveAttachment" class="visually-hidden" />
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 21a2 2 0 0 1-2-2V7h14v12a2 2 0 0 1-2 2H7Zm1-4h2V10H8v7Zm6 0h2V10h-2v7ZM8 4l1-1h6l1 1h4v2H4V4h4Z" /></svg>
+                        <span>Remove</span>
+                    </label>
+                </div>
+            }
+
+            <div>
+                <label asp-for="Submission.Attachment" class="form-label">
+                    @(string.IsNullOrWhiteSpace(Model.Submission.ExistingAttachmentFileName) ? "Choose file" : "Replace attachment")
+                </label>
+                <input asp-for="Submission.Attachment" name="Attachment" class="form-control"
+                       accept=".pdf,.pptx,.docx,.xlsx,.txt,.zip,.jpg,.jpeg,.png" />
+                <span asp-validation-for="Submission.Attachment" class="text-danger"></span>
+            </div>
+
+            <div class="coursework-form-actions">
+                <button type="submit" class="btn btn-primary">
+                    @(Model.Submission.SubmittedAtUtc.HasValue ? "Update submission" : "Submit")
+                </button>
+                <a asp-controller="StudentCourses" asp-action="Access" asp-route-id="@Model.CourseId"
+                   asp-route-tab="@CourseWorkspaceTabs.Coursework" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    }
+    else
+    {
+        <div class="alert alert-secondary mb-0">This archived Course is read-only.</div>
+    }
+</section>
+
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

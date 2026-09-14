@@ -1,0 +1,26 @@
+@model Online_Tuition_Systems.ViewModels.Billing.BillingReportFilterViewModel
+@{
+    var clearAction = ViewData["BillingFilterClearAction"]?.ToString() ?? "Index";
+    var clearRouteId = ViewData["BillingFilterClearId"];
+}
+
+<div class="report-filter-grid">
+    <div>
+        <label asp-for="FromDateMyt" class="form-label"></label>
+        <input asp-for="FromDateMyt" class="form-control" type="date" />
+        <span asp-validation-for="FromDateMyt" class="text-danger small"></span>
+    </div>
+    <div>
+        <label asp-for="ToDateMyt" class="form-label"></label>
+        <input asp-for="ToDateMyt" class="form-control" type="date" />
+        <span asp-validation-for="ToDateMyt" class="text-danger small"></span>
+    </div>
+    <div class="report-filter-actions">
+        <button type="submit" class="btn btn-primary">Apply dates</button>
+        <a asp-action="@clearAction" asp-route-id="@clearRouteId"
+           class="btn btn-outline-secondary">Clear</a>
+    </div>
+</div>
+<div class="form-text mt-2">
+    MYT dates filter enrollment and payment activity. Course portfolio totals remain current.
+</div>

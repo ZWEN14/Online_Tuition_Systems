@@ -55,4 +55,5 @@ public sealed record CourseCreateResult(
 
 public sealed record CourseActionResult(
     bool Succeeded,
-    string? Error = null);
+    string? Error = null,
+    string? Field = null);

@@ -1,0 +1,98 @@
+@model Online_Tuition_Systems.ViewModels.Billing.CourseBillingDetailViewModel
+@{
+    ViewData["Title"] = $"{Model.Title} Analytics";
+    var rangeLabel = Model.Filter.HasRange
+        ? $"{(Model.Filter.FromDateMyt?.ToString("dd MMM yyyy") ?? "Beginning")} to {(Model.Filter.ToDateMyt?.ToString("dd MMM yyyy") ?? "Today")} MYT"
+        : "All dates";
+    ViewData["BillingFilterClearAction"] = "Course";
+    ViewData["BillingFilterClearId"] = Model.CourseId;
+}
+
+<a asp-action="Index"
+   asp-route-FromDateMyt="@Model.Filter.FromDateMyt?.ToString("yyyy-MM-dd")"
+   asp-route-ToDateMyt="@Model.Filter.ToDateMyt?.ToString("yyyy-MM-dd")"
+   class="page-back print-hidden">&larr; Back</a>
+
+<div class="report-page-heading mb-4">
+    <div>
+        <div class="text-muted small">@Model.Code · @Model.Status · Tutor @Model.TutorName</div>
+        <h1 class="h3 mb-1">@Model.Title</h1>
+        <p class="text-muted mb-0">Enrollment and payment analytics for this Course.</p>
+    </div>
+    <button type="button" class="btn btn-outline-primary print-hidden" onclick="window.print()">
+        Print Course report
+    </button>
+</div>
+
+<div class="print-report-header">
+    <strong>Anywhere Edureach</strong>
+    <span>@Model.Code Course report · @rangeLabel</span>
+</div>
+
+<form asp-action="Course" asp-route-id="@Model.CourseId" method="get"
+      class="card card-body report-filter print-hidden mb-4" data-billing-report-filter>
+    <partial name="_BillingReportFilter" model="Model.Filter" />
+</form>
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl"><div class="card h-100"><div class="card-body">
+        <div class="text-muted small">Active enrollments</div><div class="h3 mb-0">@Model.ActiveEnrollments</div>
+    </div></div></div>
+    <div class="col-sm-6 col-xl"><div class="card h-100"><div class="card-body">
+        <div class="text-muted small">Pending payments</div><div class="h3 mb-0">@Model.PendingPayments</div>
+    </div></div></div>
+    <div class="col-sm-6 col-xl"><div class="card h-100"><div class="card-body">
+        <div class="text-muted small">Paid sales</div><div class="h3 mb-0">@Model.SuccessfulSales</div>
+    </div></div></div>
+    <div class="col-sm-6 col-xl"><div class="card h-100"><div class="card-body">
+        <div class="text-muted small">Gross sales</div><div class="h3 mb-0">RM @Model.GrossSales.ToString("N2")</div>
+    </div></div></div>
+    <div class="col-sm-6 col-xl"><div class="card h-100 border-success"><div class="card-body">
+        <div class="text-muted small">Net earnings</div><div class="h3 text-success mb-0">RM @Model.TutorEarnings.ToString("N2")</div>
+    </div></div></div>
+</div>
+
+<div class="alert alert-light border d-flex flex-wrap gap-4">
+    <span>Promotion discounts <strong>RM @Model.Discounts.ToString("N2")</strong></span>
+    <span>Platform fees <strong>RM @Model.PlatformFees.ToString("N2")</strong></span>
+</div>
+
+<h2 class="h4 mt-4">Payment activity</h2>
+@if (Model.Payments.Count == 0)
+{
+    <div class="alert alert-info">No payment activity exists for the selected dates.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Date (MYT)</th><th>Student</th><th>Reference</th><th>Provider</th>
+                    <th>Status</th><th>Original</th><th>Discount</th><th>Paid</th><th>Net</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var payment in Model.Payments)
+                {
+                    <tr>
+                        <td>@payment.CreatedAtUtc.AddHours(8).ToString("dd MMM yyyy HH:mm")</td>
+                        <td>@payment.StudentName</td>
+                        <td>@payment.Reference</td>
+                        <td>@payment.Provider</td>
+                        <td><span class="badge text-bg-secondary">@payment.Status</span></td>
+                        <td>RM @payment.OriginalAmount.ToString("N2")</td>
+                        <td>RM @payment.DiscountAmount.ToString("N2")</td>
+                        <td>RM @payment.FinalAmount.ToString("N2")</td>
+                        <td class="fw-semibold">RM @payment.TutorNetAmount.ToString("N2")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/billing-report-filter.js" asp-append-version="true"></script>
+}

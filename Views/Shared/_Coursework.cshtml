@@ -1,0 +1,158 @@
+@model CourseworkWorkspaceViewModel
+
+<div class="course-workspace-section-heading coursework-heading">
+    <div>
+        <h2>Coursework
+            <button type="button" class="lesson-info-button" data-bs-toggle="tooltip"
+                    title="Assignments, deadlines, submissions and private Tutor feedback."
+                    aria-label="Coursework guidance">i</button>
+        </h2>
+    </div>
+    @if (Model.IsTutor && Model.CanManage)
+    {
+        <a asp-controller="Coursework" asp-action="CreateAssignment"
+           asp-route-courseId="@Model.CourseId" class="btn btn-primary">Add assignment</a>
+    }
+</div>
+
+@if (Model.Assignments.Count == 0)
+{
+    <div class="course-workspace-empty">
+        @(Model.IsTutor ? "No assignments have been created." : "The Tutor has not published any assignments.")
+    </div>
+}
+else
+{
+    <div class="accordion coursework-list" id="courseworkList">
+        @foreach (var assignment in Model.Assignments)
+        {
+            var headingId = $"assignmentHeading{assignment.CourseAssignmentId}";
+            var contentId = $"assignmentContent{assignment.CourseAssignmentId}";
+            var isImage = assignment.AttachmentFileName?.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) == true
+                || assignment.AttachmentFileName?.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase) == true
+                || assignment.AttachmentFileName?.EndsWith(".png", StringComparison.OrdinalIgnoreCase) == true;
+            <article class="accordion-item coursework-card">
+                <h3 class="accordion-header" id="@headingId">
+                    <button class="accordion-button collapsed coursework-card-toggle" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#@contentId"
+                            aria-expanded="false" aria-controls="@contentId">
+                        <span class="coursework-assignment-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M7 3h10a2 2 0 0 1 2 2v16l-7-3-7 3V5a2 2 0 0 1 2-2Zm1 4v2h8V7H8Zm0 4v2h6v-2H8Z" /></svg>
+                        </span>
+                        <span class="coursework-card-heading">
+                            <strong>@assignment.Title</strong>
+                            <small>Due @assignment.DueAtUtc.AddHours(8).ToString("dd MMM yyyy, h:mm tt") MYT</small>
+                        </span>
+                        <span class="coursework-badges">
+                            @if (Model.IsTutor)
+                            {
+                                <span class="badge @(assignment.IsPublished ? "text-bg-primary" : "text-bg-secondary")">
+                                    @(assignment.IsPublished ? "Published" : "Draft")
+                                </span>
+                                @if (assignment.IsPublished)
+                                {
+                                    <span class="badge @(assignment.IsPastDue ? "text-bg-warning" : "text-bg-success")">
+                                        @(assignment.IsPastDue ? "Past due" : "Open")
+                                    </span>
+                                }
+                            }
+                            else
+                            {
+                                var studentState = assignment.MySubmission is not null
+                                    ? assignment.MySubmission.IsLate ? "Submitted late" : "Submitted"
+                                    : assignment.IsPastDue ? "Missing" : "Assigned";
+                                var studentStateClass = assignment.MySubmission is not null
+                                    ? assignment.MySubmission.IsLate ? "text-bg-danger" : "text-bg-success"
+                                    : assignment.IsPastDue ? "text-bg-danger" : "text-bg-primary";
+                                <span class="badge @studentStateClass">@studentState</span>
+                            }
+                        </span>
+                    </button>
+                </h3>
+                <div id="@contentId" class="accordion-collapse collapse"
+                     aria-labelledby="@headingId" data-bs-parent="#courseworkList">
+                    <div class="accordion-body coursework-card-body">
+                        <div class="coursework-instructions">@assignment.Instructions</div>
+
+                        <div class="coursework-facts">
+                            <div><small>Grading</small><strong>@(assignment.IsGraded ? $"{assignment.MaxMarks:0.##} marks" : "Non-graded")</strong></div>
+                            @if (Model.IsTutor)
+                            {
+                                <div><small>Submissions</small><strong>@assignment.SubmissionCount</strong></div>
+                                <div><small>Reviewed</small><strong>@assignment.GradedCount</strong></div>
+                            }
+                            else
+                            {
+                                <div>
+                                    <small>Your work</small>
+                                    @if (assignment.MySubmission is null)
+                                    {
+                                        <strong>Not submitted</strong>
+                                    }
+                                    else
+                                    {
+                                        <strong class="@(assignment.MySubmission.IsLate ? "text-danger" : "text-success")">
+                                            Submitted@(assignment.MySubmission.IsLate ? " late" : string.Empty)
+                                        </strong>
+                                    }
+                                </div>
+                            }
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(assignment.AttachmentFileName))
+                        {
+                            <a asp-controller="Coursework" asp-action="AssignmentFile"
+                               asp-route-assignmentId="@assignment.CourseAssignmentId"
+                               class="coursework-attachment-preview">
+                                @if (isImage)
+                                {
+                                    <img src="@Url.Action("AssignmentFile", "Coursework", new { assignmentId = assignment.CourseAssignmentId })"
+                                         alt="Preview of @assignment.AttachmentFileName" />
+                                }
+                                else
+                                {
+                                    <span class="coursework-file-icon" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24"><path d="M6 2h8l4 4v16H6V2Zm8 1.5V7h3.5L14 3.5ZM8 11v2h8v-2H8Zm0 4v2h8v-2H8Z" /></svg>
+                                    </span>
+                                }
+                                <span><strong>@assignment.AttachmentFileName</strong><small>Open assignment attachment</small></span>
+                            </a>
+                        }
+
+                        <div class="coursework-actions">
+                            @if (Model.IsTutor)
+                            {
+                                @if (assignment.IsPublished)
+                                {
+                                    <a asp-controller="Coursework" asp-action="Submissions"
+                                       asp-route-courseId="@Model.CourseId" asp-route-assignmentId="@assignment.CourseAssignmentId"
+                                       class="btn btn-sm btn-primary">View submissions</a>
+                                }
+                                @if (Model.CanManage)
+                                {
+                                    <a asp-controller="Coursework" asp-action="EditAssignment"
+                                       asp-route-courseId="@Model.CourseId" asp-route-assignmentId="@assignment.CourseAssignmentId"
+                                       class="btn btn-sm btn-outline-primary">Edit</a>
+                                }
+                                @if (Model.CanManage && !assignment.IsPublished)
+                                {
+                                    <form asp-controller="Coursework" asp-action="PublishAssignment" method="post">
+                                        <input type="hidden" name="courseId" value="@Model.CourseId" />
+                                        <input type="hidden" name="assignmentId" value="@assignment.CourseAssignmentId" />
+                                        <button class="btn btn-sm btn-outline-success" type="submit">Publish</button>
+                                    </form>
+                                }
+                            }
+                            else
+                            {
+                                <a asp-controller="Coursework" asp-action="Assignment"
+                                   asp-route-courseId="@Model.CourseId" asp-route-assignmentId="@assignment.CourseAssignmentId"
+                                   class="btn btn-sm btn-primary">Open assignment</a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </article>
+        }
+    </div>
+}

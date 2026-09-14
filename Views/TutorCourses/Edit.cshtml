@@ -1,6 +1,7 @@
 @model Online_Tuition_Systems.ViewModels.Courses.CourseFormViewModel
 @{
     ViewData["Title"] = "Edit Course";
+    var courseId = ViewData["CourseId"];
 }
 
 <div class="row justify-content-center">
@@ -68,7 +69,8 @@
 
             <div class="d-flex gap-2 mt-4">
                 <button type="submit" class="btn btn-primary">Save changes</button>
-                <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                <a asp-action="Workspace" asp-route-id="@courseId" asp-route-tab="settings"
+                   class="btn btn-outline-secondary">Cancel</a>
             </div>
         </form>
     </div>

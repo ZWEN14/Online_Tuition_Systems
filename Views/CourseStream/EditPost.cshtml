@@ -1,0 +1,34 @@
+@model Online_Tuition_Systems.ViewModels.Courses.CourseStreamPostFormViewModel
+@{
+    ViewData["Title"] = "Edit course update";
+}
+
+<div class="page-header">
+    <h1>Edit course update</h1>
+    <p class="mb-0">Update the title or message shown in the Course Stream.</p>
+</div>
+
+<form asp-action="EditPost" method="post" class="card card-body">
+    <input asp-for="CourseId" type="hidden" />
+    <input asp-for="AnnouncementId" type="hidden" />
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+    <div class="mb-3">
+        <label asp-for="Title" class="form-label"></label>
+        <input asp-for="Title" class="form-control" />
+        <span asp-validation-for="Title" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Content" class="form-label"></label>
+        <textarea asp-for="Content" class="form-control" rows="7"></textarea>
+        <span asp-validation-for="Content" class="text-danger"></span>
+    </div>
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Save update</button>
+        <a asp-controller="TutorCourses" asp-action="Workspace" asp-route-id="@Model.CourseId"
+           asp-route-tab="stream" class="btn btn-outline-secondary">Cancel</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

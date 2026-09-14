@@ -114,7 +114,7 @@ public class AnnouncementsController : Controller
     {
         var announcement = await _context.Announcements
             .AsNoTracking()
-            .SingleOrDefaultAsync(item => item.Id == id);
+            .SingleOrDefaultAsync(item => item.Id == id && item.CourseId == null);
 
         if (announcement is null)
         {
@@ -163,7 +163,7 @@ public class AnnouncementsController : Controller
         }
 
         var announcement = await _context.Announcements
-            .SingleOrDefaultAsync(item => item.Id == id);
+            .SingleOrDefaultAsync(item => item.Id == id && item.CourseId == null);
 
         if (announcement is null)
         {
@@ -209,7 +209,7 @@ public class AnnouncementsController : Controller
     public async Task<IActionResult> Publish(int id)
     {
         var announcement = await _context.Announcements
-            .SingleOrDefaultAsync(item => item.Id == id);
+            .SingleOrDefaultAsync(item => item.Id == id && item.CourseId == null);
 
         if (announcement is null)
         {
@@ -240,7 +240,7 @@ public class AnnouncementsController : Controller
     public async Task<IActionResult> Archive(int id)
     {
         var announcement = await _context.Announcements
-            .SingleOrDefaultAsync(item => item.Id == id);
+            .SingleOrDefaultAsync(item => item.Id == id && item.CourseId == null);
 
         if (announcement is null)
         {
@@ -264,7 +264,10 @@ public class AnnouncementsController : Controller
 
     private IQueryable<Announcement> VisibleAnnouncements()
     {
-        var query = _context.Announcements.AsNoTracking();
+        // Course-linked posts are visible only through the enrollment-protected Course Stream.
+        var query = _context.Announcements
+            .AsNoTracking()
+            .Where(item => item.CourseId == null);
 
         if (User.IsInRole(AppRoles.Admin))
         {

@@ -7,6 +7,8 @@
     var currentUser = int.TryParse(currentUserIdValue, out var headerUserId)
         ? db.Users.FirstOrDefault(u => u.Id == headerUserId)
         : null;
+    var sidebarController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var sidebarSection = ViewData["SidebarSection"]?.ToString();
 }
 
 <!DOCTYPE html>
@@ -28,6 +30,7 @@
     <link rel="stylesheet" href="~/css/mentor-mentee.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/app-sidebar.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/course-workspace.css" asp-append-version="true" />
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark app-navbar">
@@ -84,7 +87,9 @@
 
     @if (User.Identity?.IsAuthenticated == true)
     {
-        <div class="app-shell sidebar-enhanced">
+        <div class="app-shell sidebar-enhanced"
+             data-current-controller="@sidebarController"
+             data-sidebar-section="@sidebarSection">
             <aside class="app-sidebar">
                 <div class="shell-sidebar-controls">
                     <button type="button" class="shell-sidebar-toggle shell-sidebar-menu"
@@ -101,15 +106,18 @@
                     </svg>
                 </button>
                 <div class="sidebar-heading">Quick access</div>
-                @* Bootstrap Icons "book", MIT licensed: https://icons.getbootstrap.com/icons/book/ *@
-                <a class="sidebar-link" asp-controller="Courses" asp-action="Index">
-                    <span class="shell-nav-icon">
-                        <svg class="shell-course-icon" viewBox="0 0 16 16" aria-hidden="true">
-                            <path d="M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811zm7.5-.141c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492zM8 1.783C7.015.936 5.587.81 4.287.94c-1.514.153-3.042.672-3.994 1.105A.5.5 0 0 0 0 2.5v11a.5.5 0 0 0 .707.455c.882-.4 2.303-.881 3.68-1.02 1.409-.142 2.59.087 3.223.877a.5.5 0 0 0 .78 0c.633-.79 1.814-1.019 3.222-.877 1.378.139 2.8.62 3.681 1.02A.5.5 0 0 0 16 13.5v-11a.5.5 0 0 0-.293-.455c-.952-.433-2.48-.952-3.994-1.105C10.413.809 8.985.936 8 1.783"></path>
-                        </svg>
-                    </span>
-                    Courses
-                </a>
+                @if (User.IsInRole("Student"))
+                {
+                    @* Bootstrap Icons "book", MIT licensed: https://icons.getbootstrap.com/icons/book/ *@
+                    <a class="sidebar-link" asp-controller="Courses" asp-action="Index">
+                        <span class="shell-nav-icon">
+                            <svg class="shell-course-icon" viewBox="0 0 16 16" aria-hidden="true">
+                                <path d="M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811zm7.5-.141c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492zM8 1.783C7.015.936 5.587.81 4.287.94c-1.514.153-3.042.672-3.994 1.105A.5.5 0 0 0 0 2.5v11a.5.5 0 0 0 .707.455c.882-.4 2.303-.881 3.68-1.02 1.409-.142 2.59.087 3.223.877a.5.5 0 0 0 .78 0c.633-.79 1.814-1.019 3.222-.877 1.378.139 2.8.62 3.681 1.02A.5.5 0 0 0 16 13.5v-11a.5.5 0 0 0-.293-.455c-.952-.433-2.48-.952-3.994-1.105C10.413.809 8.985.936 8 1.783"></path>
+                            </svg>
+                        </span>
+                        Courses
+                    </a>
+                }
                 <a class="sidebar-link" asp-controller="Announcements" asp-action="Index"><span>A</span> Announcements</a>
                 <a class="sidebar-link" asp-controller="Events" asp-action="Index"><span>E</span> Events</a>
                 @if (User.IsInRole("Student") || User.IsInRole("Tutor"))
@@ -130,7 +138,7 @@
                 }
                 @if (User.IsInRole("Tutor"))
                 {
-                    <a class="sidebar-link" asp-controller="TutorCourses" asp-action="Index"><span class="shell-nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6.5h14v12H5z"></path><path d="M8 3.5h8M8 21h8"></path><path d="m10 10 4 2-4 2z"></path></svg></span> My courses</a>
+                    <a class="sidebar-link" asp-controller="TutorCourses" asp-action="Index"><span class="shell-nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6.5h14v12H5z"></path><path d="M8 3.5h8M8 21h8"></path><path d="m10 10 4 2-4 2z"></path></svg></span> Course management</a>
                     <a class="sidebar-link" asp-controller="TutorPromotions" asp-action="Index"><span>%</span> Promotions</a>
                     <a class="sidebar-link" asp-controller="TutorBilling" asp-action="Index"><span class="shell-nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-2-1.3L14 21l-2-1.3L10 21l-2-1.3L6 21z"></path><path d="M9 8h6M9 12h6M9 16h3"></path></svg></span> Course earnings</a>
                     <a class="sidebar-link" asp-controller="Timeslot" asp-action="Index"><span>◷</span> Availability</a>

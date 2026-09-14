@@ -48,6 +48,50 @@ public sealed class AdminCourseCategoriesController(
         return RedirectToAction(nameof(Index));
     }
 
+    [HttpGet]
+    public async Task<IActionResult> Edit(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        var model = await administrationService.GetCategoryEditModelAsync(
+            id,
+            cancellationToken);
+
+        return model is null ? NotFound() : View(model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(
+        int id,
+        CourseCategoryFormViewModel model,
+        CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var result = await administrationService.UpdateCategoryAsync(
+            id,
+            model,
+            cancellationToken);
+
+        if (!result.Succeeded)
+        {
+            if (result.Error == "Category not found.")
+            {
+                return NotFound();
+            }
+
+            ModelState.AddModelError(nameof(model.Name), result.Error!);
+            return View(model);
+        }
+
+        TempData["SuccessMessage"] = "Course category updated successfully.";
+        return RedirectToAction(nameof(Index));
+    }
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Toggle(

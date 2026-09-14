@@ -63,6 +63,62 @@ public sealed class CourseAdministrationService(ApplicationDbContext dbContext)
         return new CourseActionResult(true);
     }
 
+    public Task<CourseCategoryFormViewModel?> GetCategoryEditModelAsync(
+        int categoryId,
+        CancellationToken cancellationToken)
+    {
+        return dbContext.CourseCategories
+            .AsNoTracking()
+            .Where(category => category.CourseCategoryId == categoryId)
+            .Select(category => new CourseCategoryFormViewModel
+            {
+                Name = category.Name,
+                Description = category.Description
+            })
+            .SingleOrDefaultAsync(cancellationToken);
+    }
+
+    public async Task<CourseActionResult> UpdateCategoryAsync(
+        int categoryId,
+        CourseCategoryFormViewModel model,
+        CancellationToken cancellationToken)
+    {
+        var category = await dbContext.CourseCategories.FindAsync(
+            new object[] { categoryId },
+            cancellationToken);
+
+        if (category is null)
+        {
+            return new CourseActionResult(false, "Category not found.");
+        }
+
+        var normalizedName = model.Name.Trim();
+        if (await dbContext.CourseCategories.AnyAsync(
+            candidate => candidate.CourseCategoryId != categoryId
+                && candidate.Name == normalizedName,
+            cancellationToken))
+        {
+            return new CourseActionResult(false, "A category with this name already exists.");
+        }
+
+        category.Name = normalizedName;
+        category.Description = string.IsNullOrWhiteSpace(model.Description)
+            ? null
+            : model.Description.Trim();
+        category.UpdatedAtUtc = DateTime.UtcNow;
+
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            return new CourseActionResult(false, "The category could not be updated.");
+        }
+
+        return new CourseActionResult(true);
+    }
+
     public async Task<CourseActionResult> ToggleCategoryAsync(
         int categoryId,
         CancellationToken cancellationToken)

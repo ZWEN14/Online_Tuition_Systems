@@ -1,0 +1,33 @@
+@model CourseAssignmentFormViewModel
+@{
+    ViewData["Title"] = "Edit assignment";
+}
+
+<div class="coursework-page-header">
+    <a asp-controller="TutorCourses" asp-action="Workspace" asp-route-id="@Model.CourseId"
+       asp-route-tab="@CourseWorkspaceTabs.Coursework">&larr; Back</a>
+    <h1>Edit assignment</h1>
+    <p>Update the assignment details, grading, attachment or publishing state.</p>
+    @if (!Model.IsPublished && Model.CourseAssignmentId.HasValue)
+    {
+        <form asp-action="DeleteAssignment" method="post" class="coursework-delete-assignment"
+              onsubmit="return confirm('Delete this draft assignment? This cannot be undone.');">
+            <input type="hidden" name="courseId" value="@Model.CourseId" />
+            <input type="hidden" name="assignmentId" value="@Model.CourseAssignmentId" />
+            <button type="submit" class="btn btn-outline-danger">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M7 21a2 2 0 0 1-2-2V7h14v12a2 2 0 0 1-2 2H7Zm1-4h2V10H8v7Zm6 0h2V10h-2v7ZM8 4l1-1h6l1 1h4v2H4V4h4Z" />
+                </svg>
+                Delete draft
+            </button>
+        </form>
+    }
+</div>
+<form asp-action="EditAssignment" method="post" enctype="multipart/form-data" class="coursework-form-card">
+    <partial name="_AssignmentForm" model="Model" />
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/coursework-assignment-form.js" asp-append-version="true"></script>
+}

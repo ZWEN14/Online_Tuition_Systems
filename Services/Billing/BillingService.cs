@@ -272,6 +272,8 @@ public sealed class BillingService(
     public async Task<TutorBillingReportViewModel?> GetTutorReportAsync(
         int tutorId,
         int coursePage,
+        BillingReportFilterViewModel filter,
+        bool includeAllCourses,
         CancellationToken cancellationToken)
     {
         if (!await IsAvailableUserAsync(
@@ -282,6 +284,7 @@ public sealed class BillingService(
             return null;
         }
 
+        var (fromUtc, toExclusiveUtc) = GetUtcRange(filter);
         var courses = await dbContext.Courses
             .AsNoTracking()
             .Where(course => course.TutorId == tutorId)
@@ -293,23 +296,39 @@ public sealed class BillingService(
                 Title = course.Title,
                 Status = course.Status,
                 ActiveEnrollments = course.Enrollments.Count(enrollment =>
-                    enrollment.Status == EnrollmentStatus.Active),
+                    enrollment.Status == EnrollmentStatus.Active
+                    && (!fromUtc.HasValue || enrollment.EnrolledAtUtc >= fromUtc.Value)
+                    && (!toExclusiveUtc.HasValue || enrollment.EnrolledAtUtc < toExclusiveUtc.Value)),
                 PendingPayments = course.Enrollments.Count(enrollment =>
-                    enrollment.Status == EnrollmentStatus.PendingPayment),
+                    enrollment.Status == EnrollmentStatus.PendingPayment
+                    && (!fromUtc.HasValue || enrollment.EnrolledAtUtc >= fromUtc.Value)
+                    && (!toExclusiveUtc.HasValue || enrollment.EnrolledAtUtc < toExclusiveUtc.Value)),
                 SuccessfulSales = course.Enrollments
                     .SelectMany(enrollment => enrollment.Payments)
-                    .Count(payment => payment.Status == PaymentStatus.Successful),
+                    .Count(payment => payment.Status == PaymentStatus.Successful
+                        && payment.PaidAtUtc.HasValue
+                        && (!fromUtc.HasValue || payment.PaidAtUtc.Value >= fromUtc.Value)
+                        && (!toExclusiveUtc.HasValue || payment.PaidAtUtc.Value < toExclusiveUtc.Value)),
                 GrossSales = course.Enrollments
                     .SelectMany(enrollment => enrollment.Payments)
-                    .Where(payment => payment.Status == PaymentStatus.Successful)
+                    .Where(payment => payment.Status == PaymentStatus.Successful
+                        && payment.PaidAtUtc.HasValue
+                        && (!fromUtc.HasValue || payment.PaidAtUtc.Value >= fromUtc.Value)
+                        && (!toExclusiveUtc.HasValue || payment.PaidAtUtc.Value < toExclusiveUtc.Value))
                     .Sum(payment => payment.FinalAmount),
                 PlatformFees = course.Enrollments
                     .SelectMany(enrollment => enrollment.Payments)
-                    .Where(payment => payment.Status == PaymentStatus.Successful)
+                    .Where(payment => payment.Status == PaymentStatus.Successful
+                        && payment.PaidAtUtc.HasValue
+                        && (!fromUtc.HasValue || payment.PaidAtUtc.Value >= fromUtc.Value)
+                        && (!toExclusiveUtc.HasValue || payment.PaidAtUtc.Value < toExclusiveUtc.Value))
                     .Sum(payment => payment.PlatformFeeAmount),
                 TutorEarnings = course.Enrollments
                     .SelectMany(enrollment => enrollment.Payments)
-                    .Where(payment => payment.Status == PaymentStatus.Successful)
+                    .Where(payment => payment.Status == PaymentStatus.Successful
+                        && payment.PaidAtUtc.HasValue
+                        && (!fromUtc.HasValue || payment.PaidAtUtc.Value >= fromUtc.Value)
+                        && (!toExclusiveUtc.HasValue || payment.PaidAtUtc.Value < toExclusiveUtc.Value))
                     .Sum(payment => payment.TutorNetAmount)
             })
             .ToListAsync(cancellationToken);
@@ -344,6 +363,8 @@ public sealed class BillingService(
 
         return new TutorBillingReportViewModel
         {
+            Filter = filter,
+            IsFullReport = includeAllCourses,
             CoursePage = coursePage,
             TotalCoursePages = totalCoursePages,
             TotalCourses = courses.Count,
@@ -356,15 +377,54 @@ public sealed class BillingService(
             CourseStatuses = BuildCourseStatusMetrics(
                 courses.Select(course => course.Status)),
             LeadingCourses = leadingCourses,
-            Courses = courses
-                .Skip((coursePage - 1) * TutorCoursePageSize)
-                .Take(TutorCoursePageSize)
-                .ToList()
+            Courses = includeAllCourses
+                ? courses
+                : courses
+                    .Skip((coursePage - 1) * TutorCoursePageSize)
+                    .Take(TutorCoursePageSize)
+                    .ToList()
         };
+    }
+
+    public async Task<CourseBillingDetailViewModel?> GetTutorCourseReportAsync(
+        int tutorId,
+        int courseId,
+        BillingReportFilterViewModel filter,
+        CancellationToken cancellationToken)
+    {
+        if (!await IsAvailableUserAsync(tutorId, UserRole.Tutor, cancellationToken))
+        {
+            return null;
+        }
+
+        return await GetCourseReportAsync(
+            courseId: courseId,
+            expectedTutorId: tutorId,
+            filter: filter,
+            cancellationToken: cancellationToken);
+    }
+
+    public async Task<CourseBillingDetailViewModel?> GetAdminCourseReportAsync(
+        int administratorId,
+        int courseId,
+        BillingReportFilterViewModel filter,
+        CancellationToken cancellationToken)
+    {
+        if (!await IsAvailableUserAsync(administratorId, UserRole.Admin, cancellationToken))
+        {
+            return null;
+        }
+
+        return await GetCourseReportAsync(
+            courseId: courseId,
+            expectedTutorId: null,
+            filter: filter,
+            cancellationToken: cancellationToken);
     }
 
     public async Task<AdminBillingReportViewModel?> GetAdminReportAsync(
         int administratorId,
+        BillingReportFilterViewModel filter,
         CancellationToken cancellationToken)
     {
         if (!await IsAvailableUserAsync(
@@ -375,10 +435,13 @@ public sealed class BillingService(
             return null;
         }
 
+        var (fromUtc, toExclusiveUtc) = GetUtcRange(filter);
         var pendingPayments = await dbContext.Enrollments
             .AsNoTracking()
             .CountAsync(enrollment =>
-                    enrollment.Status == EnrollmentStatus.PendingPayment,
+                    enrollment.Status == EnrollmentStatus.PendingPayment
+                    && (!fromUtc.HasValue || enrollment.EnrolledAtUtc >= fromUtc.Value)
+                    && (!toExclusiveUtc.HasValue || enrollment.EnrolledAtUtc < toExclusiveUtc.Value),
                 cancellationToken);
 
         var courseAnalytics = await dbContext.Courses
@@ -391,22 +454,34 @@ public sealed class BillingService(
                 course.Status,
                 CategoryName = course.Category.Name,
                 TutorName = course.Tutor.Name,
-                TotalEnrollments = course.Enrollments.Count,
+                TotalEnrollments = course.Enrollments.Count(enrollment =>
+                    (!fromUtc.HasValue || enrollment.EnrolledAtUtc >= fromUtc.Value)
+                    && (!toExclusiveUtc.HasValue || enrollment.EnrolledAtUtc < toExclusiveUtc.Value)),
                 ActiveEnrollments = course.Enrollments.Count(enrollment =>
-                    enrollment.Status == EnrollmentStatus.Active),
+                    enrollment.Status == EnrollmentStatus.Active
+                    && (!fromUtc.HasValue || enrollment.EnrolledAtUtc >= fromUtc.Value)
+                    && (!toExclusiveUtc.HasValue || enrollment.EnrolledAtUtc < toExclusiveUtc.Value)),
                 SuccessfulSales = course.Enrollments
                     .SelectMany(enrollment => enrollment.Payments)
-                    .Count(payment => payment.Status == PaymentStatus.Successful),
+                    .Count(payment => payment.Status == PaymentStatus.Successful
+                        && payment.PaidAtUtc.HasValue
+                        && (!fromUtc.HasValue || payment.PaidAtUtc.Value >= fromUtc.Value)
+                        && (!toExclusiveUtc.HasValue || payment.PaidAtUtc.Value < toExclusiveUtc.Value)),
                 GrossSales = course.Enrollments
                     .SelectMany(enrollment => enrollment.Payments)
-                    .Where(payment => payment.Status == PaymentStatus.Successful)
+                    .Where(payment => payment.Status == PaymentStatus.Successful
+                        && payment.PaidAtUtc.HasValue
+                        && (!fromUtc.HasValue || payment.PaidAtUtc.Value >= fromUtc.Value)
+                        && (!toExclusiveUtc.HasValue || payment.PaidAtUtc.Value < toExclusiveUtc.Value))
                     .Sum(payment => payment.FinalAmount)
             })
             .ToListAsync(cancellationToken);
 
         var payments = await dbContext.Payments
             .AsNoTracking()
-            .OrderByDescending(payment => payment.CreatedAtUtc)
+            .Where(payment => (!fromUtc.HasValue || (payment.PaidAtUtc ?? payment.CreatedAtUtc) >= fromUtc.Value)
+                && (!toExclusiveUtc.HasValue || (payment.PaidAtUtc ?? payment.CreatedAtUtc) < toExclusiveUtc.Value))
+            .OrderByDescending(payment => payment.PaidAtUtc ?? payment.CreatedAtUtc)
             .Select(payment => new AdminPaymentRowViewModel
             {
                 PaymentId = payment.PaymentId,
@@ -420,7 +495,7 @@ public sealed class BillingService(
                 PlatformFee = payment.PlatformFeeAmount,
                 TutorNetAmount = payment.TutorNetAmount,
                 Status = payment.Status,
-                CreatedAtUtc = payment.CreatedAtUtc
+                CreatedAtUtc = payment.PaidAtUtc ?? payment.CreatedAtUtc
             })
             .ToListAsync(cancellationToken);
 
@@ -472,6 +547,7 @@ public sealed class BillingService(
 
         return new AdminBillingReportViewModel
         {
+            Filter = filter,
             TotalCourses = courseAnalytics.Count,
             TotalEnrollments = courseAnalytics.Sum(course => course.TotalEnrollments),
             PendingPayments = pendingPayments,
@@ -492,6 +568,114 @@ public sealed class BillingService(
                 })
                 .ToList(),
             LeadingCourses = leadingCourses,
+            Payments = payments
+        };
+    }
+
+    private static (DateTime? FromUtc, DateTime? ToExclusiveUtc) GetUtcRange(
+        BillingReportFilterViewModel filter)
+    {
+        if (filter.FromDateMyt.HasValue
+            && filter.ToDateMyt.HasValue
+            && filter.ToDateMyt.Value.Date < filter.FromDateMyt.Value.Date)
+        {
+            return (null, null);
+        }
+
+        DateTime? fromUtc = filter.FromDateMyt.HasValue
+            ? DateTime.SpecifyKind(filter.FromDateMyt.Value.Date.AddHours(-8), DateTimeKind.Utc)
+            : null;
+        DateTime? toExclusiveUtc = filter.ToDateMyt.HasValue
+            ? DateTime.SpecifyKind(filter.ToDateMyt.Value.Date.AddDays(1).AddHours(-8), DateTimeKind.Utc)
+            : null;
+
+        return (fromUtc, toExclusiveUtc);
+    }
+
+    private async Task<CourseBillingDetailViewModel?> GetCourseReportAsync(
+        int courseId,
+        int? expectedTutorId,
+        BillingReportFilterViewModel filter,
+        CancellationToken cancellationToken)
+    {
+        var courseQuery = dbContext.Courses
+            .AsNoTracking()
+            .Where(item => item.CourseId == courseId);
+
+        if (expectedTutorId.HasValue)
+        {
+            courseQuery = courseQuery.Where(item => item.TutorId == expectedTutorId.Value);
+        }
+
+        var course = await courseQuery
+            .Select(item => new
+            {
+                item.CourseId,
+                item.Code,
+                item.Title,
+                item.Status,
+                TutorName = item.Tutor.Name
+            })
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (course is null)
+        {
+            return null;
+        }
+
+        var (fromUtc, toExclusiveUtc) = GetUtcRange(filter);
+        var enrollments = dbContext.Enrollments
+            .AsNoTracking()
+            .Where(item => item.CourseId == courseId
+                && (!fromUtc.HasValue || item.EnrolledAtUtc >= fromUtc.Value)
+                && (!toExclusiveUtc.HasValue || item.EnrolledAtUtc < toExclusiveUtc.Value));
+
+        var activeEnrollments = await enrollments.CountAsync(
+            item => item.Status == EnrollmentStatus.Active,
+            cancellationToken);
+        var pendingPayments = await enrollments.CountAsync(
+            item => item.Status == EnrollmentStatus.PendingPayment,
+            cancellationToken);
+
+        var payments = await dbContext.Payments
+            .AsNoTracking()
+            .Where(item => item.Enrollment.CourseId == courseId
+                && (!fromUtc.HasValue || (item.PaidAtUtc ?? item.CreatedAtUtc) >= fromUtc.Value)
+                && (!toExclusiveUtc.HasValue || (item.PaidAtUtc ?? item.CreatedAtUtc) < toExclusiveUtc.Value))
+            .OrderByDescending(item => item.PaidAtUtc ?? item.CreatedAtUtc)
+            .Select(item => new CoursePaymentRowViewModel
+            {
+                Reference = item.Reference,
+                StudentName = item.User.Name,
+                Provider = item.Provider,
+                Status = item.Status,
+                OriginalAmount = item.OriginalAmount,
+                DiscountAmount = item.DiscountAmount,
+                FinalAmount = item.FinalAmount,
+                PlatformFee = item.PlatformFeeAmount,
+                TutorNetAmount = item.TutorNetAmount,
+                CreatedAtUtc = item.PaidAtUtc ?? item.CreatedAtUtc
+            })
+            .ToListAsync(cancellationToken);
+        var successfulPayments = payments
+            .Where(item => item.Status == PaymentStatus.Successful)
+            .ToList();
+
+        return new CourseBillingDetailViewModel
+        {
+            CourseId = course.CourseId,
+            Code = course.Code,
+            Title = course.Title,
+            TutorName = course.TutorName,
+            Status = course.Status,
+            Filter = filter,
+            ActiveEnrollments = activeEnrollments,
+            PendingPayments = pendingPayments,
+            SuccessfulSales = successfulPayments.Count,
+            GrossSales = successfulPayments.Sum(item => item.FinalAmount),
+            Discounts = successfulPayments.Sum(item => item.DiscountAmount),
+            PlatformFees = successfulPayments.Sum(item => item.PlatformFee),
+            TutorEarnings = successfulPayments.Sum(item => item.TutorNetAmount),
             Payments = payments
         };
     }

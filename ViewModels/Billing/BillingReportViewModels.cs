@@ -1,9 +1,37 @@
+using System.ComponentModel.DataAnnotations;
 using Online_Tuition_Systems.Models;
 
 namespace Online_Tuition_Systems.ViewModels.Billing;
 
+public sealed class BillingReportFilterViewModel : IValidatableObject
+{
+    [DataType(DataType.Date)]
+    [Display(Name = "From date (MYT)")]
+    public DateTime? FromDateMyt { get; set; }
+
+    [DataType(DataType.Date)]
+    [Display(Name = "To date (MYT)")]
+    public DateTime? ToDateMyt { get; set; }
+
+    public bool HasRange => FromDateMyt.HasValue || ToDateMyt.HasValue;
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (FromDateMyt.HasValue
+            && ToDateMyt.HasValue
+            && ToDateMyt.Value.Date < FromDateMyt.Value.Date)
+        {
+            yield return new ValidationResult(
+                "The To date must be on or after the From date.",
+                [nameof(ToDateMyt)]);
+        }
+    }
+}
+
 public sealed class TutorBillingReportViewModel
 {
+    public BillingReportFilterViewModel Filter { get; init; } = new();
+    public bool IsFullReport { get; init; }
     public int CoursePage { get; init; }
     public int TotalCoursePages { get; init; }
     public int TotalCourses { get; init; }
@@ -36,6 +64,7 @@ public sealed class TutorCourseRevenueViewModel
 
 public sealed class AdminBillingReportViewModel
 {
+    public BillingReportFilterViewModel Filter { get; init; } = new();
     public int TotalCourses { get; init; }
     public int TotalEnrollments { get; init; }
     public int PendingPayments { get; init; }
@@ -90,5 +119,37 @@ public sealed class AdminPaymentRowViewModel
     public decimal PlatformFee { get; init; }
     public decimal TutorNetAmount { get; init; }
     public PaymentStatus Status { get; init; }
+    public DateTime CreatedAtUtc { get; init; }
+}
+
+public sealed class CourseBillingDetailViewModel
+{
+    public int CourseId { get; init; }
+    public string Code { get; init; } = string.Empty;
+    public string Title { get; init; } = string.Empty;
+    public string TutorName { get; init; } = string.Empty;
+    public CourseStatus Status { get; init; }
+    public BillingReportFilterViewModel Filter { get; init; } = new();
+    public int ActiveEnrollments { get; init; }
+    public int PendingPayments { get; init; }
+    public int SuccessfulSales { get; init; }
+    public decimal GrossSales { get; init; }
+    public decimal Discounts { get; init; }
+    public decimal PlatformFees { get; init; }
+    public decimal TutorEarnings { get; init; }
+    public IReadOnlyList<CoursePaymentRowViewModel> Payments { get; init; } = [];
+}
+
+public sealed class CoursePaymentRowViewModel
+{
+    public string Reference { get; init; } = string.Empty;
+    public string StudentName { get; init; } = string.Empty;
+    public string Provider { get; init; } = string.Empty;
+    public PaymentStatus Status { get; init; }
+    public decimal OriginalAmount { get; init; }
+    public decimal DiscountAmount { get; init; }
+    public decimal FinalAmount { get; init; }
+    public decimal PlatformFee { get; init; }
+    public decimal TutorNetAmount { get; init; }
     public DateTime CreatedAtUtc { get; init; }
 }

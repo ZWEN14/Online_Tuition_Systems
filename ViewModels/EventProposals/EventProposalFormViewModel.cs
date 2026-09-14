@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Online_Tuition_Systems.Models;
 
 namespace Online_Tuition_Systems.ViewModels.EventProposals;
@@ -7,8 +9,11 @@ public class EventProposalFormViewModel : IValidatableObject
 {
     public int Id { get; set; }
 
-    [Display(Name = "Course ID")]
+    [Display(Name = "Course")]
     public int? CourseId { get; set; }
+
+    [ValidateNever]
+    public IReadOnlyList<SelectListItem> CourseOptions { get; set; } = [];
 
     [Required]
     [StringLength(150)]
