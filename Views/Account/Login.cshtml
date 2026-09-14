@@ -4,6 +4,7 @@
     ViewBag.Title = "Account | Login";
     var recaptchaSiteKey = ViewBag.RecaptchaSiteKey as string;
     var returnUrl = Context.Request.Query["returnURL"].FirstOrDefault();
+    var loginError = ViewData.ModelState[string.Empty]?.Errors.FirstOrDefault()?.ErrorMessage;
 }
 
 <div class="row justify-content-center">
@@ -19,7 +20,8 @@
 
                 <form asp-action="Login" method="post" data-ajax-login="true">
                     <input type="hidden" name="returnURL" value="@returnUrl" />
-                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                    <div class="alert alert-danger mb-3 @(string.IsNullOrWhiteSpace(loginError) ? "d-none" : "")"
+                         role="alert" data-login-feedback>@loginError</div>
 
                     <div class="mb-3">
                         <label asp-for="Email" class="form-label"></label>
@@ -69,17 +71,16 @@
                             const submitButton = form.querySelector('[type="submit"]');
                             const originalButtonText = submitButton?.textContent ?? "Login";
                             const captchaError = form.querySelector("[data-login-captcha-error]");
+                            const feedback = form.querySelector("[data-login-feedback]");
 
                             const resetCaptcha = () => {
                                 window.grecaptcha?.enterprise?.reset?.();
                             };
 
                             const clearServerErrors = () => {
-                                const summary = form.querySelector('[data-valmsg-summary="true"]');
-                                if (summary) {
-                                    summary.classList.remove("validation-summary-errors");
-                                    summary.classList.add("validation-summary-valid");
-                                    summary.innerHTML = "";
+                                if (feedback) {
+                                    feedback.textContent = "";
+                                    feedback.classList.add("d-none");
                                 }
 
                                 form.querySelectorAll("[data-valmsg-for]").forEach(element => {
@@ -113,17 +114,9 @@
                                 }
 
                                 if (generalErrors.length > 0) {
-                                    const summary = form.querySelector('[data-valmsg-summary="true"]');
-                                    if (summary) {
-                                        summary.classList.remove("validation-summary-valid");
-                                        summary.classList.add("validation-summary-errors");
-                                        const list = document.createElement("ul");
-                                        for (const message of generalErrors) {
-                                            const item = document.createElement("li");
-                                            item.textContent = message;
-                                            list.appendChild(item);
-                                        }
-                                        summary.replaceChildren(list);
+                                    if (feedback) {
+                                        feedback.textContent = generalErrors.join(" ");
+                                        feedback.classList.remove("d-none");
                                     }
                                 }
                             };

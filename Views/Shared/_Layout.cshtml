@@ -319,7 +319,7 @@
 
                         @if (User.IsInRole("Student") || User.IsInRole("Tutor"))
                         {
-                            <a class="sidebar-link" asp-controller="EventRegistrations" asp-action="MyRegistrations">
+                            <a class="sidebar-link" asp-controller="EventRegistrations" asp-action="@(User.IsInRole("Tutor") ? "Manage" : "MyRegistrations")">
                                 <span class="shell-nav-icon">
                                     <svg viewBox="0 0 24 24" aria-hidden="true">
                                         <path d="M5 4h14v16H5z"></path>

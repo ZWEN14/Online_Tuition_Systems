@@ -51,7 +51,7 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
         }
         else if (u == null || !hp.VerifyPassword(u.Hash, vm.Password))
         {
-            ModelState.AddModelError("", "Login credentials not matched.");
+            ModelState.AddModelError(string.Empty, "Incorrect email or password.");
             if (u != null)
             {
                 u.FailedLoginAttempts++;
