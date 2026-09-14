@@ -7,6 +7,8 @@ dotnet user-secrets set "Stripe:SecretKey" "" --project .\Online_Tuition_Systems
 ##### Check Secret 
 dotnet user-secrets list --project .\Online_Tuition_Systems.csproj
 
+
+###
 Prerequisites
 1. SQL Server Express LocalDB (MSSQLLocalDB) and sqlcmd are available.
 2. OnlineTuitionDb already exists and its EF Core migrations have been applied.
@@ -35,3 +37,30 @@ matching DEMO notifications. Rerunning seeds can refresh existing demo rows.
 Finally, inspect the database without changing it:
 
    sqlcmd -S '(localdb)\MSSQLLocalDB' -E -d OnlineTuitionDb -b -i 'Database\InspectDatabase.sql'
+
+
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Initial Catalog=OnlineTuitionDb;Integrated Security=True;MultipleActiveResultSets=true;TrustServerCertificate=True"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*",
+  "GoogleRecaptcha": {
+    "SiteKey": "6LfaE7AtAAAAAMgnGoSFfNXHd-fwBpn3i2MfFYxS",
+    "ProjectId": "bmit2023-anywhereedureach",
+    "ApiKey": "AIzaSyAhJia4RjKnOawb0dVyPb5t_ocDLQcPKlo"
+  },
+  "Smtp": {
+    "Host": "smtp.gmail.com",
+    "Port": 587,
+    "EnableSsl": true,
+    "UserName": "hosc-wm23@student.tarc.edu.my", //can change
+    "Password": "vvgg ahmp tyzi pbrh",
+    "From": "hosc-wm23@student.tarc.edu.my" //can change
+  }
+}
