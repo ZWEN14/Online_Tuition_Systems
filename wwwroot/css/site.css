@@ -74,6 +74,23 @@ h1, h2, h3, h4, h5, h6 {
   backdrop-filter: blur(14px);
 }
 
+.app-brand-logo {
+  width: 2.35rem;
+  height: 2.35rem;
+  flex: 0 0 2.35rem;
+  object-fit: contain;
+}
+
+.auth-brand-logo {
+  display: block;
+  width: 5.25rem;
+  height: 5.25rem;
+  margin-right: auto;
+  margin-left: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 .55rem .8rem rgba(35, 65, 122, .16));
+}
+
 .app-brand {
   display: inline-flex;
   align-items: center;

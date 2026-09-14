@@ -1,23 +1,28 @@
 @model Online_Tuition_Systems.ViewModels.Courses.CourseDetailsViewModel
 @{
     ViewData["Title"] = Model.Title;
+    var coverPath = string.IsNullOrWhiteSpace(Model.ThumbnailPath)
+        ? Url.Content("~/images/course-covers/default-course-cover.png")
+        : Model.ThumbnailPath;
 }
+
+<header class="course-detail-banner mb-4">
+    <img src="@coverPath" alt="Cover for @Model.Title" />
+    <div class="course-detail-banner-shade" aria-hidden="true"></div>
+    <div class="course-detail-banner-copy">
+        <div class="course-detail-banner-eyebrow">@Model.CategoryName &middot; @Model.Code</div>
+        <h1>@Model.Title</h1>
+        <p>Tutor: @Model.TutorName</p>
+    </div>
+</header>
 
 <div class="row g-4">
     <div class="col-lg-7">
-        <div class="text-muted mb-2">@Model.CategoryName · @Model.Code</div>
-        <h1>@Model.Title</h1>
-        <p class="lead">Tutor: @Model.TutorName</p>
+        <h2 class="h4">About this course</h2>
         <div class="mt-4" style="white-space: pre-line">@Model.Description</div>
     </div>
     <aside class="col-lg-5">
         <div class="card shadow-sm">
-            @if (!string.IsNullOrWhiteSpace(Model.ThumbnailPath))
-            {
-                <img src="@Model.ThumbnailPath"
-                     class="card-img-top"
-                     alt="Thumbnail for @Model.Title" />
-            }
             <div class="card-body">
                 <div class="h4 mb-3">@(Model.Price == 0 ? "Free" : $"RM {Model.Price:N2}")</div>
                 @if (User.IsInRole(AppRoles.Student))

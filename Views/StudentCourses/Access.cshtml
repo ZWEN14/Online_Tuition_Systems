@@ -8,17 +8,18 @@
         Action = "Access",
         ActiveTab = Model.ActiveTab
     };
+    var coverPath = string.IsNullOrWhiteSpace(Model.ThumbnailPath)
+        ? Url.Content("~/images/course-covers/default-course-cover.png")
+        : Model.ThumbnailPath;
 }
 
 <header class="course-workspace-header">
-    <div>
+    <img src="@coverPath" alt="Cover for @Model.Title" />
+    <div class="course-workspace-header-shade" aria-hidden="true"></div>
+    <div class="course-workspace-header-copy">
         <div class="course-workspace-eyebrow">@Model.Code · Tutor: @Model.TutorName</div>
         <h1>@Model.Title</h1>
     </div>
-    @if (!string.IsNullOrWhiteSpace(Model.ThumbnailPath))
-    {
-        <img src="@Model.ThumbnailPath" alt="Thumbnail for @Model.Title" />
-    }
 </header>
 
 @await Html.PartialAsync("_CourseWorkspaceTabs", tabs)

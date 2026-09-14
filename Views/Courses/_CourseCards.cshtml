@@ -9,15 +9,14 @@ else
     <div class="row g-4">
         @foreach (var course in Model)
         {
+            var coverPath = string.IsNullOrWhiteSpace(course.ThumbnailPath)
+                ? Url.Content("~/images/course-covers/default-course-cover.png")
+                : course.ThumbnailPath;
             <div class="col-md-6 col-lg-4">
-                <article class="card h-100 shadow-sm">
-                    @if (!string.IsNullOrWhiteSpace(course.ThumbnailPath))
-                    {
-                        <img src="@course.ThumbnailPath"
-                             class="card-img-top"
-                             style="height: 190px; object-fit: cover"
-                             alt="Thumbnail for @course.Title" />
-                    }
+                <article class="card h-100 shadow-sm course-cover-card">
+                    <img src="@coverPath"
+                         class="card-img-top course-cover-thumbnail"
+                         alt="Cover for @course.Title" />
                     <div class="card-body d-flex flex-column">
                         <div class="small text-muted mb-2">
                             @course.CategoryName &middot; @course.Code

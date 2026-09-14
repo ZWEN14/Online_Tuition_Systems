@@ -10,7 +10,12 @@
     <div class="col-md-5">
         <div class="card form-card">
             <div class="card-body p-4 p-md-5">
-                <div class="text-center mb-4"><span class="brand-mark mb-3">A</span><h1 class="h2 mb-1">Welcome back</h1><p class="text-muted mb-0">Sign in to continue learning.</p></div>
+                <div class="text-center mb-4">
+                    <img class="auth-brand-logo mb-3" src="~/images/anywhere_favicon.png"
+                         alt="Anywhere Edureach" />
+                    <h1 class="h2 mb-1">Welcome back</h1>
+                    <p class="text-muted mb-0">Sign in to continue learning.</p>
+                </div>
 
                 <form asp-action="Login" method="post" data-ajax-login="true">
                     <input type="hidden" name="returnURL" value="@returnUrl" />

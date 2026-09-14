@@ -16,6 +16,8 @@ Do not mark an implementation task complete merely because code was proposed. Ma
 - Moved the theme control from the floating page corner into the header beside Logout. It is now a compact moon/sun icon button, persists the system-wide choice in session storage, and no longer overlaps sidebar controls or page images. No package, database, or migration change is required; browser verification remains pending.
 - Removed the duplicate sidebar edge arrow globally; the hamburger is now the single open/close control for every role. Unequal Billing analytics cards use their natural content height, preventing large empty card areas.
 - Added paired dark-surface overrides for custom Home, Announcement/Event module headers, Event Proposal pages, and Notification cards/filters so these components no longer retain white or pale backgrounds with light text.
+- Added an original project-owned 16:9 online-learning Course cover under `wwwroot/images/course-covers`. Uploaded thumbnails take priority, while Courses without one use this fallback consistently in the catalogue, Student enrollment cards, Course details banner, and Student/Tutor workspace banner. No migration is required; browser verification remains pending.
+- Adopted the project-owned `wwwroot/images/anywhere_favicon.png` artwork as the browser favicon, shared-header logo, and Login-page brand image while retaining accessible Anywhere Edureach text. No package or database change is required; browser verification remains pending.
 
 ### 2026-09-14 — Sidebar, Billing filters, and Promotion time refinement ready for verification
 

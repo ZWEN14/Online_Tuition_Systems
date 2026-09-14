@@ -1,4 +1,5 @@
 .course-workspace-header {
+    position: relative;
     display: flex;
     min-height: 11rem;
     align-items: center;
@@ -9,6 +10,70 @@
     color: #fff;
     border-radius: 1.1rem 1.1rem 0 0;
     background: linear-gradient(125deg, #1d4ed8, #335fcb 58%, #183b8f);
+}
+
+.course-cover-card {
+    overflow: hidden;
+}
+
+.course-cover-thumbnail {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+}
+
+.course-detail-banner {
+    position: relative;
+    min-height: clamp(17rem, 34vw, 25rem);
+    overflow: hidden;
+    border: 1px solid var(--app-border);
+    border-radius: 1.25rem;
+    background: #123b4a;
+    box-shadow: 0 1rem 2.5rem rgba(20, 48, 55, .18);
+}
+
+.course-detail-banner > img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.course-detail-banner-shade,
+.course-workspace-header-shade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, rgba(7, 30, 39, .9) 0%, rgba(11, 47, 57, .66) 46%, rgba(16, 40, 59, .12) 100%);
+}
+
+.course-detail-banner-copy {
+    position: absolute;
+    z-index: 1;
+    left: clamp(1.5rem, 5vw, 3.5rem);
+    bottom: clamp(1.5rem, 5vw, 3rem);
+    width: min(42rem, calc(100% - 3rem));
+    color: #fff;
+}
+
+.course-detail-banner-copy h1 {
+    margin: .45rem 0;
+    color: #fff;
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    text-shadow: 0 .15rem .8rem rgba(0, 0, 0, .28);
+}
+
+.course-detail-banner-copy p {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.course-detail-banner-eyebrow {
+    color: #c6f3e8;
+    font-size: .8rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
 }
 
 /* Course Management: Coursework */
@@ -310,13 +375,17 @@
 }
 
 .course-workspace-header img {
-    width: 12rem;
-    height: 7.5rem;
-    flex: 0 0 auto;
-    border: 3px solid rgba(255, 255, 255, .3);
-    border-radius: .85rem;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
     object-fit: cover;
-    box-shadow: 0 .8rem 2rem rgba(15, 23, 42, .22);
+}
+
+.course-workspace-header-copy {
+    position: relative;
+    z-index: 1;
+    max-width: 48rem;
 }
 
 .course-workspace-eyebrow {
@@ -1401,7 +1470,7 @@
     }
 
     .course-workspace-header img {
-        display: none;
+        display: block;
     }
 
     .course-workspace-tabs {
