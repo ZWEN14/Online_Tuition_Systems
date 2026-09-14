@@ -11,6 +11,7 @@ namespace Online_Tuition_Systems.Controllers;
 [Authorize(Roles = "Student,Tutor")]
 public class SurveyController(ApplicationDbContext db, ICurrentUserService currentUser, SubmissionUploadService uploads) : Controller
 {
+    // Show available surveys and mark course eligibility and previous submissions.
     public async Task<IActionResult> Index()
     {
         var now = DateTime.UtcNow;
@@ -25,23 +26,46 @@ public class SurveyController(ApplicationDbContext db, ICurrentUserService curre
     [HttpGet]
     public async Task<IActionResult> Take(int id)
     {
-        var survey = await LoadAvailable(id); if (survey is null) return NotFound();
-        if (!await CanAccess(survey)) { TempData["Error"] = "You must be enrolled in this course to submit its survey."; return RedirectToAction(nameof(Index)); }
-        if (await HasSubmitted(id)) { TempData["Error"] = "You have already submitted this survey."; return RedirectToAction(nameof(Index)); }
-        if (survey.Sections.Count == 0) { TempData["Error"] = "This survey has no sections yet."; return RedirectToAction(nameof(Index)); }
+        var survey = await LoadAvailable(id);
+        if (survey is null)
+            return NotFound();
+        if (!await CanAccess(survey))
+        {
+            TempData["Error"] = "You must be enrolled in this course to submit its survey.";
+            return RedirectToAction(nameof(Index));
+        }
+        if (await HasSubmitted(id))
+        {
+            TempData["Error"] = "You have already submitted this survey.";
+            return RedirectToAction(nameof(Index));
+        }
+        if (survey.Sections.Count == 0)
+        {
+            TempData["Error"] = "This survey has no sections yet.";
+            return RedirectToAction(nameof(Index));
+        }
         return View(BuildViewModel(survey));
     }
 
+    // Submission: check access, calculate the path, validate answers, then save.
     [HttpPost, ValidateAntiForgeryToken, RequestSizeLimit(30 * 1024 * 1024)]
     public async Task<IActionResult> Take(SurveySubmissionViewModel postedModel)
     {
-        var survey = await LoadAvailable(postedModel.SurveyId); if (survey is null) return NotFound();
-        if (!await CanAccess(survey)) return Forbid();
-        if (await HasSubmitted(survey.Id)) { TempData["Error"] = "You have already submitted this survey."; return RedirectToAction(nameof(Index)); }
+        var survey = await LoadAvailable(postedModel.SurveyId);
+        if (survey is null)
+            return NotFound();
+        if (!await CanAccess(survey))
+            return Forbid();
+        if (await HasSubmitted(survey.Id))
+        {
+            TempData["Error"] = "You have already submitted this survey.";
+            return RedirectToAction(nameof(Index));
+        }
 
         postedModel.Answers ??= [];
         if (postedModel.Answers.SelectMany(x => x.Files ?? []).Sum(x => x.Length) > 25L * 1024 * 1024)
             ModelState.AddModelError(string.Empty, "The total upload size must not exceed 25 MB.");
+        // Group uploaded files and normalise answer values by question ID.
         var attachments = new Dictionary<int, List<SubmissionAttachment>>();
         var posted = postedModel.Answers.GroupBy(x => x.QuestionId).ToDictionary(
             group => group.Key,
@@ -58,29 +82,36 @@ public class SurveyController(ApplicationDbContext db, ICurrentUserService curre
         }
 
         var visitedSections = CalculatePath(survey, normalized, out var pathError);
-        if (pathError is not null) ModelState.AddModelError(string.Empty, pathError);
+        if (pathError is not null)
+            ModelState.AddModelError(string.Empty, pathError);
         foreach (var section in visitedSections)
-        foreach (var question in section.Questions)
-        {
-            var value = normalized.GetValueOrDefault(question.Id);
-            if (question.Type == SurveyQuestionType.FileUpload)
+            foreach (var question in section.Questions)
             {
-                var files = postedModel.Answers.Where(x => x.QuestionId == question.Id).SelectMany(x => x.Files ?? []).ToList();
-                if (question.IsRequired && files.Count == 0) ModelState.AddModelError(string.Empty, $"Upload a file for '{question.Text}'.");
-                if (ModelState.IsValid)
+                var value = normalized.GetValueOrDefault(question.Id);
+                if (question.Type == SurveyQuestionType.FileUpload)
                 {
-                    try { attachments[question.Id] = await uploads.ReadAsync(files, false, HttpContext.RequestAborted); }
-                    catch (InvalidDataException ex) { ModelState.AddModelError(string.Empty, $"{question.Text}: {ex.Message}"); }
+                    var files = postedModel.Answers.Where(x => x.QuestionId == question.Id).SelectMany(x => x.Files ?? []).ToList();
+                    if (question.IsRequired && files.Count == 0)
+                        ModelState.AddModelError(string.Empty, $"Upload a file for '{question.Text}'.");
+                    if (ModelState.IsValid)
+                    {
+                        try
+                        {
+                            attachments[question.Id] = await uploads.ReadAsync(files, false, HttpContext.RequestAborted);
+                        }
+                        catch (InvalidDataException ex) { ModelState.AddModelError(string.Empty, $"{question.Text}: {ex.Message}"); }
+                    }
+                    continue;
                 }
-                continue;
+                if (question.IsRequired && string.IsNullOrWhiteSpace(value))
+                    ModelState.AddModelError(string.Empty, $"'{question.Text}' is required.");
+                else if (!string.IsNullOrWhiteSpace(value) && !IsValid(question, value))
+                    ModelState.AddModelError(string.Empty, $"Invalid answer for '{question.Text}'.");
             }
-            if (question.IsRequired && string.IsNullOrWhiteSpace(value)) ModelState.AddModelError(string.Empty, $"'{question.Text}' is required.");
-            else if (!string.IsNullOrWhiteSpace(value) && !IsValid(question, value)) ModelState.AddModelError(string.Empty, $"Invalid answer for '{question.Text}'.");
-        }
-        model.VisitedSectionIds = visitedSections.Select(x => x.Id).ToList();
         if (!ModelState.IsValid)
         {
-            if (postedModel.Answers.Any(x => x.Files?.Count > 0)) ModelState.AddModelError(string.Empty, "Please select your files again after correcting the form.");
+            if (postedModel.Answers.Any(x => x.Files?.Count > 0))
+                ModelState.AddModelError(string.Empty, "Please select your files again after correcting the form.");
             return View(model);
         }
 
@@ -91,27 +122,41 @@ public class SurveyController(ApplicationDbContext db, ICurrentUserService curre
             if (question.Type == SurveyQuestionType.FileUpload)
             {
                 var files = attachments.GetValueOrDefault(question.Id) ?? [];
-                if (files.Count > 0) response.Answers.Add(new SurveyAnswer { QuestionId = question.Id, Attachments = files });
+                if (files.Count > 0)
+                    response.Answers.Add(new SurveyAnswer { QuestionId = question.Id, Attachments = files });
                 continue;
             }
-            if (!string.IsNullOrWhiteSpace(value)) response.Answers.Add(new SurveyAnswer { QuestionId = question.Id, Value = value });
+            if (!string.IsNullOrWhiteSpace(value))
+                response.Answers.Add(new SurveyAnswer { QuestionId = question.Id, Value = value });
         }
         db.SurveyResponses.Add(response);
         if (survey.CreatorId != currentUser.UserId)
             db.Notifications.Add(new UserNotification
             {
-                UserId = survey.CreatorId, Type = UserNotificationType.SurveyResponseSubmitted,
-                Title = "New survey response", Message = $"A response was submitted for '{survey.Title}'.",
+                UserId = survey.CreatorId,
+                Type = UserNotificationType.SurveyResponseSubmitted,
+                Title = "New survey response",
+                Message = $"A response was submitted for '{survey.Title}'.",
                 TargetUrl = $"/SurveyAdmin/Responses/{survey.Id}"
             });
-        try { await db.SaveChangesAsync(); }
+        try
+        {
+            await db.SaveChangesAsync();
+        }
         catch (DbUpdateException ex) when (ex.InnerException is Microsoft.Data.SqlClient.SqlException { Number: 2601 or 2627 }) { TempData["Error"] = "This survey has already been submitted."; return RedirectToAction(nameof(Index)); }
-        TempData["Success"] = "Survey submitted successfully."; return RedirectToAction(nameof(MyResponses));
+        TempData["Success"] = "Survey submitted successfully.";
+        return RedirectToAction(nameof(MyResponses));
     }
 
     public async Task<IActionResult> MyResponses() => View(await db.SurveyResponses.Include(x => x.Survey).Where(x => x.UserId == currentUser.UserId).OrderByDescending(x => x.SubmittedAt).ToListAsync());
-    public async Task<IActionResult> ResponseDetails(int id) { var response = await db.SurveyResponses.Include(x => x.Survey).Include(x => x.Answers).ThenInclude(x => x.Attachments).Include(x => x.Answers).ThenInclude(x => x.Question).ThenInclude(x => x!.Options).FirstOrDefaultAsync(x => x.Id == id && x.UserId == currentUser.UserId); return response is null ? NotFound() : View(response); }
+    public async Task<IActionResult> ResponseDetails(int id)
+    {
+        var response = await db.SurveyResponses.Include(x => x.Survey).Include(x => x.Answers).ThenInclude(x => x.Attachments).Include(x => x.Answers).ThenInclude(x => x.Question).ThenInclude(x => x!.Options).FirstOrDefaultAsync(x => x.Id == id && x.UserId == currentUser.UserId);
+        return response is null ? NotFound() : View(response);
+    }
 
+    // Recalculate routes on the server: posted section IDs are not trusted.
+    // An option route wins over the section default; only forward routes are valid.
     private static List<SurveySection> CalculatePath(Survey survey, Dictionary<int, string?> answers, out string? error)
     {
         error = null;
@@ -122,23 +167,36 @@ public class SurveyController(ApplicationDbContext db, ICurrentUserService curre
         var current = ordered.FirstOrDefault();
         while (current is not null)
         {
-            if (!seen.Add(current.Id)) { error = "The survey contains a section routing loop."; break; }
+            if (!seen.Add(current.Id))
+            {
+                error = "The survey contains a section routing loop.";
+                break;
+            }
             visited.Add(current);
             var routers = current.Questions.Where(q => q.Type is SurveyQuestionType.MultipleChoice or SurveyQuestionType.Dropdown && q.Options.Any(o => o.BranchRule is not null)).ToList();
-            if (routers.Count > 1) { error = $"Section '{current.Title}' has more than one routing question."; break; }
+            if (routers.Count > 1)
+            {
+                error = $"Section '{current.Title}' has more than one routing question.";
+                break;
+            }
             SurveyBranchRule? rule = null;
             if (routers.Count == 1 && int.TryParse(answers.GetValueOrDefault(routers[0].Id), out var selectedOptionId))
                 rule = routers[0].Options.FirstOrDefault(x => x.Id == selectedOptionId)?.BranchRule;
             var action = rule?.Action is SurveyBranchAction.GoToSection or SurveyBranchAction.Submit ? rule.Action : current.AfterSectionAction;
             var destinationId = rule?.Action == SurveyBranchAction.GoToSection ? rule.DestinationSectionId : current.NextSectionId;
-            if (action == SurveyBranchAction.Submit) break;
+            if (action == SurveyBranchAction.Submit)
+                break;
             if (action == SurveyBranchAction.GoToSection)
             {
                 if (!destinationId.HasValue || !byId.TryGetValue(destinationId.Value, out var destination) || destination.DisplayOrder <= current.DisplayOrder)
-                { error = "The survey contains a broken or backward section route."; break; }
+                {
+                    error = "The survey contains a broken or backward section route.";
+                    break;
+                }
                 current = destination;
             }
-            else current = ordered.FirstOrDefault(x => x.DisplayOrder > current.DisplayOrder);
+            else
+                current = ordered.FirstOrDefault(x => x.DisplayOrder > current.DisplayOrder);
         }
         return visited;
     }
@@ -150,9 +208,11 @@ public class SurveyController(ApplicationDbContext db, ICurrentUserService curre
     private Task<bool> CanAccess(Survey survey) => survey.CourseId is null ? Task.FromResult(true) : db.Enrollments.AnyAsync(x => x.StudentId == currentUser.UserId && x.CourseId == survey.CourseId && x.Status == EnrollmentStatus.Active);
     private static string? NormalizeAnswer(Question question, PostedAnswer? answer)
     {
-        if (question.Type != SurveyQuestionType.Checkbox) return string.IsNullOrWhiteSpace(answer?.Value) ? null : answer.Value.Trim();
+        if (question.Type != SurveyQuestionType.Checkbox)
+            return string.IsNullOrWhiteSpace(answer?.Value) ? null : answer.Value.Trim();
         return answer is null || answer.SelectedValues.Count == 0 ? null : string.Join(',', answer.SelectedValues.OrderBy(x => x, StringComparer.Ordinal));
     }
+    // Each question type has its own server-side answer validation.
     private static bool IsValid(Question question, string value) => question.Type switch
     {
         SurveyQuestionType.Rating => int.TryParse(value, out var rating) && rating is >= 1 and <= 5,
@@ -162,16 +222,22 @@ public class SurveyController(ApplicationDbContext db, ICurrentUserService curre
         SurveyQuestionType.Text => value.Length <= 2000,
         _ => false
     };
+    // Convert database entities into the fields rendered by Take.cshtml.
     private static SurveySubmissionViewModel BuildViewModel(Survey survey)
     {
         var sections = survey.Sections.OrderBy(x => x.DisplayOrder).ThenBy(x => x.Id).ToList();
         return new SurveySubmissionViewModel
         {
-            SurveyId = survey.Id, SurveyTitle = survey.Title, SurveyDescription = survey.Description,
+            SurveyId = survey.Id,
+            SurveyTitle = survey.Title,
+            SurveyDescription = survey.Description,
             Sections = sections.Select(s => new SurveySectionInputViewModel { Id = s.Id, Title = s.Title, Description = s.Description, DisplayOrder = s.DisplayOrder, AfterSectionAction = s.AfterSectionAction, NextSectionId = s.NextSectionId, QuestionIds = s.Questions.OrderBy(q => q.DisplayOrder).Select(q => q.Id).ToList() }).ToList(),
             Answers = sections.SelectMany(s => s.Questions.OrderBy(q => q.DisplayOrder)).Select(question => new SurveyAnswerInputViewModel
             {
-                QuestionId = question.Id, QuestionText = question.Text, Type = question.Type, IsRequired = question.IsRequired,
+                QuestionId = question.Id,
+                QuestionText = question.Text,
+                Type = question.Type,
+                IsRequired = question.IsRequired,
                 Options = question.Options.OrderBy(x => x.DisplayOrder).Select(option => new QuestionOptionItemViewModel { Id = option.Id, Text = option.Text, BranchAction = option.BranchRule?.Action ?? SurveyBranchAction.Continue, DestinationSectionId = option.BranchRule?.DestinationSectionId }).ToList()
             }).ToList()
         };

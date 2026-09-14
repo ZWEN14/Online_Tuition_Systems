@@ -3,14 +3,18 @@ using Online_Tuition_Systems.Models;
 
 namespace Online_Tuition_Systems.ViewModels;
 
+// Form data and validation used by the controller and Razor view.
 public class SurveyEditViewModel
 {
     public int Id { get; set; }
     [Required, StringLength(150)] public string Title { get; set; } = string.Empty;
-    [StringLength(1000)] public string? Description { get; set; }
-    [Display(Name = "Expiry Date")] public DateTime? ExpiresAt { get; set; }
+    [StringLength(1000)]
+    public string? Description { get; set; }
+    [Display(Name = "Expiry Date")]
+    public DateTime? ExpiresAt { get; set; }
     [Display(Name = "Active")] public bool IsActive { get; set; } = true;
-    [Display(Name = "Course (optional)")] public int? CourseId { get; set; }
+    [Display(Name = "Course (optional)")]
+    public int? CourseId { get; set; }
 }
 
 public class SurveyCreateViewModel : SurveyEditViewModel
@@ -21,11 +25,13 @@ public class SurveyCreateViewModel : SurveyEditViewModel
 
 public class SurveySectionCreateViewModel
 {
-    [StringLength(40)] public string? DestinationKey { get; set; }
+    [StringLength(40)]
+    public string? DestinationKey { get; set; }
     public int Id { get; set; }
     [Required, StringLength(40)] public string ClientKey { get; set; } = Guid.NewGuid().ToString("N");
     [Required, StringLength(150)] public string Title { get; set; } = "Section 1";
-    [StringLength(500)] public string? Description { get; set; }
+    [StringLength(500)]
+    public string? Description { get; set; }
     [MinLength(1, ErrorMessage = "Each section needs at least one question.")]
     public List<SurveyQuestionCreateViewModel> Questions { get; set; } = [new()];
 }
@@ -38,19 +44,6 @@ public class SurveyQuestionCreateViewModel
     [Required, StringLength(500), Display(Name = "Question")] public string Text { get; set; } = string.Empty;
     [Required, Display(Name = "Question Type")] public SurveyQuestionType Type { get; set; } = SurveyQuestionType.Text;
     [Display(Name = "Required")] public bool IsRequired { get; set; } = true;
-    [Display(Name = "Options (one per line)")] public string? OptionsText { get; set; }
-}
-
-public class QuestionEditViewModel
-{
-    public int Id { get; set; }
-    public int SurveyId { get; set; }
-    [Required, StringLength(500), Display(Name = "Question")] public string Text { get; set; } = string.Empty;
-    [Required, Display(Name = "Question Type")] public SurveyQuestionType Type { get; set; } = SurveyQuestionType.Text;
-    [Display(Name = "Required")] public bool IsRequired { get; set; } = true;
-    [Range(1, 999), Display(Name = "Display Order")] public int DisplayOrder { get; set; } = 1;
-    [Display(Name = "Options")] public string? OptionsText { get; set; }
-    [Required, Display(Name = "Section")] public int? SectionId { get; set; }
 }
 
 public class SurveySubmissionViewModel
@@ -60,7 +53,6 @@ public class SurveySubmissionViewModel
     public string? SurveyDescription { get; set; }
     public List<SurveyAnswerInputViewModel> Answers { get; set; } = [];
     public List<SurveySectionInputViewModel> Sections { get; set; } = [];
-    public List<int> VisitedSectionIds { get; set; } = [];
 }
 
 public class SurveySectionInputViewModel
@@ -94,35 +86,10 @@ public class QuestionOptionItemViewModel
     public int? DestinationSectionId { get; set; }
 }
 
-public class SurveySectionEditViewModel
-{
-    public int Id { get; set; }
-    public int SurveyId { get; set; }
-    [Required, StringLength(150)] public string Title { get; set; } = string.Empty;
-    [StringLength(500)] public string? Description { get; set; }
-    [Range(1, 999), Display(Name = "Section Order")] public int DisplayOrder { get; set; }
-}
-
-public class SurveyRoutingViewModel
-{
-    public int QuestionId { get; set; }
-    public int SurveyId { get; set; }
-    public string QuestionText { get; set; } = string.Empty;
-    public string SectionTitle { get; set; } = string.Empty;
-    public List<SurveyOptionRouteViewModel> Options { get; set; } = [];
-}
-
-public class SurveyOptionRouteViewModel
-{
-    public int OptionId { get; set; }
-    public string OptionText { get; set; } = string.Empty;
-    public SurveyBranchAction Action { get; set; } = SurveyBranchAction.Continue;
-    public int? DestinationSectionId { get; set; }
-}
-
 public class SurveyBuilderOptionViewModel
 {
     public int Id { get; set; }
     [Required, StringLength(200)] public string Text { get; set; } = string.Empty;
-    [StringLength(40)] public string? DestinationKey { get; set; }
+    [StringLength(40)]
+    public string? DestinationKey { get; set; }
 }

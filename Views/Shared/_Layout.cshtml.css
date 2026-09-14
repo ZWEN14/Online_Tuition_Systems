@@ -1,47 +1,187 @@
 ﻿/* Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
 for details on configuring this project to bundle and minify static web assets. */
-
 a.navbar-brand {
-  white-space: normal;
-  text-align: left;
-  word-break: normal;
+    white-space: normal;
+    text-align: left;
+    word-break: normal;
 }
 
 a {
-  color: #4051ee;
+    color: #4051ee;
 }
 
 .btn-primary {
-  color: #fff;
-  background-color: #4051ee;
-  border-color: #4051ee;
+    color: #fff;
+    background-color: #4051ee;
+    border-color: #4051ee;
 }
 
-.nav-pills .nav-link.active, .nav-pills .show > .nav-link {
-  color: #fff;
-  background-color: #4051ee;
-  border-color: #4051ee;
+.nav-pills .nav-link.active,
+.nav-pills .show > .nav-link {
+    color: #fff;
+    background-color: #4051ee;
+    border-color: #4051ee;
 }
 
 .border-top {
-  border-top: 1px solid #e5e5e5;
+    border-top: 1px solid #e5e5e5;
 }
+
 .border-bottom {
-  border-bottom: 1px solid #e5e5e5;
+    border-bottom: 1px solid #e5e5e5;
 }
 
 .box-shadow {
-  box-shadow: 0 .25rem .75rem rgba(15, 23, 42, .05);
+    box-shadow: 0 .25rem .75rem rgba(15, 23, 42, .05);
 }
 
 button.accept-policy {
-  font-size: 1rem;
-  line-height: inherit;
+    font-size: 1rem;
+    line-height: inherit;
 }
 
 .footer {
-  position: static;
-  width: 100%;
-  white-space: normal;
-  line-height: 1.5;
+    position: static;
+    width: 100%;
+    white-space: normal;
+    line-height: 1.5;
+}
+
+
+/* =========================================
+   SIDEBAR
+   ========================================= */
+
+.sidebar-section {
+    margin-top: 18px;
+}
+
+    .sidebar-section:first-of-type {
+        margin-top: 10px;
+    }
+
+.sidebar-section-title {
+    margin: 0 12px 6px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    opacity: 0.6;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    text-decoration: none;
+}
+
+.sidebar-link-label {
+    flex: 1;
+}
+
+.shell-nav-icon {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .shell-nav-icon svg {
+        width: 18px;
+        height: 18px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+
+/* =========================================
+   SIDEBAR SPACING
+   ========================================= */
+
+.app-sidebar .sidebar-link {
+    min-height: 40px;
+    padding: 8px 12px;
+    border-radius: 8px;
+}
+
+.app-sidebar .sidebar-section-title + .sidebar-link {
+    margin-top: 2px;
+}
+
+
+/* =========================================
+   SIDEBAR HOVER
+   ========================================= */
+
+.app-sidebar .sidebar-link:hover {
+    background-color: rgba(64, 81, 238, 0.08);
+    text-decoration: none;
+}
+
+    .app-sidebar .sidebar-link:hover .shell-nav-icon {
+        color: #4051ee;
+    }
+
+
+/* =========================================
+   SIDEBAR ACTIVE LINK
+   ========================================= */
+
+.app-sidebar .sidebar-link.active {
+    background-color: rgba(64, 81, 238, 0.10);
+    color: #4051ee;
+}
+
+    .app-sidebar .sidebar-link.active .shell-nav-icon {
+        color: #4051ee;
+    }
+
+
+/* =========================================
+   SIDEBAR HEADING
+   ========================================= */
+
+.app-sidebar .sidebar-heading {
+    margin-bottom: 4px;
+}
+
+
+/* =========================================
+   SIDEBAR ICON ALIGNMENT
+   ========================================= */
+
+.app-sidebar .shell-nav-icon svg {
+    display: block;
+}
+
+
+/* =========================================
+   COLLAPSED SIDEBAR
+   ========================================= */
+
+.app-sidebar.is-collapsed .sidebar-section-title,
+.app-sidebar.is-collapsed .sidebar-link-label,
+.app-sidebar.is-collapsed .sidebar-heading {
+    display: none;
+}
+
+.app-sidebar.is-collapsed .sidebar-section {
+    margin-top: 10px;
+}
+
+.app-sidebar.is-collapsed .sidebar-link {
+    justify-content: center;
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+.app-sidebar.is-collapsed .shell-nav-icon {
+    margin: 0;
 }

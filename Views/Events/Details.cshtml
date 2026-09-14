@@ -23,6 +23,8 @@
         <p class="text-muted mb-0">@tuitionEvent.Mode event</p>
     </div>
 
+    @if (Model.IsOrganizer || (User.IsInRole(AppRoles.Admin) && tuitionEvent.Status is (EventStatus.Published or EventStatus.Cancelled)) || Model.CanRegister)
+    {
     <div class="d-flex flex-wrap justify-content-end gap-2">
         @if (Model.IsOrganizer)
         {
@@ -82,8 +84,8 @@
             </a>
         }
 
-        <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
     </div>
+    }
 </div>
 
 @if (!User.IsInRole(AppRoles.Admin) && !Model.IsOrganizer)
@@ -126,6 +128,22 @@
 
             <dt class="col-sm-3">Event organizer</dt>
             <dd class="col-sm-9">@(tuitionEvent.OrganizerUserId ?? "Not assigned")</dd>
+
+            @if (tuitionEvent.CourseId.HasValue)
+            {
+                <dt class="col-sm-3">Related course</dt>
+                <dd class="col-sm-9">
+                    @if (ViewData["RelatedCourse"] is Course course)
+                    {
+                        <a asp-controller="Courses" asp-action="Details" asp-route-slug="@course.Slug"
+                           class="btn btn-sm btn-outline-primary">View @course.Title</a>
+                    }
+                    else
+                    {
+                        <span class="text-muted">Course is no longer published.</span>
+                    }
+                </dd>
+            }
 
             <dt class="col-sm-3">Location</dt>
             <dd class="col-sm-9">@(tuitionEvent.Location ?? "Not applicable")</dd>

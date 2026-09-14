@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Online_Tuition_Systems.Models;
 
+// Groups questions into a page and stores the default destination after that page.
 public class SurveySection
 {
     public int Id { get; set; }

@@ -17,7 +17,12 @@ public class NotificationService : INotificationService
 
     public async Task AnnouncementPublishedAsync(Announcement announcement)
     {
-        var userIds = await AudienceUserIds(announcement.Audience);
+        var userIds = announcement.CourseId.HasValue
+            ? await CourseAudienceUserIds(
+                announcement.CourseId.Value,
+                announcement.Audience is AnnouncementAudience.All or AnnouncementAudience.Student,
+                announcement.Audience is AnnouncementAudience.All or AnnouncementAudience.Tutor)
+            : await AudienceUserIds(announcement.Audience);
 
         AddNotifications(
             userIds,
@@ -30,7 +35,12 @@ public class NotificationService : INotificationService
 
     public async Task AnnouncementUpdatedAsync(Announcement announcement)
     {
-        var userIds = await AudienceUserIds(announcement.Audience);
+        var userIds = announcement.CourseId.HasValue
+            ? await CourseAudienceUserIds(
+                announcement.CourseId.Value,
+                announcement.Audience is AnnouncementAudience.All or AnnouncementAudience.Student,
+                announcement.Audience is AnnouncementAudience.All or AnnouncementAudience.Tutor)
+            : await AudienceUserIds(announcement.Audience);
 
         AddNotifications(
             userIds,
@@ -53,7 +63,12 @@ public class NotificationService : INotificationService
             return;
         }
 
-        var userIds = await AudienceUserIds(tuitionEvent.RegistrationAudience);
+        var userIds = tuitionEvent.CourseId.HasValue
+            ? await CourseAudienceUserIds(
+                tuitionEvent.CourseId.Value,
+                tuitionEvent.RegistrationAudience is RegistrationAudience.All or RegistrationAudience.Student,
+                tuitionEvent.RegistrationAudience is RegistrationAudience.All or RegistrationAudience.Tutor)
+            : await AudienceUserIds(tuitionEvent.RegistrationAudience);
 
         AddNotifications(
             userIds,
@@ -66,7 +81,12 @@ public class NotificationService : INotificationService
 
     public async Task EventUpdatedAsync(Event tuitionEvent)
     {
-        var userIds = await AudienceUserIds(tuitionEvent.RegistrationAudience);
+        var userIds = tuitionEvent.CourseId.HasValue
+            ? await CourseAudienceUserIds(
+                tuitionEvent.CourseId.Value,
+                tuitionEvent.RegistrationAudience is RegistrationAudience.All or RegistrationAudience.Student,
+                tuitionEvent.RegistrationAudience is RegistrationAudience.All or RegistrationAudience.Tutor)
+            : await AudienceUserIds(tuitionEvent.RegistrationAudience);
         var registrantUserIds = await _context.EventRegistrations
             .Where(item =>
                 item.EventId == tuitionEvent.Id
@@ -158,7 +178,9 @@ public class NotificationService : INotificationService
     {
         var userId = await UserIdForReference(proposal.ProposedByUserId);
 
-        if (!userId.HasValue)
+        if (!userId.HasValue
+            || !await _context.Users.AsNoTracking().AnyAsync(item =>
+                item.Id == userId.Value && item.Role == UserRole.Tutor))
         {
             return;
         }
@@ -287,6 +309,36 @@ public class NotificationService : INotificationService
         }
 
         return await query.Select(item => item.Id).ToListAsync();
+    }
+
+    private async Task<List<int>> CourseAudienceUserIds(
+        int courseId, bool includeStudents, bool includeTutor)
+    {
+        var userIds = new List<int>();
+
+        if (includeStudents)
+        {
+            userIds.AddRange(await _context.Enrollments.AsNoTracking()
+                .Where(item => item.CourseId == courseId
+                    && item.Status == EnrollmentStatus.Active)
+                .Select(item => item.StudentId)
+                .ToListAsync());
+        }
+
+        if (includeTutor)
+        {
+            var tutorId = await _context.Courses.AsNoTracking()
+                .Where(item => item.CourseId == courseId)
+                .Select(item => (int?)item.TutorId)
+                .SingleOrDefaultAsync();
+
+            if (tutorId.HasValue)
+            {
+                userIds.Add(tutorId.Value);
+            }
+        }
+
+        return userIds;
     }
 
     private IQueryable<User> StudentAndTutorUsers()

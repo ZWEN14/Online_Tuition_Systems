@@ -9,7 +9,8 @@ public class EditEventViewModel : IValidatableObject
 {
     public int Id { get; set; }
 
-    [Display(Name = "Course")]
+    [Display(Name = "Related course")]
+    [Range(1, int.MaxValue, ErrorMessage = "Select a valid course.")]
     public int? CourseId { get; set; }
 
     [ValidateNever]

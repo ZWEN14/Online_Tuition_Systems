@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Online_Tuition_Systems.Models;
 
+// A survey question belongs to a section; Type determines its input and validation.
 public class Question
 {
     public int Id { get; set; }

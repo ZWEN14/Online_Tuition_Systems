@@ -420,7 +420,7 @@ public class EventRegistrationsController : Controller
                 return NotFound();
             }
 
-            if (registration.Event.OrganizerUserId != organizer.Email)
+            if (registration.Event.OrganizerUserId != organizer.Id.ToString())
             {
                 return Forbid();
             }
@@ -470,7 +470,7 @@ public class EventRegistrationsController : Controller
             return Forbid();
         }
 
-        if (registration.Event.OrganizerUserId != organizer.Email)
+        if (registration.Event.OrganizerUserId != organizer.Id.ToString())
         {
             return Forbid();
         }

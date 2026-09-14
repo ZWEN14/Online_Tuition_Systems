@@ -91,10 +91,7 @@ public class NotificationsController : Controller
             return BadRequest();
         }
 
-        var notification = await _context.Notifications
-            .SingleOrDefaultAsync(item =>
-                item.Id == id
-                && item.UserId == userId.Value);
+        var notification = await _feed.GetVisibleModuleNotificationAsync(userId.Value, id);
 
         if (notification is null)
         {

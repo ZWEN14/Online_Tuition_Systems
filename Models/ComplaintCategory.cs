@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Online_Tuition_Systems.Models;
 
+// Categories can be deactivated without deleting existing complaints.
 public class ComplaintCategory
 {
     public int Id { get; set; }

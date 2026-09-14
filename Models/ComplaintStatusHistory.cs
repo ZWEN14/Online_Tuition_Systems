@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Online_Tuition_Systems.Models;
 
+// Records who changed a complaint status, when, and the accompanying note.
 public class ComplaintStatusHistory
 {
     public int Id { get; set; }

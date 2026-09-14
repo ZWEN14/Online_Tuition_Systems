@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Online_Tuition_Systems.Models;
 
+// An option-specific route overrides the section default.
 public class SurveyBranchRule
 {
     public int Id { get; set; }

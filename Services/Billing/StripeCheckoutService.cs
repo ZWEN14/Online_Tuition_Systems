@@ -572,6 +572,19 @@ public sealed class StripeCheckoutService(
         booking.TransactionId = session.Id;
         booking.PaidAt = DateTime.Now;
         booking.UpdatedAt = DateTime.Now;
+        dbContext.BookingNotifications.AddRange(
+            new Notification
+            {
+                UserId = booking.StudentId,
+                BookingId = booking.Id,
+                Message = "Your booking payment was verified and the booking is confirmed."
+            },
+            new Notification
+            {
+                UserId = booking.TutorId,
+                BookingId = booking.Id,
+                Message = "A booking payment was completed and the booking is confirmed."
+            });
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return new(true, "Payment verified and booking confirmed.");

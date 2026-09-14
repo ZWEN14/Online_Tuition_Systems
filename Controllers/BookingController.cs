@@ -259,6 +259,7 @@ public class BookingController(
             booking.Status = BookingStatus.Cancelled;
             booking.CancelledAt = DateTime.Now;
             db.SaveChanges();
+            ns.NotifyBookingStatusChanged(booking);
         }
 
         if (IsPaymentExpired(booking))
@@ -267,6 +268,7 @@ public class BookingController(
             booking.PaymentStatus = "failed";
             booking.CancelledAt = DateTime.Now;
             db.SaveChanges();
+            ns.NotifyBookingStatusChanged(booking);
         }
 
         ViewBag.StripeAvailable = stripeCheckoutService.IsConfigured;
@@ -458,12 +460,13 @@ public class BookingController(
     private IActionResult AutoCancel(int id, string message)
     {
         var booking = db.Bookings.Find(id);
-        if (booking != null)
+        if (booking != null && booking.Status != BookingStatus.Cancelled)
         {
             booking.Status = BookingStatus.Cancelled;
             booking.CancelledAt = DateTime.Now;
             booking.PaymentStatus = "failed";
             db.SaveChanges();
+            ns.NotifyBookingStatusChanged(booking);
         }
         return StatusError(id, message);
     }

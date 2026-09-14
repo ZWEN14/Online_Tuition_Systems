@@ -58,6 +58,12 @@
     communityLinks.Add(("Account", "UpdateProfile", "My profile", "Keep your account details up to date.", "P", "feature-violet"));
 }
 
+@if (isStudent)
+{
+    <partial name="_StudentDashboard" model="Model" />
+}
+else
+{
 <section class="home-dashboard-hero" aria-labelledby="home-heading">
     <div class="home-dashboard-intro">
         <span class="section-kicker">@roleName.ToUpperInvariant() WORKSPACE</span>
@@ -185,3 +191,5 @@
         </div>
     </div>
 </section>
+
+}

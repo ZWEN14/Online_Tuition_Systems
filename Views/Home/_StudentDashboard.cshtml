@@ -1,0 +1,86 @@
+@model Online_Tuition_Systems.ViewModels.Home.HomeDashboardViewModel
+
+<header class="mb-4">
+    <h1 class="h2 mb-2">Your learning dashboard</h1>
+    <p class="text-muted mb-0">Continue your learning or plan your next lesson.</p>
+</header>
+
+<section class="mb-4" aria-labelledby="student-learning-heading">
+    <h2 id="student-learning-heading" class="h5 mb-3">Your learning</h2>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <a asp-controller="StudentCourses" asp-action="Index" class="card h-100 p-3 text-decoration-none d-flex flex-row align-items-center justify-content-between gap-3">
+                <span class="home-feature-copy"><strong>My courses</strong><small>Continue courses you have joined.</small></span>
+                <span class="home-feature-arrow" aria-hidden="true">&rarr;</span>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a asp-controller="Booking" asp-action="Index" class="card h-100 p-3 text-decoration-none d-flex flex-row align-items-center justify-content-between gap-3">
+                <span class="home-feature-copy"><strong>My bookings</strong><small>Review your lesson requests and sessions.</small></span>
+                <span class="home-feature-arrow" aria-hidden="true">&rarr;</span>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a asp-controller="Tutor" asp-action="Index" class="card h-100 p-3 text-decoration-none d-flex flex-row align-items-center justify-content-between gap-3">
+                <span class="home-feature-copy"><strong>Find a tutor</strong><small>Choose a tutor for your next lesson.</small></span>
+                <span class="home-feature-arrow" aria-hidden="true">&rarr;</span>
+            </a>
+        </div>
+    </div>
+</section>
+
+<section aria-labelledby="student-discover-heading">
+    <h2 id="student-discover-heading" class="h5 mb-3">Discover and stay informed</h2>
+    <div class="row g-3">
+        <div class="col-lg-4">
+            <div class="home-latest-panel h-100">
+                <div class="home-latest-panel-head"><h3>Explore courses</h3><a asp-controller="Courses" asp-action="Index">Browse all</a></div>
+                @if (Model.Courses.Count == 0)
+                {
+                    <p class="home-latest-empty">New courses will appear here when published.</p>
+                }
+                @foreach (var course in Model.Courses)
+                {
+                    <a asp-controller="Courses" asp-action="Details" asp-route-id="@course.Id" class="home-latest-item">
+                        <strong>@course.Title</strong>
+                        <small>@course.Category &middot; @(course.Price == 0 ? "Free" : $"RM {course.Price:0.00}")</small>
+                    </a>
+                }
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="home-latest-panel h-100">
+                <div class="home-latest-panel-head"><h3>Upcoming events</h3><a asp-controller="Events" asp-action="Index">View all</a></div>
+                @if (Model.Events.Count == 0)
+                {
+                    <p class="home-latest-empty">No upcoming events. Check back for new activities.</p>
+                }
+                @foreach (var item in Model.Events)
+                {
+                    <a asp-controller="Events" asp-action="Details" asp-route-id="@item.Id" class="home-latest-item">
+                        <strong>@item.Title</strong><small>@item.StartsAt.ToLocalTime().ToString("dd MMM yyyy, h:mm tt")</small>
+                    </a>
+                }
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="home-latest-panel h-100">
+                <div class="home-latest-panel-head"><h3>Announcements</h3><a asp-controller="Announcements" asp-action="Index">View all</a></div>
+                @if (Model.Announcements.Count == 0)
+                {
+                    <p class="home-latest-empty">You are up to date. New announcements will appear here.</p>
+                }
+                @foreach (var item in Model.Announcements)
+                {
+                    <a asp-controller="Announcements" asp-action="Details" asp-route-id="@item.Id" class="home-latest-item">
+                        <strong>@item.Title</strong>
+                        @if (item.PublishedAt.HasValue)
+                        {
+                            <small>@item.PublishedAt.Value.ToLocalTime().ToString("dd MMM yyyy")</small>
+                        }
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+</section>

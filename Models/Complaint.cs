@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Online_Tuition_Systems.Models;
 
+// Tracks the submitter, category, optional assigned tutor and current status.
 public class Complaint
 {
     public ICollection<SubmissionAttachment> Attachments { get; set; } = new List<SubmissionAttachment>();
