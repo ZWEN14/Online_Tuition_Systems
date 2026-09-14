@@ -30,16 +30,16 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
         captchaToken ??= Request.Form["g-recaptcha-response"].FirstOrDefault();
         if (!ModelState.IsValid)
         {
-            ViewBag.RecaptchaSiteKey = recaptcha.SiteKey;
-            return View(vm);
+            return LoginFailure(vm);
         }
-
-        var u = db.Users.FirstOrDefault(u => u.Email == vm.Email);
 
         if (!await recaptcha.VerifyAsync(captchaToken, HttpContext.Connection.RemoteIpAddress?.ToString(), HttpContext.RequestAborted))
         {
-            ModelState.AddModelError("Captcha", "Please complete the CAPTCHA check.");
+            ModelState.AddModelError("Captcha", "CAPTCHA verification failed. Complete the check and try again.");
+            return LoginFailure(vm);
         }
+
+        var u = db.Users.FirstOrDefault(u => u.Email == vm.Email);
 
         if (u?.IsBlocked == true)
         {
@@ -74,7 +74,8 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
             if (!u.EmailVerified)
             {
                 TempData["Info"] = "Please verify your email before signing in.";
-                return RedirectToAction(nameof(VerifyEmail), new { email = u.Email });
+                var verificationUrl = Url.Action(nameof(VerifyEmail), new { email = u.Email })!;
+                return LoginSuccess(verificationUrl);
             }
 
             TempData["Info"] = "Login successfully.";
@@ -83,16 +84,41 @@ public class AccountController(ApplicationDbContext db, Helper hp, IWebHostEnvir
             hp.SignIn(u!.Id, u.Email, u.Name, u.Role.ToString(), vm.RememberMe);
 
             // (4) Handle return URL
-            if (!string.IsNullOrEmpty(returnURL) && Url.IsLocalUrl(returnURL))
-            {
-                return Redirect(returnURL);
-            }
-
-            return RedirectToAction("Index", "Home");
+            var destinationUrl = !string.IsNullOrEmpty(returnURL) && Url.IsLocalUrl(returnURL)
+                ? returnURL
+                : Url.Action("Index", "Home")!;
+            return LoginSuccess(destinationUrl);
         }
 
+        return LoginFailure(vm);
+    }
+
+    private IActionResult LoginFailure(LoginVM vm)
+    {
         ViewBag.RecaptchaSiteKey = recaptcha.SiteKey;
-        return View(vm);
+        if (!Request.IsAjax())
+        {
+            return View(nameof(Login), vm);
+        }
+
+        var errors = ModelState
+            .Where(entry => entry.Value?.Errors.Count > 0)
+            .ToDictionary(
+                entry => entry.Key,
+                entry => entry.Value!.Errors
+                    .Select(error => string.IsNullOrWhiteSpace(error.ErrorMessage)
+                        ? "The submitted value is invalid."
+                        : error.ErrorMessage)
+                    .ToArray());
+
+        return Json(new { success = false, errors });
+    }
+
+    private IActionResult LoginSuccess(string destinationUrl)
+    {
+        return Request.IsAjax()
+            ? Json(new { success = true, redirectUrl = destinationUrl })
+            : Redirect(destinationUrl);
     }
 
     [Authorize]

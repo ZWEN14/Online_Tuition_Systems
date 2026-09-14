@@ -3,6 +3,7 @@
 @{
     ViewBag.Title = "Account | Login";
     var recaptchaSiteKey = ViewBag.RecaptchaSiteKey as string;
+    var returnUrl = Context.Request.Query["returnURL"].FirstOrDefault();
 }
 
 <div class="row justify-content-center">
@@ -11,7 +12,8 @@
             <div class="card-body p-4 p-md-5">
                 <div class="text-center mb-4"><span class="brand-mark mb-3">A</span><h1 class="h2 mb-1">Welcome back</h1><p class="text-muted mb-0">Sign in to continue learning.</p></div>
 
-                <form method="post">
+                <form asp-action="Login" method="post" data-ajax-login="true">
+                    <input type="hidden" name="returnURL" value="@returnUrl" />
                     <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
                     <div class="mb-3">
@@ -35,11 +37,13 @@
                     {
                         <div class="mb-3">
                             <div class="g-recaptcha" data-sitekey="@recaptchaSiteKey"></div>
-                            <span class="text-danger">@Html.ValidationMessage("Captcha")</span>
+                            <span class="text-danger" data-login-captcha-error>
+                                @ViewData.ModelState["Captcha"]?.Errors.FirstOrDefault()?.ErrorMessage
+                            </span>
                         </div>
                     }
 
-                    <button class="btn btn-primary w-100">Login</button>
+                    <button type="submit" class="btn btn-primary w-100">Login</button>
                 </form>
 
                 <p class="mt-4 text-center small">
@@ -52,6 +56,112 @@
                     {
                         <script src="https://www.google.com/recaptcha/enterprise.js" async defer></script>
                     }
+                    <script>
+                        (() => {
+                            const form = document.querySelector("[data-ajax-login]");
+                            if (!form || !window.fetch) return;
+
+                            const submitButton = form.querySelector('[type="submit"]');
+                            const originalButtonText = submitButton?.textContent ?? "Login";
+                            const captchaError = form.querySelector("[data-login-captcha-error]");
+
+                            const resetCaptcha = () => {
+                                window.grecaptcha?.enterprise?.reset?.();
+                            };
+
+                            const clearServerErrors = () => {
+                                const summary = form.querySelector('[data-valmsg-summary="true"]');
+                                if (summary) {
+                                    summary.classList.remove("validation-summary-errors");
+                                    summary.classList.add("validation-summary-valid");
+                                    summary.innerHTML = "";
+                                }
+
+                                form.querySelectorAll("[data-valmsg-for]").forEach(element => {
+                                    element.textContent = "";
+                                    element.classList.remove("field-validation-error");
+                                    element.classList.add("field-validation-valid");
+                                });
+                                if (captchaError) captchaError.textContent = "";
+                            };
+
+                            const showErrors = errors => {
+                                const generalErrors = [];
+                                for (const [key, messages] of Object.entries(errors ?? {})) {
+                                    const message = Array.isArray(messages) ? messages[0] : messages;
+                                    if (!message) continue;
+
+                                    if (key === "Captcha") {
+                                        if (captchaError) captchaError.textContent = message;
+                                        continue;
+                                    }
+
+                                    const fieldError = [...form.querySelectorAll("[data-valmsg-for]")]
+                                        .find(element => element.dataset.valmsgFor === key);
+                                    if (fieldError) {
+                                        fieldError.textContent = message;
+                                        fieldError.classList.remove("field-validation-valid");
+                                        fieldError.classList.add("field-validation-error");
+                                    } else {
+                                        generalErrors.push(...(Array.isArray(messages) ? messages : [message]));
+                                    }
+                                }
+
+                                if (generalErrors.length > 0) {
+                                    const summary = form.querySelector('[data-valmsg-summary="true"]');
+                                    if (summary) {
+                                        summary.classList.remove("validation-summary-valid");
+                                        summary.classList.add("validation-summary-errors");
+                                        const list = document.createElement("ul");
+                                        for (const message of generalErrors) {
+                                            const item = document.createElement("li");
+                                            item.textContent = message;
+                                            list.appendChild(item);
+                                        }
+                                        summary.replaceChildren(list);
+                                    }
+                                }
+                            };
+
+                            form.addEventListener("submit", async event => {
+                                event.preventDefault();
+                                if (window.jQuery?.validator && !window.jQuery(form).valid()) return;
+
+                                clearServerErrors();
+                                if (submitButton) {
+                                    submitButton.disabled = true;
+                                    submitButton.textContent = "Signing in...";
+                                }
+
+                                try {
+                                    const response = await fetch(form.action, {
+                                        method: "POST",
+                                        body: new FormData(form),
+                                        headers: {
+                                            "Accept": "application/json",
+                                            "X-Requested-With": "XMLHttpRequest"
+                                        }
+                                    });
+                                    const result = await response.json();
+                                    if (result.success && result.redirectUrl) {
+                                        window.location.assign(result.redirectUrl);
+                                        return;
+                                    }
+
+                                    showErrors(result.errors);
+                                    resetCaptcha();
+                                } catch {
+                                    showErrors({ "": ["Login could not be completed. Please try again."] });
+                                    resetCaptcha();
+                                } finally {
+                                    if (submitButton) {
+                                        submitButton.disabled = false;
+                                        submitButton.textContent = originalButtonText;
+                                    }
+                                }
+                            });
+                        })();
+                    </script>
                 }
             </div>
         </div>

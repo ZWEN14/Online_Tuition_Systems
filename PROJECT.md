@@ -8,6 +8,20 @@ Read `AGENTS.md` before using this file. `AGENTS.md` controls how Codex and othe
 
 Do not mark an implementation task complete merely because code was proposed. Mark it complete only after the user confirms that the change was manually applied and works, or after the repository already contains verified working implementation.
 
+### 2026-09-14 — Login reCAPTCHA enforcement correction ready for verification
+
+- Found that reCAPTCHA verification deliberately failed open in Development when its token/configuration was missing or Google verification failed, allowing Login and Registration to continue without a successful CAPTCHA assessment.
+- Changed the shared reCAPTCHA service to fail closed in every environment: missing tokens, incomplete configuration, rejected assessments, network errors, and verification timeouts now return failure.
+- Login now stops before loading/checking account credentials when CAPTCHA verification fails and shows a field-level CAPTCHA message. This prevents password checks, failed-login counters, and cookie sign-in from running without a successful CAPTCHA.
+- Kept the existing reCAPTCHA Enterprise checkbox integration, manual cookie authentication, account lockout, email verification, registration, and Account UI structure. No database or migration change is required; Login and Registration browser verification remains pending.
+
+### 2026-09-14 — AJAX Login feedback ready for verification
+
+- Added progressive AJAX submission to Login so validation, CAPTCHA, blocked-account, lockout, and credential errors update inside the existing form without refreshing the full page.
+- The server still owns all validation and authorization decisions. Normal form submission remains available when JavaScript or Fetch is unavailable.
+- Failed AJAX attempts reset the single-use reCAPTCHA checkbox token. Successful authentication and unverified-email outcomes navigate to the same safe local destinations as the original Login workflow.
+- Preserved anti-forgery validation, return-URL checking, failed-login counting, lockout, email verification, and manual cookie sign-in. No database or migration change is required; browser verification remains pending.
+
 ### 2026-09-14 — Student assignment presentation refinement started
 
 - Show the Student assignment state only once inside `Your work`, where it describes the Student's submission outcome.

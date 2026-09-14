@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Text.Json;
 using Microsoft.Extensions.Options;
 
 namespace AnywhereEdureach.Services;
@@ -10,7 +11,10 @@ public sealed class RecaptchaOptions
     public string ApiKey { get; set; } = "";
 }
 
-public sealed class GoogleRecaptchaService(HttpClient httpClient, IOptions<RecaptchaOptions> options, ILogger<GoogleRecaptchaService> logger, IWebHostEnvironment environment)
+public sealed class GoogleRecaptchaService(
+    HttpClient httpClient,
+    IOptions<RecaptchaOptions> options,
+    ILogger<GoogleRecaptchaService> logger)
 {
     private readonly RecaptchaOptions options = options.Value;
 
@@ -23,14 +27,20 @@ public sealed class GoogleRecaptchaService(HttpClient httpClient, IOptions<Recap
 
     public async Task<bool> VerifyAsync(string? token, string? remoteIp, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(token) || !IsConfigured)
+        if (string.IsNullOrWhiteSpace(token))
         {
-            logger.LogWarning("reCAPTCHA Enterprise verification was skipped because token or configuration is missing. TokenPresent={TokenPresent}, ProjectConfigured={ProjectConfigured}, ApiKeyConfigured={ApiKeyConfigured}, SiteKeyConfigured={SiteKeyConfigured}",
-                !string.IsNullOrWhiteSpace(token),
+            logger.LogWarning("reCAPTCHA Enterprise verification rejected because the response token is missing.");
+            return false;
+        }
+
+        if (!IsConfigured)
+        {
+            logger.LogError(
+                "reCAPTCHA Enterprise verification rejected because configuration is incomplete. ProjectConfigured={ProjectConfigured}, ApiKeyConfigured={ApiKeyConfigured}, SiteKeyConfigured={SiteKeyConfigured}",
                 IsUsableProjectId(options.ProjectId),
                 IsUsableApiKey(options.ApiKey),
                 IsUsableSiteKey(options.SiteKey));
-            return environment.IsDevelopment();
+            return false;
         }
 
         var eventData = new Dictionary<string, object>
@@ -77,12 +87,17 @@ public sealed class GoogleRecaptchaService(HttpClient httpClient, IOptions<Recap
         catch (HttpRequestException exception)
         {
             logger.LogWarning(exception, "reCAPTCHA Enterprise could not be reached.");
-            return environment.IsDevelopment();
+            return false;
         }
         catch (OperationCanceledException exception) when (!cancellationToken.IsCancellationRequested)
         {
             logger.LogWarning(exception, "reCAPTCHA Enterprise verification timed out.");
-            return environment.IsDevelopment();
+            return false;
+        }
+        catch (JsonException exception)
+        {
+            logger.LogWarning(exception, "reCAPTCHA Enterprise returned an invalid assessment response.");
+            return false;
         }
     }
 
