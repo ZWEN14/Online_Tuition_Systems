@@ -57,12 +57,6 @@
     communityLinks.Add(("Notifications", "Index", "Notifications", "Keep up with updates across your modules.", "N", "feature-blue"));
     communityLinks.Add(("Account", "UpdateProfile", "My profile", "Keep your account details up to date.", "P", "feature-violet"));
 }
-
-@if (isStudent)
-{
-    <partial name="_StudentDashboard" model="Model" />
-}
-else
 {
 <section class="home-dashboard-hero" aria-labelledby="home-heading">
     <div class="home-dashboard-intro">
@@ -191,5 +185,3 @@ else
         </div>
     </div>
 </section>
-
-}
